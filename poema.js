@@ -14,44 +14,91 @@
 // =====================================================================
 
 const LIBRO = {
-  titulo: "Volverán las oscuras golondrinas",
-  autor: "Gustavo Adolfo Bécquer",
-  dedicatoria: "Un poema de muestra: cámbialo por el tuyo en poema.js",
+  titulo: "Me encantas",
+  autor: "Un amigo extraño",
+  dedicatoria: "",
   tapa: "burdeos",
   alinear: "izquierda",
   tamano: 1,
 
   paginas: [
-`Volverán las oscuras golondrinas
-en tu balcón sus nidos a colgar,
-y otra vez con el ala a sus cristales
-jugando llamarán.`,
+`Me encantas agrupa
+Cual grupo de hojas
+Sentimientos vividos
+Que en algún momento sentí.`,
 
-`Pero aquellas que el vuelo refrenaban
-tu hermosura y mi dicha a contemplar,
-aquellas que aprendieron nuestros nombres...
-¡esas... no volverán!`,
+`Cuando las veo
+Una por una
+Llega tu brisa
+Se vuelven a ir.`,
 
-`Volverán las tupidas madreselvas
-de tu jardín las tapias a escalar,
-y otra vez a la tarde aún más hermosas
-sus flores se abrirán.`,
+`Como explicar en breves palabras
+Lo que significa que siento por ti
+Un cariño que va creciendo y creciendo
+Calentando en invierno
+Y refrescando en abril.`,
 
-`Pero aquellas, cuajadas de rocío
-cuyas gotas mirábamos temblar
-y caer como lágrimas del día...
-¡esas... no volverán!`,
+`Pero ese no es el significado
+Que yo le he dado
+A un me encantas forzado
+Lo podrías pensar.`,
 
-`Volverán del amor en tus oídos
-las palabras ardientes a sonar;
-tu corazón de su profundo sueño
-tal vez despertará.`,
+`Veelo mejor no como algo malo
+Sino un freno de mano
+¡Me tiemblan las manos!
 
-`Pero mudo y absorto y de rodillas
-como se adora a Dios ante su altar,
-como yo te he querido...; desengáñate,
-¡así... no te querrán!`,
+Motor encendido
+Sentado y seguro
+Manos al volante
+Ya quiero partir`,
+
+`Limitarme a palabra
+Quizás te confunde
+Porqué me limito
+A decir tu nombre
+
+Ay karen suspiro
+Jhuliana susurro
+Me gustas te digo
+Y en me encantas me freno
+Cuchito te digo
+Cuentitos te leo`,
+
+`Te extraño de día
+en las tardes te espero
+en las noches reímos
+Y empezamos de nuevo`,
+
+`He hablado de tu risa? Claro que sí estoy seguro
+Te he dicho te quiero, estoy seguro que si!
+De tus ojos almendrados, y de tu pelito negro,
+ahora lo hago
+Disculpa la pausa
+Es que babeo por ti.`,
+
+`Talvez te dije que a ojos cerrados
+Aveces es la forma en las que te vuelvo a ver
+Que sueño contigo estando a tu lado
+A ojos abiertos y viendote comer
+Tomando agüita
+Midiendonos las manos
+Abrazándote desde los hombros
+Y tu pelo oler.`,
+
+`Ha pasado tan poco tiempo y haces bien en temer
+Tremendo poder el qué te he dado
+Mi amor infinito es díficil de ver`,
+
+`Te quiero y te extraño
+Es divertido y comodo
+Imaginarme a tu lado
+En un atardecer de otoño
+De aquí a unos años
+Esperemos que funcione todo
+Te quiero y te adoro
+Te la dedica
+Un amigo extraño.`,
   ],
 
-  colofon: "Rima LIII · 1871",
+  colofon: "",
 };
