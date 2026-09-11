@@ -15,7 +15,7 @@
   --pw:340px; --ph:480px; --escala:1; --dur:1.15s;
   --tapa1:#6b2630; --tapa2:#4a1a20; --tapa3:#33111a;
   --oro:#d4b06a; --oro2:#f0d59a;
-  --papel:#f3ead6; --tinta:#2c2219; --tinta2:#6e5a45; --folio:#9a8664;
+  --papel:#f3ead6; --tinta:#241b13; --tinta2:#6e5a45; --folio:#9a8664;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#120d0b;overflow:hidden;
@@ -55,6 +55,8 @@ body[data-modo="2"] #izq{display:block}
 .lado-der::after,.lado-izq::after{content:'';position:absolute;inset:0;pointer-events:none}
 .lado-der::after{background:linear-gradient(90deg, rgba(60,40,20,.30), rgba(60,40,20,.09) 6%, transparent 15%)}
 .lado-izq::after{background:linear-gradient(270deg, rgba(60,40,20,.30), rgba(60,40,20,.09) 6%, transparent 15%)}
+/* lienzo de efectos y tinte, detrás del texto */
+.lienzo,.tinte{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
 /* canto de las hojas (el grosor del libro) */
 .canto{position:absolute;top:0;left:0;width:var(--pw);height:var(--ph);transform:translateZ(-1px);pointer-events:none}
@@ -124,14 +126,15 @@ body[data-modo="1"] .hoja .dorso{visibility:hidden}
 @keyframes sombra{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
 
 /* ---------- contenido de las páginas ---------- */
-.contenido{position:absolute;inset:0;padding:8% 7% 10%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.contenido{position:absolute;inset:0;padding:8% 6% 10%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .contenido.blanca{background:transparent}
 .texto{display:inline-block;max-width:100%;text-align:left;margin-top:1.1em}
 body.centro .texto{text-align:center}
 .estrofa{margin-bottom:1.15em}
 .estrofa:last-child{margin-bottom:0}
-.verso{font-size:calc(var(--ph) * 0.037 * var(--escala));font-weight:500;line-height:1.5;color:var(--tinta);
+.verso{font-size:calc(var(--ph) * 0.037 * var(--escala) * var(--ajuste, 1));font-weight:500;line-height:1.52;color:var(--tinta);
   padding-left:1.4em;text-indent:-1.4em}
+.contenido.densa .verso{font-weight:600}
 body.centro .verso{padding-left:0;text-indent:0}
 .titulo-pagina{font-family:Cinzel,serif;font-weight:400;font-size:calc(var(--ph) * 0.03 * var(--escala));letter-spacing:.25em;color:var(--tinta2);margin:.8em 0 0}
 .folio{position:absolute;bottom:5%;left:0;right:0;text-align:center;font-family:Cinzel,serif;font-size:calc(var(--ph)*0.02);letter-spacing:.2em;color:var(--folio)}
@@ -206,8 +209,9 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
   const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DUR = reducido ? 300 : 1150;
   document.documentElement.style.setProperty('--dur', DUR + 'ms');
+  const R = Math.random;
 
-  let modo = 1, cur = 0, abierto = false, ocupado = false, pistaT = 0, pasadas = 0;
+  let modo = 1, cur = 0, abierto = false, ocupado = false, pistaT = 0, pasadas = 0, PW = 340, PH = 480;
 
   // ---- ajustes del poema.js ----
   const TAPAS = {
@@ -224,6 +228,188 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
   $('#tapa-titulo').textContent = titulo;
   $('#tapa-autor').textContent = L.autor || '';
 
+  // =====================================================================
+  //  EFECTOS DE PÁGINA: partículas en un canvas detrás del texto
+  // =====================================================================
+  const TINTES = {
+    hojas:'linear-gradient(180deg, rgba(200,120,40,.08), transparent 60%)',
+    brisa:'linear-gradient(90deg, rgba(120,160,200,.06), transparent 60%)',
+    nieve:'linear-gradient(180deg, rgba(120,150,200,.11), rgba(120,150,200,.02) 60%, transparent)',
+    petalos:'linear-gradient(180deg, rgba(240,140,170,.08), transparent 65%)',
+    estrellas:'linear-gradient(180deg, rgba(40,40,95,.24), rgba(40,40,95,.06) 55%, transparent)',
+    luciernagas:'linear-gradient(0deg, rgba(20,70,40,.22), rgba(20,70,40,.05) 55%, transparent)',
+    lluvia:'linear-gradient(180deg, rgba(70,90,120,.13), rgba(70,90,120,.03) 70%, transparent)',
+    corazones:'linear-gradient(0deg, rgba(220,80,110,.07), transparent 60%)'
+  };
+  const PAL_HOJAS = ['#b5651d','#c98a2e','#8a5a2b','#a3402a','#d4a63a','#7d6b2a'];
+  const PAL_PET = ['#f0a0b6','#f6c3cf','#e88aa4','#fad1da','#ea97ae'];
+  const PAL_COR = ['#de5f80','#ea89a3','#d9486c'];
+  const EFECTOS = {};
+
+  function nuevaHoja(e, inicial, viento){
+    const p = { s:(6 + R()*8)*e.k, vy:(22 + R()*30)*e.k, vx:(viento*(40 + R()*50) + (R() - .5)*10)*e.k,
+      f:R()*6.28, fv:.7 + R()*1.3, amp:(12 + R()*22)*e.k, r:R()*6.28, vr:(R() - .5)*2.4,
+      col:PAL_HOJAS[R()*PAL_HOJAS.length | 0], a:.5 + R()*.4 };
+    if (inicial){ p.x = R()*e.w; p.y = R()*e.h; }
+    else if (viento > .5){ p.x = -24; p.y = R()*e.h*.85; }
+    else { p.x = R()*e.w; p.y = -20; }
+    return p;
+  }
+  function pasoHojas(e, dt, viento){
+    const ctx = e.ctx;
+    for (const p of e.p){
+      p.f += p.fv*dt; p.y += p.vy*dt; p.x += (p.vx + Math.cos(p.f)*p.amp)*dt; p.r += p.vr*dt;
+      if (p.y > e.h + 24 || p.x > e.w + 30 || p.x < -40) Object.assign(p, nuevaHoja(e, false, viento));
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.globalAlpha = p.a; ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.moveTo(-p.s, 0); ctx.quadraticCurveTo(0, -p.s*.7, p.s, 0); ctx.quadraticCurveTo(0, p.s*.7, -p.s, 0); ctx.fill();
+      ctx.strokeStyle = 'rgba(70,35,10,.45)'; ctx.lineWidth = .8;
+      ctx.beginPath(); ctx.moveTo(-p.s*.8, 0); ctx.lineTo(p.s*.8, 0); ctx.stroke();
+      ctx.restore();
+    }
+  }
+  function nuevaRacha(e, inicial){
+    return { x: inicial ? R()*e.w : -110*e.k, y:R()*e.h, len:(50 + R()*70)*e.k, v:(150 + R()*120)*e.k, a:.10 + R()*.12, c:(R() - .5)*30*e.k };
+  }
+  EFECTOS.hojas = { n:14, nueva:(e, i) => nuevaHoja(e, i, .1), paso:(e, dt) => pasoHojas(e, dt, .1) };
+  EFECTOS.brisa = { n:10, nueva:(e, i) => nuevaHoja(e, i, 2.2),
+    extra:e => { e.x = []; for (let i = 0; i < 7; i++) e.x.push(nuevaRacha(e, true)); },
+    paso:(e, dt) => {
+      const ctx = e.ctx; ctx.lineWidth = 1.2;
+      for (const r of e.x){
+        r.x += r.v*dt; if (r.x > e.w + 20) Object.assign(r, nuevaRacha(e, false));
+        ctx.strokeStyle = 'rgba(90,110,140,' + r.a + ')';
+        ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.quadraticCurveTo(r.x + r.len*.5, r.y + r.c, r.x + r.len, r.y); ctx.stroke();
+      }
+      pasoHojas(e, dt, 2.2);
+    } };
+  EFECTOS.nieve = { n:55,
+    nueva:(e, i) => ({ x:R()*e.w, y:i ? R()*e.h : -8, r:(1 + R()*2.4)*e.k, vy:(16 + R()*28)*e.k, f:R()*6.28, fv:.6 + R()*1.2, amp:(5 + R()*12)*e.k, a:.45 + R()*.45 }),
+    paso:(e, dt) => {
+      const ctx = e.ctx; ctx.fillStyle = '#d6e2f2'; ctx.strokeStyle = 'rgba(140,165,205,.6)'; ctx.lineWidth = .7;
+      for (const p of e.p){
+        p.f += p.fv*dt; p.y += p.vy*dt; p.x += Math.sin(p.f)*p.amp*dt;
+        if (p.y > e.h + 8){ p.y = -8; p.x = R()*e.w; }
+        ctx.globalAlpha = p.a; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill(); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    } };
+  EFECTOS.petalos = { n:18,
+    nueva:(e, i) => ({ x:R()*e.w, y:i ? R()*e.h : -16, s:(4.5 + R()*5)*e.k, vy:(18 + R()*26)*e.k, vx:(R() - .35)*16*e.k, f:R()*6.28, fv:1.2 + R()*1.6,
+      amp:(10 + R()*18)*e.k, r:R()*6.28, vr:(R() - .5)*2.5, col:PAL_PET[R()*PAL_PET.length | 0], a:.6 + R()*.35 }),
+    paso:(e, dt) => {
+      const ctx = e.ctx;
+      for (const p of e.p){
+        p.f += p.fv*dt; p.y += p.vy*dt; p.x += (p.vx + Math.cos(p.f)*p.amp)*dt; p.r += p.vr*dt;
+        if (p.y > e.h + 16 || p.x < -20 || p.x > e.w + 20){ p.y = -16; p.x = R()*e.w; }
+        const s = p.s;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r + Math.sin(p.f)*.5); ctx.globalAlpha = p.a; ctx.fillStyle = p.col;
+        ctx.beginPath(); ctx.moveTo(0, -s); ctx.bezierCurveTo(s*.95, -s*.45, s*.85, s*.55, 0, s); ctx.bezierCurveTo(-s*.85, s*.55, -s*.95, -s*.45, 0, -s); ctx.fill();
+        ctx.restore();
+      }
+    } };
+  EFECTOS.estrellas = { n:42,
+    nueva:e => ({ x:R()*e.w, y:R()*e.h*.62, r:(.9 + R()*1.9)*e.k, f:R()*6.28, fv:.8 + R()*2.2, a:.45 + R()*.5 }),
+    extra:e => { e.fugaz = null; e.prox = 2 + R()*4; },
+    paso:(e, dt) => {
+      const ctx = e.ctx; ctx.fillStyle = '#7d5f16';
+      for (const p of e.p){
+        ctx.globalAlpha = p.a*(.5 + .5*Math.sin(e.t*p.fv + p.f));
+        if (p.r > 1.6){
+          const s = p.r*2.4;
+          ctx.beginPath(); ctx.moveTo(p.x, p.y - s); ctx.quadraticCurveTo(p.x, p.y, p.x + s, p.y); ctx.quadraticCurveTo(p.x, p.y, p.x, p.y + s);
+          ctx.quadraticCurveTo(p.x, p.y, p.x - s, p.y); ctx.quadraticCurveTo(p.x, p.y, p.x, p.y - s); ctx.fill();
+        } else { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill(); }
+      }
+      ctx.globalAlpha = 1;
+      e.prox -= dt;
+      if (e.prox <= 0 && !e.fugaz){ e.fugaz = { x:R()*e.w*.6, y:R()*e.h*.25, vx:(300 + R()*160)*e.k, vy:(90 + R()*70)*e.k, v:0 }; e.prox = 5 + R()*6; }
+      if (e.fugaz){
+        const f = e.fugaz; f.v += dt; f.x += f.vx*dt; f.y += f.vy*dt;
+        const a = Math.max(0, 1 - f.v/.9), m = Math.hypot(f.vx, f.vy), L = 70*e.k;
+        const tx = f.x - f.vx/m*L, ty = f.y - f.vy/m*L;
+        const g = ctx.createLinearGradient(f.x, f.y, tx, ty);
+        g.addColorStop(0, 'rgba(125,95,22,' + a + ')'); g.addColorStop(1, 'rgba(125,95,22,0)');
+        ctx.strokeStyle = g; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(tx, ty); ctx.stroke();
+        if (f.v > .9) e.fugaz = null;
+      }
+    } };
+  EFECTOS.luciernagas = { n:14,
+    nueva:e => ({ bx:R()*e.w, by:e.h*(.3 + R()*.65), f1:R()*6.28, f2:R()*6.28, f3:R()*6.28, s1:.3 + R()*.4, s2:.2 + R()*.3, r:(1.8 + R()*1.6)*e.k, amp:(25 + R()*35)*e.k }),
+    paso:(e, dt) => {
+      const ctx = e.ctx;
+      for (const p of e.p){
+        const x = p.bx + Math.sin(e.t*p.s1 + p.f1)*p.amp + Math.cos(e.t*p.s2*1.7 + p.f2)*p.amp*.5;
+        const y = p.by + Math.cos(e.t*p.s2 + p.f2)*p.amp*.7 + Math.sin(e.t*p.s1*1.3 + p.f3)*p.amp*.3;
+        const b = Math.pow(.5 + .5*Math.sin(e.t*1.6 + p.f3), 2), a = .15 + .85*b;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, p.r*6);
+        g.addColorStop(0, 'rgba(165,185,30,' + (a*.7) + ')'); g.addColorStop(1, 'rgba(165,185,30,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, p.r*6, 0, 6.2832); ctx.fill();
+        ctx.fillStyle = 'rgba(105,125,5,' + a + ')'; ctx.beginPath(); ctx.arc(x, y, p.r, 0, 6.2832); ctx.fill();
+      }
+    } };
+  EFECTOS.lluvia = { n:60,
+    nueva:(e, i) => ({ x:R()*(e.w + 40) - 20, y:i ? R()*e.h : -20, len:(8 + R()*10)*e.k, vy:(380 + R()*260)*e.k, a:.16 + R()*.2 }),
+    paso:(e, dt) => {
+      const ctx = e.ctx; ctx.lineWidth = 1; ctx.lineCap = 'round';
+      for (const p of e.p){
+        p.y += p.vy*dt; p.x -= p.vy*.09*dt;
+        if (p.y > e.h + 20){ p.y = -20; p.x = R()*(e.w + 40) - 10; }
+        ctx.strokeStyle = 'rgba(70,95,130,' + p.a + ')';
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + p.len*.09, p.y - p.len); ctx.stroke();
+      }
+    } };
+  EFECTOS.corazones = { n:11,
+    nueva:(e, i) => ({ x:R()*e.w, y:i ? R()*e.h : e.h + 14, s:(3.5 + R()*4.5)*e.k, vy:(14 + R()*20)*e.k, f:R()*6.28, fv:.8 + R()*1.2, amp:(6 + R()*12)*e.k, col:PAL_COR[R()*3 | 0], a:.3 + R()*.4 }),
+    paso:(e, dt) => {
+      const ctx = e.ctx;
+      for (const p of e.p){
+        p.f += p.fv*dt; p.y -= p.vy*dt; p.x += Math.sin(p.f)*p.amp*dt;
+        if (p.y < -16){ p.y = e.h + 14; p.x = R()*e.w; }
+        const s = p.s;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.globalAlpha = p.a; ctx.fillStyle = p.col;
+        ctx.beginPath(); ctx.moveTo(0, s); ctx.bezierCurveTo(-s*1.6, -s*.2, -s*.8, -s*1.4, 0, -s*.5); ctx.bezierCurveTo(s*.8, -s*1.4, s*1.6, -s*.2, 0, s); ctx.fill();
+        ctx.restore();
+      }
+    } };
+
+  class Escena {
+    constructor(cv, tipo, w, h){
+      this.c = cv; this.ctx = cv.getContext('2d'); this.def = EFECTOS[tipo]; this.t = R()*100; this.vivo = false; this.p = [];
+      this.redim(w, h);
+      const cant = Math.round(this.def.n * Math.min(2, Math.max(.6, (w*h)/(370*526))));
+      for (let i = 0; i < cant; i++) this.p.push(this.def.nueva(this, true));
+      if (this.def.extra) this.def.extra(this);
+    }
+    redim(w, h){
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      this.w = w; this.h = h; this.k = w/370;
+      this.c.width = Math.round(w*dpr); this.c.height = Math.round(h*dpr);
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    frame(dt){ this.ctx.clearRect(0, 0, this.w, this.h); this.t += dt; this.def.paso(this, dt); }
+    start(){
+      if (reducido){ this.frame(.016); return; }
+      this.vivo = true; let ult = performance.now();
+      const loop = now => { if (!this.vivo) return; const dt = Math.min(.05, (now - ult)/1000); ult = now; this.frame(dt); this.raf = requestAnimationFrame(loop); };
+      this.raf = requestAnimationFrame(loop);
+    }
+    stop(){ this.vivo = false; cancelAnimationFrame(this.raf); }
+  }
+  function lienzoDe(ef){
+    if (!ef || !EFECTOS[ef]) return '';
+    return '<canvas class="lienzo" data-efecto="' + ef + '"></canvas><div class="tinte" style="background:' + TINTES[ef] + '"></div>';
+  }
+  function arrancarEfecto(el){
+    if (el._efecto){ el._efecto.stop(); el._efecto = null; }
+    const cv = el.querySelector('canvas.lienzo');
+    if (cv){ el._efecto = new Escena(cv, cv.dataset.efecto, PW, PH); el._efecto.start(); }
+  }
+  function prepararCara(cara, copia){
+    const cv = cara.querySelector('canvas.lienzo'); if (!cv) return;
+    if (copia && copia.width){ cv.width = copia.width; cv.height = copia.height; cv.getContext('2d').drawImage(copia, 0, 0); }
+    else new Escena(cv, cv.dataset.efecto, PW, PH).frame(.016);
+  }
+
   // ---- páginas ----
   const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const ADORNO = '<svg class="adorno" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h46M74 6h46" stroke="currentColor" stroke-width="1" fill="none"/><path d="M60 1l5 5-5 5-5-5z" fill="currentColor"/></svg>';
@@ -234,22 +420,48 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
       '<h1 class="titulo">' + esc(titulo) + '</h1>' +
       (L.autor ? '<div class="autor">' + esc(L.autor) + '</div>' : '') + ADORNO +
       (L.dedicatoria ? '<p class="dedicatoria">' + esc(L.dedicatoria) + '</p>' : '') + '</div>';
-    if (i === n - 1) return '<div class="contenido fin">' + ADORNO + '<div class="fin-palabra">Fin</div>' +
+    if (i === n - 1) return lienzoDe(L.efecto_fin) + '<div class="contenido fin">' + ADORNO + '<div class="fin-palabra">Fin</div>' +
       (L.colofon ? '<p class="colofon">' + esc(L.colofon) + '</p>' : '') +
       '<p class="nota">Toca para cerrar el libro</p></div>';
     const p = paginas[i - 1];
-    const texto = (p && typeof p === 'object') ? String(p.texto || '') : String(p || '');
-    const tit = (p && typeof p === 'object' && p.titulo) ? '<h2 class="titulo-pagina" style="--i:0">' + esc(p.titulo) + '</h2>' : '';
+    const obj = p && typeof p === 'object';
+    const texto = obj ? String(p.texto || '') : String(p || '');
+    const tit = (obj && p.titulo) ? '<h2 class="titulo-pagina" style="--i:0">' + esc(p.titulo) + '</h2>' : '';
     let k = tit ? 1 : 0;
     const estrofas = texto.replace(/\r/g, '').trim().split(/\n[ \t]*\n+/).map(e =>
       '<div class="estrofa">' + e.split('\n').map(v =>
         '<div class="verso" style="--i:' + (k++) + '">' + (esc(v.trim()) || '&nbsp;') + '</div>').join('') + '</div>').join('');
-    return '<div class="contenido poema' + (viva ? ' viva' : '') + '" style="--espera:' + (espera || 0) + 'ms">' +
+    return lienzoDe(obj ? p.efecto : '') + '<div class="contenido poema' + (viva ? ' viva' : '') + '" style="--espera:' + (espera || 0) + 'ms">' +
       ADORNO + tit + '<div class="texto">' + estrofas + '</div><div class="folio">' + i + '</div></div>';
   }
+
+  // cada página ajusta su letra para que el verso más largo quepa en una línea
+  const medidor = document.createElement('canvas').getContext('2d');
+  function ajustarTexto(cont){
+    if (!cont) return;
+    const versos = cont.querySelectorAll('.verso'); if (!versos.length) return;
+    cont.style.setProperty('--ajuste', 1); cont.classList.remove('densa');
+    const cs = getComputedStyle(versos[0]);
+    medidor.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    let max = 0;
+    versos.forEach(v => { max = Math.max(max, medidor.measureText(v.textContent).width); });
+    const cc = getComputedStyle(cont);
+    const disp = cont.clientWidth - parseFloat(cc.paddingLeft) - parseFloat(cc.paddingRight);
+    const a = disp / (max + 2);
+    if (a < .999){
+      cont.style.setProperty('--ajuste', Math.max(.72, a).toFixed(3));
+      if (a < .9) cont.classList.add('densa');
+    }
+  }
+  function ajustarTodo(){ document.querySelectorAll('.contenido.poema').forEach(ajustarTexto); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarTodo);
+
   function pintar(el, i, viva, espera){
+    if (el._efecto){ el._efecto.stop(); el._efecto = null; }
     el.innerHTML = htmlPagina(i, viva, espera);
     el.classList.toggle('oculta', i < 0);
+    ajustarTexto(el.querySelector('.contenido.poema'));
+    arrancarEfecto(el);
   }
   function render(){
     if (modo === 2){
@@ -278,16 +490,17 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
 
   // ---- medidas: una hoja (celular vertical) o dos (pantalla ancha) ----
   function medir(){
-    const W = innerWidth, H = innerHeight, R = 1.42;
+    const W = innerWidth, H = innerHeight, RZ = 1.42;
     const nuevo = modoForzado || ((W >= 760 && W > H * 1.05) ? 2 : 1);
     let pw, ph;
     if (nuevo === 1){
-      pw = Math.min(W * 0.9, 440); ph = pw * R;
-      const maxH = H * 0.8; if (ph > maxH){ ph = maxH; pw = ph / R; }
+      pw = Math.min(W * 0.9, 440); ph = pw * RZ;
+      const maxH = H * 0.8; if (ph > maxH){ ph = maxH; pw = ph / RZ; }
     } else {
-      ph = Math.min(H * 0.82, 760); pw = ph / R;
-      const maxW = W * 0.92; if (pw * 2 > maxW){ pw = maxW / 2; ph = pw * R; }
+      ph = Math.min(H * 0.82, 760); pw = ph / RZ;
+      const maxW = W * 0.92; if (pw * 2 > maxW){ pw = maxW / 2; ph = pw * RZ; }
     }
+    PW = pw; PH = ph;
     raiz.setProperty('--pw', pw.toFixed(1) + 'px');
     raiz.setProperty('--ph', ph.toFixed(1) + 'px');
     if (nuevo !== modo){
@@ -297,6 +510,9 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
       tapa.classList.toggle('oculta', abierto && modo === 1);
       render();
       requestAnimationFrame(() => requestAnimationFrame(() => cuerpo.classList.remove('instantaneo')));
+    } else {
+      ajustarTodo();
+      [der, izq].forEach(el => { if (el._efecto) el._efecto.redim(PW, PH); });
     }
   }
 
@@ -308,12 +524,15 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
     el.addEventListener('transitionend', onEnd);
     setTimeout(fin, DUR + 120);
   }
-  function crearHoja(iFrente, iDorso, girada){
+  function crearHoja(iFrente, iDorso, girada, copiaFrente, copiaDorso){
     const h = document.createElement('div');
     h.className = 'hoja' + (girada ? ' girada sin-transicion' : ' sin-transicion');
     h.innerHTML = '<div class="cara frente papel lado-der">' + htmlPagina(iFrente, false) + '</div>' +
                   '<div class="cara dorso papel lado-izq">' + htmlPagina(iDorso, false) + '</div>';
     libro.appendChild(h);
+    h.querySelectorAll('.contenido.poema').forEach(ajustarTexto);
+    prepararCara(h.querySelector('.frente'), copiaFrente);
+    prepararCara(h.querySelector('.dorso'), copiaDorso);
     return h;
   }
   function girar(h, haciaAdelante, cb){
@@ -363,13 +582,13 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
       const k = Math.ceil(cur / 2), sig = 2 * k + 1;
       if (sig > n - 1){ cerrar(); return; }
       ocupado = true;
-      const h = crearHoja(2 * k, sig, false);
+      const h = crearHoja(2 * k, sig, false, der.querySelector('canvas.lienzo'), null);
       pintar(der, 2 * k + 2, true, 500);
       girar(h, true, () => { pintar(izq, sig, false); cur = sig; ocupado = false; barra(); });
     } else {
       if (cur + 1 > n - 1){ cerrar(); return; }
       ocupado = true;
-      const h = crearHoja(cur, -1, false);
+      const h = crearHoja(cur, -1, false, der.querySelector('canvas.lienzo'), null);
       pintar(der, cur + 1, true, 500);
       girar(h, true, () => { cur = cur + 1; ocupado = false; barra(); });
     }
@@ -380,13 +599,13 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
       const k = Math.ceil(cur / 2);
       if (k === 0){ cerrar(); return; }
       ocupado = true;
-      const h = crearHoja(2 * k - 2, 2 * k - 1, true);
+      const h = crearHoja(2 * k - 2, 2 * k - 1, true, null, izq.querySelector('canvas.lienzo'));
       pintar(izq, 2 * k - 3, false);
       girar(h, false, () => { pintar(der, 2 * k - 2, false); cur = 2 * k - 2; ocupado = false; barra(); });
     } else {
       if (cur === 0){ cerrar(); return; }
       ocupado = true;
-      const h = crearHoja(cur - 1, -1, true);
+      const h = crearHoja(cur - 1, -1, true, null, null);
       girar(h, false, () => { pintar(der, cur - 1, false); cur = cur - 1; ocupado = false; barra(); });
     }
   }

@@ -6,10 +6,22 @@
 //  - tapa: color del cuero: "burdeos", "verde", "azul", "marron" o "negro".
 //  - alinear: "izquierda" (versos alineados, lo clásico) o "centro".
 //  - tamano: 1 es el tamaño normal de letra; 0.9 más chico, 1.15 más grande.
-//  - paginas: cada elemento entre comillas invertidas (`) es UNA PÁGINA.
+//  - paginas: cada elemento es UNA PÁGINA. Puede ser solo el texto entre
+//    comillas invertidas (`), o { efecto: "...", texto: `...` }.
 //        * Un Enter separa versos.
 //        * Una línea en blanco separa estrofas dentro de la misma página.
-//        * Para poner un título a una página: { titulo: "I", texto: `...` }
+//        * titulo: "I" pone un titulito arriba de la página (opcional).
+//        * efecto: animación detrás del texto. Opciones:
+//              "hojas"       hojas de otoño cayendo
+//              "brisa"       hojas y ráfagas que cruzan de lado
+//              "nieve"       copos
+//              "petalos"     pétalos rosados
+//              "estrellas"   cielo que titila con alguna estrella fugaz
+//              "luciernagas" lucecitas que vagan
+//              "lluvia"      lluvia fina
+//              "corazones"   corazones que suben
+//          Sin efecto = página quieta (también vale, no todas lo necesitan).
+//  - efecto_fin: efecto de la última página ("Fin").
 //  - colofon: nota de la última página (fecha, lugar, "para ti"...).
 // =====================================================================
 
@@ -22,28 +34,31 @@ const LIBRO = {
   tamano: 1,
 
   paginas: [
+{ efecto: "hojas", texto:
 `Me encantas agrupa
 Cual grupo de hojas
 Sentimientos vividos
-Que en algún momento sentí.`,
+Que en algún momento sentí.` },
 
+{ efecto: "brisa", texto:
 `Cuando las veo
 Una por una
 Llega tu brisa
-Se vuelven a ir.`,
+Se vuelven a ir.` },
 
-`Como explicar en breves palabras
+{ efecto: "nieve", texto:
+`Cómo explicar en breves palabras
 Lo que significa que siento por ti
 Un cariño que va creciendo y creciendo
 Calentando en invierno
-Y refrescando en abril.`,
+Y refrescando en abril.` },
 
 `Pero ese no es el significado
 Que yo le he dado
 A un me encantas forzado
 Lo podrías pensar.`,
 
-`Veelo mejor no como algo malo
+`Velo mejor, no como algo malo
 Sino un freno de mano
 ¡Me tiemblan las manos!
 
@@ -52,53 +67,59 @@ Sentado y seguro
 Manos al volante
 Ya quiero partir`,
 
+{ efecto: "petalos", texto:
 `Limitarme a palabra
 Quizás te confunde
-Porqué me limito
+Por qué me limito
 A decir tu nombre
 
-Ay karen suspiro
+Ay, Karen, suspiro
 Jhuliana susurro
 Me gustas te digo
 Y en me encantas me freno
 Cuchito te digo
-Cuentitos te leo`,
+Cuentitos te leo` },
 
+{ efecto: "estrellas", texto:
 `Te extraño de día
-en las tardes te espero
-en las noches reímos
-Y empezamos de nuevo`,
+En las tardes te espero
+En las noches reímos
+Y empezamos de nuevo` },
 
-`He hablado de tu risa? Claro que sí estoy seguro
-Te he dicho te quiero, estoy seguro que si!
+`¿He hablado de tu risa? Claro que sí, estoy seguro
+Te he dicho te quiero, ¡estoy seguro que sí!
 De tus ojos almendrados, y de tu pelito negro,
-ahora lo hago
+Ahora lo hago
 Disculpa la pausa
 Es que babeo por ti.`,
 
-`Talvez te dije que a ojos cerrados
-Aveces es la forma en las que te vuelvo a ver
+{ efecto: "luciernagas", texto:
+`Tal vez te dije que a ojos cerrados
+A veces es la forma en la que te vuelvo a ver
 Que sueño contigo estando a tu lado
-A ojos abiertos y viendote comer
+A ojos abiertos y viéndote comer
 Tomando agüita
-Midiendonos las manos
+Midiéndonos las manos
 Abrazándote desde los hombros
-Y tu pelo oler.`,
+Y tu pelo oler.` },
 
+{ efecto: "lluvia", texto:
 `Ha pasado tan poco tiempo y haces bien en temer
-Tremendo poder el qué te he dado
-Mi amor infinito es díficil de ver`,
+Tremendo poder el que te he dado
+Mi amor infinito es difícil de ver` },
 
+{ efecto: "hojas", texto:
 `Te quiero y te extraño
-Es divertido y comodo
+Es divertido y cómodo
 Imaginarme a tu lado
 En un atardecer de otoño
 De aquí a unos años
 Esperemos que funcione todo
 Te quiero y te adoro
 Te la dedica
-Un amigo extraño.`,
+Un amigo extraño.` },
   ],
 
+  efecto_fin: "petalos",
   colofon: "",
 };
