@@ -136,6 +136,6 @@ Un amigo extraño.` },
     youtube: ["GcfSoMWOe88", "F8dKVbP1Nzo"],   // ID del video (tras v= en la URL); si uno falla, prueba el siguiente
     titulo: "Lola Marsh · Something Stupid",
     inicio: 0,      // segundo en el que arranca cada vuelta (solo YouTube)
-    volumen: 55,    // 0 a 100 (solo YouTube)
+    volumen: 25,    // 0 a 100 (solo YouTube)
   },
 };

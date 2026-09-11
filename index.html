@@ -162,15 +162,15 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
 #pista.ver{opacity:1}
 
 /* ---------- música (reproductor de YouTube visible, en una esquina) ---------- */
-#musica{position:fixed;z-index:5;right:12px;bottom:max(12px, env(safe-area-inset-bottom));width:212px;padding:6px 6px 3px;border-radius:10px;
-  background:linear-gradient(160deg,var(--tapa1),var(--tapa2) 60%,var(--tapa3));border:1px solid rgba(212,176,106,.55);
-  box-shadow:0 12px 30px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.35)}
+#musica{position:fixed;z-index:5;right:12px;bottom:max(12px, env(safe-area-inset-bottom));width:200px;padding:0;border-radius:8px;
+  background:#000;border:1px solid rgba(255,255,255,.05);box-shadow:0 10px 26px rgba(0,0,0,.55)}
 body[data-modo="2"] #musica{right:auto;left:16px;bottom:16px}
-#musica-marco{position:relative;width:200px;height:200px;border-radius:6px;overflow:hidden;background:#000}
+#musica-marco{position:relative;width:200px;height:200px;border-radius:8px;overflow:hidden;background:#000}
 #musica-marco iframe{display:block;width:200px;height:200px;border:0}
-#musica-pie{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 2px 1px;font-family:Cinzel,serif;font-size:10px;letter-spacing:.12em;color:rgba(240,213,154,.85);white-space:nowrap}
-#musica-titulo{overflow:hidden;text-overflow:ellipsis}
-#musica-x{background:none;border:0;color:rgba(240,213,154,.8);font:400 20px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 4px;flex:none}
+#musica-pie{position:absolute;right:0;top:-32px;display:flex;align-items:center;gap:6px;padding:0;font-family:Cinzel,serif;font-size:10px;letter-spacing:.12em;color:rgba(240,213,154,.6);white-space:nowrap}
+#musica-titulo{display:none}
+#musica-x{width:26px;height:26px;border-radius:50%;background:rgba(20,10,8,.6);border:1px solid rgba(212,176,106,.3);color:rgba(240,213,154,.7);font:400 17px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 0 2px;flex:none}
+#musica-x:hover{border-color:rgba(212,176,106,.7);color:rgba(240,213,154,1)}
 #musica-aviso{position:absolute;left:0;right:0;bottom:0;padding:5px;text-align:center;font-family:Cinzel,serif;font-size:10px;letter-spacing:.1em;color:#f0d59a;background:rgba(20,10,8,.8);pointer-events:none}
 body.con-musica[data-modo="1"] #escena{padding-bottom:232px}
 body.con-musica[data-modo="1"] #barra{bottom:254px}
@@ -179,9 +179,8 @@ body.con-musica[data-modo="2"] #escena{padding-left:236px}
 #musica.spotify{left:12px;right:12px;width:auto;padding:0;background:none;border:0;box-shadow:none;display:flex;align-items:center;gap:8px}
 #musica.spotify #musica-marco{flex:1;width:auto;height:80px;border-radius:12px;background:#282828;box-shadow:0 10px 24px rgba(0,0,0,.55)}
 #musica.spotify #musica-marco iframe{width:100%;height:80px}
-#musica.spotify #musica-pie{padding:0}
-#musica.spotify #musica-titulo{display:none}
-#musica.spotify #musica-x{width:30px;height:30px;border-radius:50%;border:1px solid rgba(212,176,106,.4);background:rgba(20,10,8,.6)}
+#musica.spotify #musica-pie{position:static;padding:0}
+#musica.spotify #musica-x{width:30px;height:30px}
 body[data-modo="2"] #musica.spotify{right:auto;left:16px;bottom:16px;width:420px}
 body.con-musica.musica-spotify[data-modo="1"] #escena{padding-bottom:104px}
 body.con-musica.musica-spotify[data-modo="1"] #barra{bottom:110px}
@@ -526,7 +525,7 @@ body.con-musica.musica-spotify[data-modo="2"] #escena{padding-left:0;padding-bot
     let pw, ph;
     if (nuevo === 1){
       pw = Math.min(W * 0.9, 440); ph = pw * RZ;
-      const maxH = conM ? Math.min(H * 0.8, H - (compacta ? 204 : 344)) : H * 0.8;
+      const maxH = conM ? Math.min(H * 0.8, H - (compacta ? 204 : 352)) : H * 0.8;
       if (ph > maxH){ ph = maxH; pw = ph / RZ; }
     } else {
       ph = Math.min(H * 0.82, 760, (conM && compacta) ? H - 190 : 1e9); pw = ph / RZ;
