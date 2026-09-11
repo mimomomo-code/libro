@@ -122,20 +122,4 @@ Un amigo extraño.` },
 
   efecto_fin: "petalos",
   colofon: "",
-
-  // Música de fondo. Dos formas, se elige con "usar":
-  //   "spotify": banner chico de 80 px (como el de Spotify). Suena la canción
-  //              completa si el visitante tiene sesión de Spotify abierta en ese
-  //              navegador; si no, Spotify solo deja 30 segundos de muestra.
-  //   "youtube": tarjeta de 200 px con el video (YouTube exige que se vea).
-  //              Suena completa para todos.
-  // Arranca con el primer toque y se repite en bucle. musica: null la quita.
-  musica: {
-    usar: "youtube",
-    spotify: "29EdNlJQqStWhNkSGpkuFQ",        // lo que sigue a /track/ en el enlace de Spotify
-    youtube: ["GcfSoMWOe88", "F8dKVbP1Nzo"],   // ID del video (tras v= en la URL); si uno falla, prueba el siguiente
-    titulo: "Lola Marsh · Something Stupid",
-    inicio: 0,      // segundo en el que arranca cada vuelta (solo YouTube)
-    volumen: 25,    // 0 a 100 (solo YouTube)
-  },
 };
