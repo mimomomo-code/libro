@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#120d0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Libro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pw:340px; --ph:480px; --escala:1; --dur:1.15s;
+  --tapa1:#6b2630; --tapa2:#4a1a20; --tapa3:#33111a;
+  --oro:#d4b06a; --oro2:#f0d59a;
+  --papel:#f3ead6; --tinta:#2c2219; --tinta2:#6e5a45; --folio:#9a8664;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#120d0b;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+body{font-family:'Cormorant Garamond',Garamond,'EB Garamond',Georgia,'Times New Roman',serif;color:var(--tinta)}
+body.instantaneo *{transition:none !important;animation:none !important}
+
+/* ---------- la mesa ---------- */
+#escena{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  perspective:2400px;perspective-origin:50% 45%;overflow:hidden;cursor:pointer;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(130,95,60,.38), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.014) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.05) 0 1px, transparent 1px 37px),
+    linear-gradient(180deg,#221915 0%,#130e0b 55%,#0a0706 100%)}
+
+/* ---------- el libro ---------- */
+#libro{position:relative;width:var(--pw);height:var(--ph);transform-style:preserve-3d;
+  transition:transform var(--dur) cubic-bezier(.65,0,.35,1)}
+body[data-modo="2"] #libro{width:calc(var(--pw)*2)}
+body[data-modo="2"] #libro.cerrado{transform:translateX(calc(var(--pw) * -0.5))}
+
+/* papel */
+.papel{background:
+    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.28), transparent 72%),
+    repeating-linear-gradient(0deg, rgba(110,80,45,.045) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(110,80,45,.03) 0 1px, transparent 1px 7px),
+    linear-gradient(180deg,#f6eedc,#ede2ca);
+  box-shadow:inset 0 0 44px rgba(120,90,50,.16)}
+.pagina{position:absolute;top:0;left:0;width:var(--pw);height:var(--ph);overflow:hidden;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden}
+body[data-modo="2"] #der{left:var(--pw)}
+#izq{display:none}
+body[data-modo="2"] #izq{display:block}
+.pagina.oculta{visibility:hidden}
+/* sombra del lomo */
+.lado-der::after,.lado-izq::after{content:'';position:absolute;inset:0;pointer-events:none}
+.lado-der::after{background:linear-gradient(90deg, rgba(60,40,20,.30), rgba(60,40,20,.09) 6%, transparent 15%)}
+.lado-izq::after{background:linear-gradient(270deg, rgba(60,40,20,.30), rgba(60,40,20,.09) 6%, transparent 15%)}
+
+/* canto de las hojas (el grosor del libro) */
+.canto{position:absolute;top:0;left:0;width:var(--pw);height:var(--ph);transform:translateZ(-1px);pointer-events:none}
+#canto-der{box-shadow:2px 1px 0 #e9dfc8,3px 2px 0 #d3c5a6,5px 3px 0 #e9dfc8,6px 4px 0 #d3c5a6,8px 5px 0 #e2d7bd,9px 6px 0 #c9bb9b}
+body[data-modo="2"] #canto-der{left:var(--pw)}
+#canto-izq{display:none;box-shadow:-2px 1px 0 #e9dfc8,-3px 2px 0 #d3c5a6,-5px 3px 0 #e9dfc8,-6px 4px 0 #d3c5a6,-8px 5px 0 #e2d7bd,-9px 6px 0 #c9bb9b}
+body[data-modo="2"] #libro.abierto #canto-izq{display:block}
+
+/* tapas */
+.cuero{background:
+    radial-gradient(ellipse at 28% 18%, rgba(255,255,255,.11), transparent 55%),
+    radial-gradient(ellipse at 82% 92%, rgba(0,0,0,.38), transparent 60%),
+    repeating-radial-gradient(circle at 20% 30%, rgba(0,0,0,.035) 0 2px, transparent 2px 5px),
+    repeating-radial-gradient(circle at 70% 60%, rgba(255,255,255,.025) 0 1px, transparent 1px 4px),
+    linear-gradient(160deg, var(--tapa1), var(--tapa2) 60%, var(--tapa3))}
+#tapa,#contratapa{position:absolute;top:-7px;left:0;width:calc(var(--pw) + 7px);height:calc(var(--ph) + 14px)}
+body[data-modo="2"] #tapa,body[data-modo="2"] #contratapa{left:var(--pw)}
+#contratapa{transform:translateZ(-6px);border-radius:3px 10px 10px 3px;
+  box-shadow:0 3px 0 -1px #1f0a0e,0 6px 0 -2px #150609,0 34px 60px rgba(0,0,0,.7)}
+#tapa{transform-origin:left center;transform-style:preserve-3d;transform:rotateY(0deg) translateZ(6px);
+  transition:transform var(--dur) cubic-bezier(.65,0,.35,1)}
+#libro.abierto #tapa{transform:rotateY(-180deg) translateZ(6px)}
+#tapa.oculta{visibility:hidden}
+.cara{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.cara.dorso{transform:rotateY(180deg)}
+#tapa .frente{border-radius:3px 10px 10px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:12% 10%;text-align:center;
+  box-shadow:0 3px 0 -1px #1f0a0e,0 6px 0 -2px #150609,0 34px 60px rgba(0,0,0,.7),inset 0 0 0 1px rgba(0,0,0,.35)}
+#tapa .frente::before{content:'';position:absolute;inset:15px 15px 15px 22px;border:1.5px solid rgba(212,176,106,.72);
+  outline:1px solid rgba(212,176,106,.32);outline-offset:4px;border-radius:2px 6px 6px 2px;pointer-events:none}
+#tapa .frente::after{content:'';position:absolute;top:0;bottom:0;left:0;width:16px;border-radius:3px 0 0 3px;
+  background:linear-gradient(90deg, rgba(0,0,0,.5), rgba(0,0,0,.08) 45%, rgba(255,255,255,.09) 65%, rgba(0,0,0,.3))}
+#tapa-titulo{font-family:Cinzel,'Cormorant Garamond',serif;font-weight:600;font-size:clamp(15px, calc(var(--pw)*0.082), 42px);
+  line-height:1.28;letter-spacing:.06em;margin:.55em 0 .4em;text-wrap:balance;
+  background:linear-gradient(180deg,#f6e2a6 0%,#d9b463 48%,#a9822f 52%,#f0d58f 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(255,220,150,.18))}
+#tapa-autor{font-style:italic;font-weight:500;color:rgba(240,213,154,.88);font-size:clamp(12px, calc(var(--pw)*0.052), 24px);letter-spacing:.03em}
+.adorno{display:block;width:34%;height:auto;color:#b39a6a;margin:0 auto}
+#tapa .adorno{color:var(--oro);width:40%}
+#tapa .dorso{background:linear-gradient(160deg, var(--tapa2), var(--tapa3))}
+#tapa .dorso::before{content:'';position:absolute;inset:9px 9px 9px 0;
+  background:
+    radial-gradient(ellipse 30% 20% at 20% 25%, rgba(120,70,60,.35), transparent 70%),
+    radial-gradient(ellipse 25% 35% at 75% 60%, rgba(70,90,70,.30), transparent 70%),
+    radial-gradient(ellipse 40% 25% at 50% 85%, rgba(140,100,60,.30), transparent 70%),
+    radial-gradient(ellipse 20% 30% at 85% 15%, rgba(120,70,60,.25), transparent 70%),
+    radial-gradient(ellipse 35% 20% at 35% 55%, rgba(90,70,110,.18), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(80,50,40,.05) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(-45deg, rgba(80,50,40,.05) 0 1px, transparent 1px 6px),
+    linear-gradient(180deg,#d8c8ab,#c9b797);
+  box-shadow:inset 0 0 60px rgba(60,30,20,.35)}
+
+/* hoja que gira */
+.hoja{position:absolute;top:0;left:0;width:var(--pw);height:var(--ph);transform-origin:left center;
+  transform-style:preserve-3d;transform:translateZ(2px) rotateY(0deg);pointer-events:none;
+  transition:transform var(--dur) cubic-bezier(.6,.05,.3,1)}
+body[data-modo="2"] .hoja{left:var(--pw)}
+.hoja.girada{transform:translateZ(2px) rotateY(-180deg)}
+.hoja.sin-transicion{transition:none}
+body[data-modo="1"] .hoja .dorso{visibility:hidden}
+.hoja .cara{box-shadow:0 8px 26px rgba(0,0,0,.28)}
+.hoja .cara::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;opacity:0;
+  background:linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.42) 100%)}
+.hoja .dorso::before{background:linear-gradient(270deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.42) 100%)}
+.hoja.animando .cara::before{animation:sombra var(--dur) ease-in-out both}
+@keyframes sombra{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+
+/* ---------- contenido de las páginas ---------- */
+.contenido{position:absolute;inset:0;padding:8% 7% 10%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.contenido.blanca{background:transparent}
+.texto{display:inline-block;max-width:100%;text-align:left;margin-top:1.1em}
+body.centro .texto{text-align:center}
+.estrofa{margin-bottom:1.15em}
+.estrofa:last-child{margin-bottom:0}
+.verso{font-size:calc(var(--ph) * 0.037 * var(--escala));font-weight:500;line-height:1.5;color:var(--tinta);
+  padding-left:1.4em;text-indent:-1.4em}
+body.centro .verso{padding-left:0;text-indent:0}
+.titulo-pagina{font-family:Cinzel,serif;font-weight:400;font-size:calc(var(--ph) * 0.03 * var(--escala));letter-spacing:.25em;color:var(--tinta2);margin:.8em 0 0}
+.folio{position:absolute;bottom:5%;left:0;right:0;text-align:center;font-family:Cinzel,serif;font-size:calc(var(--ph)*0.02);letter-spacing:.2em;color:var(--folio)}
+.portadilla .titulo{font-family:Cinzel,serif;font-weight:400;font-size:calc(var(--ph) * 0.046 * var(--escala));letter-spacing:.04em;line-height:1.3;margin:.7em 0 .35em;color:var(--tinta);text-wrap:balance}
+.portadilla .autor{font-style:italic;font-size:calc(var(--ph) * 0.036 * var(--escala));color:var(--tinta2);margin-bottom:1em}
+.portadilla .dedicatoria,.fin .colofon{font-style:italic;font-size:calc(var(--ph) * 0.03 * var(--escala));color:var(--tinta2);margin:1.8em 0 0;max-width:86%;line-height:1.45}
+.fin .fin-palabra{font-family:Cinzel,serif;font-size:calc(var(--ph) * 0.06);letter-spacing:.35em;margin:.6em 0 .3em;padding-left:.35em;color:var(--tinta)}
+.fin .nota{position:absolute;bottom:6%;left:0;right:0;font-family:Cinzel,serif;font-size:calc(var(--ph)*0.019);letter-spacing:.18em;color:var(--folio);text-transform:uppercase}
+
+/* aparición verso a verso */
+.viva .verso,.viva .titulo-pagina{opacity:0;animation:aparecer .85s cubic-bezier(.2,.6,.3,1) forwards;
+  animation-delay:calc(var(--espera, 0ms) + var(--i, 0) * 130ms)}
+@keyframes aparecer{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* ---------- chrome ---------- */
+#barra{position:fixed;left:0;right:0;bottom:max(14px, env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;gap:18px;
+  font-family:Cinzel,serif;font-size:13px;letter-spacing:.2em;color:rgba(212,176,106,.75);opacity:0;transition:opacity .6s;pointer-events:none}
+body.leyendo #barra{opacity:1;pointer-events:auto}
+#barra button{background:none;border:1px solid rgba(212,176,106,.35);color:rgba(212,176,106,.85);width:38px;height:38px;border-radius:50%;
+  font:400 26px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 0 3px;transition:background .2s,border-color .2s}
+#barra button:hover{background:rgba(212,176,106,.12);border-color:rgba(212,176,106,.7)}
+#num{min-width:64px;text-align:center}
+#pista{position:fixed;left:50%;top:max(18px, env(safe-area-inset-top));transform:translateX(-50%);max-width:88vw;text-align:center;
+  font-family:Cinzel,serif;font-size:12px;letter-spacing:.16em;color:rgba(240,213,154,.7);opacity:0;transition:opacity .8s;pointer-events:none}
+#pista.ver{opacity:1}
+
+@media (prefers-reduced-motion: reduce){
+  :root{--dur:.3s}
+  .viva .verso,.viva .titulo-pagina{animation-duration:.25s;animation-delay:0ms}
+}
+</style>
+</head>
+<body data-modo="1">
+<div id="escena">
+  <div id="libro" class="cerrado">
+    <div id="contratapa" class="cuero"></div>
+    <div id="canto-izq" class="canto"></div>
+    <div id="canto-der" class="canto"></div>
+    <div id="izq" class="pagina papel lado-izq oculta"></div>
+    <div id="der" class="pagina papel lado-der"></div>
+    <div id="tapa">
+      <div class="cara frente cuero">
+        <svg class="adorno" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h46M74 6h46" stroke="currentColor" stroke-width="1" fill="none"/><path d="M60 1l5 5-5 5-5-5z" fill="currentColor"/></svg>
+        <h1 id="tapa-titulo">Libro</h1>
+        <div id="tapa-autor"></div>
+        <svg class="adorno" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h46M74 6h46" stroke="currentColor" stroke-width="1" fill="none"/><path d="M60 1l5 5-5 5-5-5z" fill="currentColor"/></svg>
+      </div>
+      <div class="cara dorso"></div>
+    </div>
+  </div>
+</div>
+<div id="barra">
+  <button id="atras" type="button" aria-label="Página anterior">&lsaquo;</button>
+  <span id="num"></span>
+  <button id="adelante" type="button" aria-label="Página siguiente">&rsaquo;</button>
+</div>
+<div id="pista"></div>
+
+<script src="poema.js"></script>
+<script>
+(function(){
+  'use strict';
+  const L = (typeof LIBRO === 'object' && LIBRO) ? LIBRO : {};
+  const paginas = Array.isArray(L.paginas) && L.paginas.length ? L.paginas
+    : ['Todavía no hay poema.\nAbre poema.js y escribe el tuyo.'];
+  const n = paginas.length + 2;               // portadilla + páginas + fin
+  const $ = s => document.querySelector(s);
+  const cuerpo = document.body, libro = $('#libro'), tapa = $('#tapa'), der = $('#der'), izq = $('#izq');
+  const num = $('#num'), pista = $('#pista'), escena = $('#escena');
+  const q = new URLSearchParams(location.search);
+  const modoForzado = q.get('modo') === '1' || q.get('modo') === '2' ? +q.get('modo') : 0;
+  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DUR = reducido ? 300 : 1150;
+  document.documentElement.style.setProperty('--dur', DUR + 'ms');
+
+  let modo = 1, cur = 0, abierto = false, ocupado = false, pistaT = 0, pasadas = 0;
+
+  // ---- ajustes del poema.js ----
+  const TAPAS = {
+    burdeos:['#6b2630','#4a1a20','#33111a'], verde:['#2f5a44','#1f3f2f','#142a20'],
+    azul:['#2b3f6b','#1e2c4d','#141d33'], marron:['#6b4a2b','#4a321c','#2f1f10'], negro:['#3d3d3d','#242424','#151515']
+  };
+  const t = TAPAS[L.tapa] || TAPAS.burdeos;
+  const raiz = document.documentElement.style;
+  raiz.setProperty('--tapa1', t[0]); raiz.setProperty('--tapa2', t[1]); raiz.setProperty('--tapa3', t[2]);
+  if (L.tamano > 0) raiz.setProperty('--escala', L.tamano);
+  if (L.alinear === 'centro') cuerpo.classList.add('centro');
+  const titulo = L.titulo || 'Sin título';
+  document.title = titulo + (L.autor ? ' · ' + L.autor : '');
+  $('#tapa-titulo').textContent = titulo;
+  $('#tapa-autor').textContent = L.autor || '';
+
+  // ---- páginas ----
+  const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const ADORNO = '<svg class="adorno" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h46M74 6h46" stroke="currentColor" stroke-width="1" fill="none"/><path d="M60 1l5 5-5 5-5-5z" fill="currentColor"/></svg>';
+
+  function htmlPagina(i, viva, espera){
+    if (i < 0 || i >= n) return '<div class="contenido blanca"></div>';
+    if (i === 0) return '<div class="contenido portadilla' + (viva ? ' viva' : '') + '">' + ADORNO +
+      '<h1 class="titulo">' + esc(titulo) + '</h1>' +
+      (L.autor ? '<div class="autor">' + esc(L.autor) + '</div>' : '') + ADORNO +
+      (L.dedicatoria ? '<p class="dedicatoria">' + esc(L.dedicatoria) + '</p>' : '') + '</div>';
+    if (i === n - 1) return '<div class="contenido fin">' + ADORNO + '<div class="fin-palabra">Fin</div>' +
+      (L.colofon ? '<p class="colofon">' + esc(L.colofon) + '</p>' : '') +
+      '<p class="nota">Toca para cerrar el libro</p></div>';
+    const p = paginas[i - 1];
+    const texto = (p && typeof p === 'object') ? String(p.texto || '') : String(p || '');
+    const tit = (p && typeof p === 'object' && p.titulo) ? '<h2 class="titulo-pagina" style="--i:0">' + esc(p.titulo) + '</h2>' : '';
+    let k = tit ? 1 : 0;
+    const estrofas = texto.replace(/\r/g, '').trim().split(/\n[ \t]*\n+/).map(e =>
+      '<div class="estrofa">' + e.split('\n').map(v =>
+        '<div class="verso" style="--i:' + (k++) + '">' + (esc(v.trim()) || '&nbsp;') + '</div>').join('') + '</div>').join('');
+    return '<div class="contenido poema' + (viva ? ' viva' : '') + '" style="--espera:' + (espera || 0) + 'ms">' +
+      ADORNO + tit + '<div class="texto">' + estrofas + '</div><div class="folio">' + i + '</div></div>';
+  }
+  function pintar(el, i, viva, espera){
+    el.innerHTML = htmlPagina(i, viva, espera);
+    el.classList.toggle('oculta', i < 0);
+  }
+  function render(){
+    if (modo === 2){
+      const k = Math.ceil(cur / 2);
+      pintar(izq, 2 * k - 1, false); pintar(der, 2 * k, false);
+    } else {
+      pintar(der, cur, false);
+    }
+    barra();
+  }
+  function barra(){
+    if (!abierto){ num.textContent = ''; return; }
+    let txt;
+    if (modo === 2){
+      const k = Math.ceil(cur / 2), a = 2 * k - 1, b = 2 * k;
+      const en = i => i >= 1 && i <= n - 2;
+      if (en(a) && en(b)) txt = a + '–' + b;
+      else if (en(a)) txt = String(a);
+      else if (en(b)) txt = String(b);
+      else txt = (b >= n - 1 || a >= n - 1) ? 'Fin' : '';
+    } else {
+      txt = cur === 0 ? '' : cur === n - 1 ? 'Fin' : String(cur);
+    }
+    num.textContent = txt && txt !== 'Fin' ? txt + ' / ' + (n - 2) : txt;
+  }
+
+  // ---- medidas: una hoja (celular vertical) o dos (pantalla ancha) ----
+  function medir(){
+    const W = innerWidth, H = innerHeight, R = 1.42;
+    const nuevo = modoForzado || ((W >= 760 && W > H * 1.05) ? 2 : 1);
+    let pw, ph;
+    if (nuevo === 1){
+      pw = Math.min(W * 0.9, 440); ph = pw * R;
+      const maxH = H * 0.8; if (ph > maxH){ ph = maxH; pw = ph / R; }
+    } else {
+      ph = Math.min(H * 0.82, 760); pw = ph / R;
+      const maxW = W * 0.92; if (pw * 2 > maxW){ pw = maxW / 2; ph = pw * R; }
+    }
+    raiz.setProperty('--pw', pw.toFixed(1) + 'px');
+    raiz.setProperty('--ph', ph.toFixed(1) + 'px');
+    if (nuevo !== modo){
+      modo = nuevo; cuerpo.dataset.modo = modo;
+      cuerpo.classList.add('instantaneo');
+      document.querySelectorAll('.hoja').forEach(h => h.remove());
+      tapa.classList.toggle('oculta', abierto && modo === 1);
+      render();
+      requestAnimationFrame(() => requestAnimationFrame(() => cuerpo.classList.remove('instantaneo')));
+    }
+  }
+
+  // ---- animaciones ----
+  function esperar(el, cb){
+    let hecho = false;
+    const fin = () => { if (hecho) return; hecho = true; el.removeEventListener('transitionend', onEnd); cb(); };
+    const onEnd = e => { if (e.target === el && e.propertyName === 'transform') fin(); };
+    el.addEventListener('transitionend', onEnd);
+    setTimeout(fin, DUR + 120);
+  }
+  function crearHoja(iFrente, iDorso, girada){
+    const h = document.createElement('div');
+    h.className = 'hoja' + (girada ? ' girada sin-transicion' : ' sin-transicion');
+    h.innerHTML = '<div class="cara frente papel lado-der">' + htmlPagina(iFrente, false) + '</div>' +
+                  '<div class="cara dorso papel lado-izq">' + htmlPagina(iDorso, false) + '</div>';
+    libro.appendChild(h);
+    return h;
+  }
+  function girar(h, haciaAdelante, cb){
+    h.getBoundingClientRect();
+    h.classList.remove('sin-transicion');
+    h.classList.add('animando');
+    h.getBoundingClientRect();
+    h.classList.toggle('girada', haciaAdelante);
+    esperar(h, () => { h.remove(); cb(); });
+  }
+  function mostrarPista(txt, ms){
+    pista.textContent = txt; pista.classList.add('ver');
+    clearTimeout(pistaT);
+    if (ms) pistaT = setTimeout(() => pista.classList.remove('ver'), ms);
+  }
+
+  function abrir(){
+    if (ocupado || abierto) return;
+    ocupado = true; abierto = true; cur = 0;
+    render();
+    pintar(der, 0, true, 650);
+    tapa.classList.remove('oculta');
+    libro.classList.add('abierto'); libro.classList.remove('cerrado');
+    cuerpo.classList.add('leyendo');
+    barra();
+    mostrarPista('Toca para pasar la página · desliza a la derecha para volver', 6000);
+    esperar(tapa, () => { if (modo === 1) tapa.classList.add('oculta'); ocupado = false; });
+  }
+  function cerrar(){
+    if (ocupado || !abierto) return;
+    ocupado = true; abierto = false;
+    tapa.classList.remove('oculta');
+    tapa.getBoundingClientRect();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      libro.classList.remove('abierto'); libro.classList.add('cerrado');
+      cuerpo.classList.remove('leyendo');
+      barra();
+      mostrarPista('Toca el libro para abrirlo', 0);
+      esperar(tapa, () => { cur = 0; render(); ocupado = false; });
+    }));
+  }
+  function adelante(){
+    if (ocupado) return;
+    if (!abierto){ abrir(); return; }
+    if (++pasadas === 1) pista.classList.remove('ver');
+    if (modo === 2){
+      const k = Math.ceil(cur / 2), sig = 2 * k + 1;
+      if (sig > n - 1){ cerrar(); return; }
+      ocupado = true;
+      const h = crearHoja(2 * k, sig, false);
+      pintar(der, 2 * k + 2, true, 500);
+      girar(h, true, () => { pintar(izq, sig, false); cur = sig; ocupado = false; barra(); });
+    } else {
+      if (cur + 1 > n - 1){ cerrar(); return; }
+      ocupado = true;
+      const h = crearHoja(cur, -1, false);
+      pintar(der, cur + 1, true, 500);
+      girar(h, true, () => { cur = cur + 1; ocupado = false; barra(); });
+    }
+  }
+  function atras(){
+    if (ocupado || !abierto) return;
+    if (modo === 2){
+      const k = Math.ceil(cur / 2);
+      if (k === 0){ cerrar(); return; }
+      ocupado = true;
+      const h = crearHoja(2 * k - 2, 2 * k - 1, true);
+      pintar(izq, 2 * k - 3, false);
+      girar(h, false, () => { pintar(der, 2 * k - 2, false); cur = 2 * k - 2; ocupado = false; barra(); });
+    } else {
+      if (cur === 0){ cerrar(); return; }
+      ocupado = true;
+      const h = crearHoja(cur - 1, -1, true);
+      girar(h, false, () => { pintar(der, cur - 1, false); cur = cur - 1; ocupado = false; barra(); });
+    }
+  }
+
+  // ---- entrada: toque, deslizar, teclado, botones ----
+  let pd = null;
+  escena.addEventListener('pointerdown', e => { if (e.button !== 0) return; pd = { x: e.clientX, y: e.clientY }; });
+  escena.addEventListener('pointerup', e => {
+    if (!pd) return;
+    const dx = e.clientX - pd.x, dy = e.clientY - pd.y; pd = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3){ if (dx < 0) adelante(); else atras(); return; }
+    if (Math.abs(dx) > 12 || Math.abs(dy) > 12) return;
+    if (!abierto){ abrir(); return; }
+    if (e.clientX < innerWidth * 0.25) atras(); else adelante();
+  });
+  escena.addEventListener('pointercancel', () => { pd = null; });
+  $('#atras').addEventListener('click', atras);
+  $('#adelante').addEventListener('click', adelante);
+  addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter' || e.key === 'PageDown'){ e.preventDefault(); adelante(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace'){ e.preventDefault(); atras(); }
+    else if (e.key === 'Escape'){ cerrar(); }
+  });
+  addEventListener('resize', medir);
+
+  // ---- arranque (?p=N abre directo en esa página) ----
+  cuerpo.classList.add('instantaneo');
+  medir();
+  const p = q.has('p') ? Math.max(0, Math.min(n - 1, parseInt(q.get('p'), 10) || 0)) : -1;
+  if (p >= 0){
+    abierto = true; cur = p;
+    libro.classList.add('abierto'); libro.classList.remove('cerrado');
+    cuerpo.classList.add('leyendo');
+    if (modo === 1) tapa.classList.add('oculta');
+    render();
+  } else {
+    render();
+    mostrarPista('Toca el libro para abrirlo', 0);
+  }
+  requestAnimationFrame(() => requestAnimationFrame(() => cuerpo.classList.remove('instantaneo')));
+})();
+</script>
+</body>
+</html>
