@@ -22,6 +22,15 @@ Todo el contenido vive en `poema.js`. No hace falta tocar `index.html`.
 Después de editar: `git add -A`, `git commit -m "mi poema"`, `git push`.
 GitHub Pages republica solo en uno o dos minutos.
 
+## Música de fondo
+
+`musica/piano.mp3` es una pieza de piano original generada para esta página
+(sin copyright de terceros). En `poema.js`, el bloque `musica` indica el
+archivo y el volumen (0 a 1); `musica: null` la quita. Arranca con el primer
+toque en el libro (los navegadores bloquean el sonido automático), suena
+bajita, se repite sin costura y el botón ♪ de la barra la silencia. Para poner
+otra pieza basta con cambiar el archivo, siempre que tengas derecho a usarla.
+
 ## Controles
 
 | Gesto | Acción |

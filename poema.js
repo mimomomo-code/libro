@@ -27,8 +27,9 @@
 
 const LIBRO = {
   titulo: "Me encantas",
-  autor: "Un amigo extraño",
-  dedicatoria: "",
+  autor: "Bastian M. Ascencio",
+  dedicatoria: "Para Karen Maquera",
+  tapa_solo_titulo: true,   // en la tapa solo el título; el autor y la dedicatoria van en la primera página
   tapa: "burdeos",
   alinear: "izquierda",
   tamano: 1,
@@ -122,4 +123,12 @@ Un amigo extraño.` },
 
   efecto_fin: "petalos",
   colofon: "",
+
+  // Música de fondo: una pieza de piano ORIGINAL generada para esta página
+  // (sin copyright de terceros), guardada en la carpeta musica/. Arranca con
+  // el primer toque, suena bajita y se repite sin costura. musica: null la quita.
+  musica: {
+    archivo: "musica/piano.mp3",
+    volumen: 0.35,   // 0 a 1
+  },
 };
