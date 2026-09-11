@@ -175,6 +175,17 @@ body[data-modo="2"] #musica{right:auto;left:16px;bottom:16px}
 body.con-musica[data-modo="1"] #escena{padding-bottom:232px}
 body.con-musica[data-modo="1"] #barra{bottom:254px}
 body.con-musica[data-modo="2"] #escena{padding-left:236px}
+/* variante banner (Spotify, 80 px) */
+#musica.spotify{left:12px;right:12px;width:auto;padding:0;background:none;border:0;box-shadow:none;display:flex;align-items:center;gap:8px}
+#musica.spotify #musica-marco{flex:1;width:auto;height:80px;border-radius:12px;background:#282828;box-shadow:0 10px 24px rgba(0,0,0,.55)}
+#musica.spotify #musica-marco iframe{width:100%;height:80px}
+#musica.spotify #musica-pie{padding:0}
+#musica.spotify #musica-titulo{display:none}
+#musica.spotify #musica-x{width:30px;height:30px;border-radius:50%;border:1px solid rgba(212,176,106,.4);background:rgba(20,10,8,.6)}
+body[data-modo="2"] #musica.spotify{right:auto;left:16px;bottom:16px;width:420px}
+body.con-musica.musica-spotify[data-modo="1"] #escena{padding-bottom:104px}
+body.con-musica.musica-spotify[data-modo="1"] #barra{bottom:110px}
+body.con-musica.musica-spotify[data-modo="2"] #escena{padding-left:0;padding-bottom:100px}
 
 @media (prefers-reduced-motion: reduce){
   :root{--dur:.3s}
@@ -511,15 +522,15 @@ body.con-musica[data-modo="2"] #escena{padding-left:236px}
   function medir(){
     const W = innerWidth, H = innerHeight, RZ = 1.42;
     const nuevo = modoForzado || ((W >= 760 && W > H * 1.05) ? 2 : 1);
-    const conM = cuerpo.classList.contains('con-musica');
+    const conM = cuerpo.classList.contains('con-musica'), compacta = cuerpo.classList.contains('musica-spotify');
     let pw, ph;
     if (nuevo === 1){
       pw = Math.min(W * 0.9, 440); ph = pw * RZ;
-      const maxH = conM ? Math.min(H * 0.8, H - 344) : H * 0.8;
+      const maxH = conM ? Math.min(H * 0.8, H - (compacta ? 204 : 344)) : H * 0.8;
       if (ph > maxH){ ph = maxH; pw = ph / RZ; }
     } else {
-      ph = Math.min(H * 0.82, 760); pw = ph / RZ;
-      const maxW = (W - (conM ? 236 : 0)) * 0.92; if (pw * 2 > maxW){ pw = maxW / 2; ph = pw * RZ; }
+      ph = Math.min(H * 0.82, 760, (conM && compacta) ? H - 190 : 1e9); pw = ph / RZ;
+      const maxW = (W - ((conM && !compacta) ? 236 : 0)) * 0.92; if (pw * 2 > maxW){ pw = maxW / 2; ph = pw * RZ; }
     }
     PW = pw; PH = ph;
     raiz.setProperty('--pw', pw.toFixed(1) + 'px');
@@ -659,8 +670,11 @@ body.con-musica[data-modo="2"] #escena{padding-left:236px}
   const M = (L.musica && typeof L.musica === 'object') ? L.musica : null;
   const cardM = $('#musica');
   let yt = null, ytListo = false, ytIds = [], ytIdx = 0, ytPendiente = false, ytPedido = false, ytAvisoT = 0;
+  let sp = null, spListo = false, spSonando = false, spUlt = 0;
   function musicaInit(){
     if (!M) return;
+    const usar = M.usar || (M.spotify ? 'spotify' : 'youtube');
+    if (usar === 'spotify' && M.spotify){ spotifyInit(); return; }
     ytIds = [].concat(M.youtube || M.id || []).filter(Boolean);
     if (!ytIds.length) return;
     $('#musica-titulo').textContent = M.titulo || 'Música';
@@ -668,6 +682,27 @@ body.con-musica[data-modo="2"] #escena{padding-left:236px}
     window.onYouTubeIframeAPIReady = crearPlayer;
     const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.async = true;
     s.onerror = () => { $('#musica-titulo').textContent = 'Sin conexión con YouTube'; };
+    document.head.appendChild(s);
+  }
+  function spotifyInit(){
+    const id = String(M.spotify).replace(/^.*\/track\//, '').replace(/^spotify:track:/, '').replace(/[?#].*$/, '');
+    cardM.classList.add('spotify'); cuerpo.classList.add('musica-spotify');
+    cardM.hidden = false; cuerpo.classList.add('con-musica');
+    window.onSpotifyIframeApiReady = api => {
+      api.createController($('#yt'), { uri:'spotify:track:' + id, width:'100%', height:80, theme:'dark' }, ctrl => {
+        sp = ctrl;
+        ctrl.addListener('ready', () => { spListo = true; if (ytPendiente) tocar(); });
+        ctrl.addListener('playback_update', e => {
+          const d = (e && e.data) || {};
+          if (d.isPaused === false) spSonando = true;
+          if (d.duration > 0 && d.position >= d.duration - 1200 && performance.now() - spUlt > 4000){
+            spUlt = performance.now(); try { ctrl.playFromStart(); } catch (er) {}
+          }
+        });
+      });
+    };
+    const s = document.createElement('script'); s.src = 'https://open.spotify.com/embed/iframe-api/v1'; s.async = true;
+    s.onerror = () => mostrarPista('Sin conexión con Spotify', 5000);
     document.head.appendChild(s);
   }
   function crearPlayer(){
@@ -689,6 +724,14 @@ body.con-musica[data-modo="2"] #escena{padding-left:236px}
     } });
   }
   function tocar(){
+    if (sp || cuerpo.classList.contains('musica-spotify')){
+      if (!sp || !spListo){ ytPendiente = true; return; }
+      ytPendiente = false;
+      try { sp.play(); } catch (e) {}
+      clearTimeout(ytAvisoT);
+      ytAvisoT = setTimeout(() => { if (!spSonando) mostrarPista('Toca ▶ en la barra de Spotify para que suene', 6000); }, 2200);
+      return;
+    }
     if (!yt || !ytListo){ ytPendiente = true; return; }
     ytPendiente = false;
     try { yt.playVideo(); } catch (e) {}
@@ -698,7 +741,8 @@ body.con-musica[data-modo="2"] #escena{padding-left:236px}
   function arrancarMusica(){ if (!M || ytPedido) return; ytPedido = true; tocar(); }
   $('#musica-x').addEventListener('click', () => {
     if (yt){ try { yt.destroy(); } catch (e) {} yt = null; }
-    cardM.hidden = true; cuerpo.classList.remove('con-musica'); medir();
+    if (sp){ try { sp.destroy(); } catch (e) {} sp = null; }
+    cardM.hidden = true; cuerpo.classList.remove('con-musica', 'musica-spotify'); medir();
   });
   musicaInit();
 
