@@ -131,7 +131,7 @@ Un amigo extraño.` },
   //              Suena completa para todos.
   // Arranca con el primer toque y se repite en bucle. musica: null la quita.
   musica: {
-    usar: "spotify",
+    usar: "youtube",
     spotify: "29EdNlJQqStWhNkSGpkuFQ",        // lo que sigue a /track/ en el enlace de Spotify
     youtube: ["GcfSoMWOe88", "F8dKVbP1Nzo"],   // ID del video (tras v= en la URL); si uno falla, prueba el siguiente
     titulo: "Lola Marsh · Something Stupid",
