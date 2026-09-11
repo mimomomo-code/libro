@@ -129,6 +129,6 @@ Un amigo extraño.` },
   // el primer toque, suena bajita y se repite sin costura. musica: null la quita.
   musica: {
     archivo: "musica/piano.mp3",
-    volumen: 0.35,   // 0 a 1
+    volumen: 0.05,   // 0 a 1 (0.05 = 5 %)
   },
 };
