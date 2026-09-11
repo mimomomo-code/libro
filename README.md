@@ -22,6 +22,17 @@ Todo el contenido vive en `poema.js`. No hace falta tocar `index.html`.
 Después de editar: `git add -A`, `git commit -m "mi poema"`, `git push`.
 GitHub Pages republica solo en uno o dos minutos.
 
+## Música de fondo
+
+En `poema.js`, el bloque `musica` pone un reproductor de YouTube pequeño en una
+esquina (YouTube exige que el video se vea, no permite usarlo como audio
+escondido). Arranca con el primer toque en el libro (los navegadores bloquean
+el sonido automático) y se repite en bucle. `youtube` es el ID del video, lo que
+sigue a `v=` en la URL; si se pone una lista, se prueba el siguiente cuando uno
+no permite insertarse. `musica: null` la quita. Un poema con música pública
+necesita el reproductor de YouTube: subir un mp3 al repositorio sería
+redistribuir la canción.
+
 ## Controles
 
 | Gesto | Acción |

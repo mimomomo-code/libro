@@ -122,4 +122,16 @@ Un amigo extraño.` },
 
   efecto_fin: "petalos",
   colofon: "",
+
+  // Música de fondo: un reproductor de YouTube pequeño en una esquina (YouTube
+  // exige que el video se vea; no permite usarlo como audio escondido). Arranca
+  // con el primer toque y se repite en bucle. Pon musica: null para quitarla.
+  musica: {
+    // ID del video = lo que sigue a "v=" en la URL de YouTube. Si el primero no
+    // se deja insertar, se prueba el siguiente de la lista.
+    youtube: ["GcfSoMWOe88", "F8dKVbP1Nzo"],
+    titulo: "Lola Marsh · Something Stupid",
+    inicio: 0,      // segundo en el que arranca cada vuelta
+    volumen: 55,    // 0 a 100
+  },
 };
