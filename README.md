@@ -45,10 +45,13 @@ imágenes: `texturas.js` las genera en un canvas al cargar y el CSS las
 mezcla con `multiply` sobre los colores de siempre. No pesan nada y se ven
 igual en cualquier pantalla.
 
-Los dos sillones son dibujos SVG. Si pones en `assets/` las imágenes
-`sillon_rojo.webp` y `sillon_amarillo.webp` (fondo transparente, vistas de
-frente), la sala las usa en su lugar; `DECORACION` en `libros.js` dice qué
-archivo mira cada pieza y `PROMPTS.md` trae los prompts para generarlas.
+Los sillones, la mesa y la alfombra tienen su imagen ilustrada en `assets/`
+(WebP con fondo transparente); `DECORACION` en `libros.js` dice qué archivo
+mira cada pieza y `PROMPTS.md` guarda los prompts con que se generaron. Si
+falta un archivo, la pieza vuelve a su dibujo en CSS/SVG. La mesa manda su
+propia proporción (nunca más del 30 % del alto de la sala) y los libros se
+apoyan en su tapa; la alfombra rellena el suelo en pantalla ancha y en
+celular vertical muestra su centro sin deformarse.
 
 ## Cambiar el poema
 

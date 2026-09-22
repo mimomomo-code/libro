@@ -55,11 +55,11 @@ isolated on a plain transparent background, high resolution
 
 Mismo prompt negativo que el rojo.
 
-## Si quieres ir más lejos (todavía no lo lee la página)
+## Mesa y alfombra (ya cableadas)
 
-Estas piezas hoy son CSS con textura procedural. Si algún día quieres
-ilustrarlas, estos prompts siguen la misma línea; avísame y las cableo igual
-que los sillones:
+`assets/mesa.webp` (vista de frente; los libros se apoyan a un 19 % de su
+alto, ajustable con `--mesa-tapa`) y `assets/alfombra.webp` (en perspectiva,
+borde de abajo más ancho). Se generaron con estos prompts:
 
 - **Mesa redonda**: `storybook illustration of a small round wooden pedestal
   side table, warm walnut, three splayed legs, front view slightly from above,

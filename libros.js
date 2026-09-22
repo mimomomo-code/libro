@@ -24,6 +24,8 @@
 const DECORACION = {
   sillon_rojo: "assets/sillon_rojo.webp",
   sillon_amarillo: "assets/sillon_amarillo.webp",
+  mesa: "assets/mesa.webp",            // vista de frente; los libros se apoyan en su tapa
+  alfombra: "assets/alfombra.webp",    // vista en perspectiva, con el borde de abajo más ancho
 };
 
 const LIBROS = [

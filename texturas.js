@@ -90,16 +90,28 @@
   }
   document.querySelectorAll('.sillon').forEach(vestir);
 
+  // La mesa con imagen manda su propia proporción: ancha como antes pero sin pasar
+  // del 30 % del alto de la sala, y siempre con la forma de la foto.
+  function ajustarMesa(){
+    const m = document.querySelector('.mesa.con-imagen'); if (!m) return;
+    const im = m.querySelector('.foto'); if (!im || !im.naturalWidth) return;
+    const asp = im.naturalWidth / im.naturalHeight, c = m.parentElement.getBoundingClientRect();
+    const w = Math.min(c.width * .74, 430, c.height * .30 * asp);
+    m.style.width = w + 'px'; m.style.height = (w / asp) + 'px';
+  }
+  addEventListener('resize', ajustarMesa);
+
   const DEC = (typeof DECORACION === 'object' && DECORACION) ? DECORACION : {};
   for (const clave of Object.keys(DEC)){
-    const el = document.querySelector('.sillon[data-pieza="' + clave + '"]'), ruta = DEC[clave];
+    const el = document.querySelector('[data-pieza="' + clave + '"]'), ruta = DEC[clave];
     if (!el || !ruta) continue;
     const im = new Image();
     im.onload = () => {
+      im.alt = ''; im.draggable = false; im.className = 'foto';
       const svg = el.querySelector('svg'); if (svg) svg.remove();
-      im.alt = ''; im.draggable = false;
       el.insertBefore(im, el.firstChild); el.classList.add('con-imagen');
-      vestir(el);
+      if (el.classList.contains('sillon')) vestir(el);
+      if (el.classList.contains('mesa')) ajustarMesa();
     };
     im.onerror = () => {};                                 // sin imagen: se queda el dibujo
     im.src = ruta;
