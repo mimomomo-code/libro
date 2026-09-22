@@ -397,17 +397,18 @@ body.arrastrando{cursor:grabbing}
 @media (max-width: 640px) and (orientation: portrait){
   #sala{--lib:clamp(72px, 20vw, 230px)}
   .libreria{top:1.5%;bottom:5%}
-  .pared{height:52%}
-  .suelo{top:52%}
-  .ventanal{width:min(86%, 520px);top:3%;max-height:32%}
-  #pista-sala{top:31%;font-size:11px;max-width:80vw}
-  .sillon.rojo{width:56%;left:-3%;bottom:44%}
-  .sillon.amarillo{width:58%;right:-4%;bottom:43%}
-  .alfombra{top:55%;bottom:1%}
-  .alfombra.con-imagen{left:3%;right:3%;top:55%}
+  .pared{height:46%}
+  .suelo{top:46%}
+  /* la ventana crece hacia abajo y los sillones se le montan encima: quedan de espaldas a ella */
+  .ventanal{width:min(96%, 520px);top:2%;aspect-ratio:5/7;max-height:36%}
+  #pista-sala{top:53%;font-size:11px;max-width:80vw;padding:6px 12px;border-radius:14px;background:rgba(20,10,6,.55);text-shadow:0 1px 3px #000}
+  .sillon.rojo{width:60%;left:-4%;bottom:50%}
+  .sillon.amarillo{width:62%;right:-5%;bottom:49%}
+  .alfombra{top:49%;bottom:2%}
+  .alfombra.con-imagen{left:3%;right:3%;top:49%}
   .alfombra .foto{object-fit:cover;object-position:50% 100%}
-  .luz-luna{top:50%;height:48%}
-  .mesa{bottom:4%}
+  .luz-luna{top:44%;height:52%}
+  .mesa{bottom:8%}
 }
 @media (prefers-reduced-motion: reduce){
   :root{--dur:.3s}
