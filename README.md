@@ -38,6 +38,18 @@ El catálogo vive en `libros.js`. Cada libro tiene un `id`, un `tipo`, un
 
 Colores de tapa: `burdeos`, `verde`, `azul`, `marron`, `negro`, `girasol`.
 
+## Texturas y sillones ilustrados
+
+Las tramas (veta de madera, tejido, terciopelo, papel, cuero) no son
+imágenes: `texturas.js` las genera en un canvas al cargar y el CSS las
+mezcla con `multiply` sobre los colores de siempre. No pesan nada y se ven
+igual en cualquier pantalla.
+
+Los dos sillones son dibujos SVG. Si pones en `assets/` las imágenes
+`sillon_rojo.webp` y `sillon_amarillo.webp` (fondo transparente, vistas de
+frente), la sala las usa en su lugar; `DECORACION` en `libros.js` dice qué
+archivo mira cada pieza y `PROMPTS.md` trae los prompts para generarlas.
+
 ## Cambiar el poema
 
 Todo el contenido del poema vive en `poema.js`. No hace falta tocar `index.html`.

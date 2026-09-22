@@ -18,6 +18,14 @@
 //             navegador recuerda el orden.
 // =====================================================================
 
+// Piezas de la sala que pueden llevar una imagen propia (PNG o WebP con
+// fondo transparente, vistas de frente). Si el archivo existe se usa; si no,
+// se queda el dibujo. Los prompts para generarlas están en PROMPTS.md.
+const DECORACION = {
+  sillon_rojo: "assets/sillon_rojo.webp",
+  sillon_amarillo: "assets/sillon_amarillo.webp",
+};
+
 const LIBROS = [
   {
     id: "poema",
