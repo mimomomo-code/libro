@@ -171,7 +171,7 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
 #pista{position:absolute}
 #pista.ver,#pista-sala.ver{opacity:1}
 body.en-lector #pista-sala{opacity:0}
-#pista-sala{text-shadow:0 1px 6px rgba(0,0,0,.8);color:rgba(240,213,154,.85);max-width:86vw}
+#pista-sala{top:10vh;text-shadow:0 1px 6px rgba(0,0,0,.8);color:rgba(240,213,154,.85);max-width:86vw}
 /* volver a la sala */
 #volver{position:absolute;left:max(14px, env(safe-area-inset-left));top:max(12px, env(safe-area-inset-top));z-index:30;width:40px;height:40px;border-radius:50%;
   background:rgba(18,13,11,.55);border:1px solid rgba(212,176,106,.4);color:rgba(240,213,154,.9);
@@ -189,11 +189,13 @@ body.en-lector #pista-sala{opacity:0}
    ===================================================================== */
 #sala{--lib:clamp(84px, 23vw, 230px);--lw:clamp(15px, calc(var(--lib) / 8 * .86), 27px);
   --lm:clamp(50px, min(9.5vw, 11vh), 104px);background:#1a0d0a;font-family:Cinzel,serif}
+/* la pared: papel vino oscuro con rombos tenues (liso, para que las cortinas plisadas resalten) */
 .pared{position:absolute;left:0;right:0;top:0;height:60%;
   background:
-    radial-gradient(ellipse 60% 55% at 50% 35%, rgba(255,130,95,.10), transparent 70%),
-    repeating-linear-gradient(90deg, rgba(0,0,0,.22) 0 9px, rgba(255,255,255,.035) 9px 15px, transparent 15px 34px),
-    linear-gradient(180deg,#7b1e27 0%,#5a151c 55%,#3a0d12 100%)}
+    radial-gradient(ellipse 60% 55% at 50% 35%, rgba(255,150,110,.09), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 2px, transparent 2px 26px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.03) 0 2px, transparent 2px 26px),
+    linear-gradient(180deg,#5c141b 0%,#3f0d12 55%,#25080b 100%)}
 .pared::after{content:'';position:absolute;left:0;right:0;bottom:-3px;height:7px;background:#2b1a0f;box-shadow:0 2px 0 #4a2f1a}
 .suelo{position:absolute;left:0;right:0;top:60%;bottom:0;
   background:
@@ -207,8 +209,9 @@ body.en-lector #pista-sala{opacity:0}
     repeating-linear-gradient(-45deg, rgba(0,0,0,.08) 0 6px, transparent 6px 14px),
     linear-gradient(180deg,#5d739a,#4a5d80 60%,#3c4c6b);
   box-shadow:inset 0 0 0 5px #34446a, inset 0 0 0 7px #7688ad, 0 6px 18px rgba(0,0,0,.4)}
-/* la ventana: un arco de noche con la luna, y la cortina recogida a la derecha */
-.ventana{position:absolute;left:50%;top:4%;transform:translateX(-50%);width:min(66%, 520px);aspect-ratio:5/6;max-height:47%;
+/* la ventana: un arco de noche con la luna en marco de madera, dos cortinas recogidas con lazo, cenefa y barra */
+.ventanal{position:absolute;left:50%;top:5%;transform:translateX(-50%);width:min(60%, 480px);aspect-ratio:5/6;max-height:46%}
+.ventana{position:absolute;inset:0;z-index:1;
   border-radius:48% 48% 6px 6px / 40% 40% 6px 6px;overflow:hidden;
   background:
     radial-gradient(circle at 20% 34%, rgba(255,255,255,.95) 0 1px, transparent 1.6px),
@@ -219,18 +222,32 @@ body.en-lector #pista-sala{opacity:0}
     radial-gradient(circle at 12% 62%, rgba(255,255,255,.5) 0 .7px, transparent 1.3px),
     radial-gradient(ellipse at 50% 105%, #2c3572, transparent 70%),
     linear-gradient(180deg,#1a2050,#121740 60%,#0c1030);
-  box-shadow:inset 0 0 0 4px #3a0e13, inset 0 0 44px rgba(0,0,0,.6), 0 0 0 6px #5a151c, 0 10px 30px rgba(0,0,0,.45)}
+  box-shadow:inset 0 0 0 4px #2b1b12, inset 0 0 44px rgba(0,0,0,.6), 0 0 0 7px #6a4426, 0 0 0 9px #3a2416, 0 10px 30px rgba(0,0,0,.45)}
 .luna{position:absolute;left:34%;top:15%;width:26%;height:auto;filter:drop-shadow(0 0 14px rgba(241,230,198,.55))}
-.cortina{position:absolute;right:0;top:0;bottom:0;width:40%;
-  background:repeating-linear-gradient(90deg, #8a232c 0 8px, #5e141b 8px 15px, #7a1e26 15px 25px);
-  clip-path:polygon(100% 0, 56% 0, 60% 24%, 76% 44%, 82% 52%, 64% 78%, 56% 100%, 100% 100%);
-  box-shadow:-10px 0 18px rgba(0,0,0,.5)}
-.cortina::after{content:'';position:absolute;left:58%;top:47%;width:36%;height:7%;border-radius:40%;
-  background:linear-gradient(180deg,#e2c072,#a3792c);box-shadow:0 2px 4px rgba(0,0,0,.5)}
-.cenefa{position:absolute;left:-2%;right:-2%;top:-2px;height:15%;
-  background:radial-gradient(circle at 50% 100%, transparent 58%, #7d2028 60%) 0 0 / 14% 100% repeat-x, linear-gradient(180deg,#8a232c,#7d2028);
-  background-blend-mode:normal;box-shadow:0 6px 10px rgba(0,0,0,.35)}
-.cenefa::before{content:'';position:absolute;left:0;right:0;top:0;height:22%;background:linear-gradient(180deg,#a0343d,#8a232c)}
+/* cada cortina es un panel con pliegues, recogido a media altura (forma de reloj de arena);
+   el recorte va en el ::before para que la sombra del panel siga la forma */
+.cortina{position:absolute;top:-4%;bottom:-9%;width:30%;z-index:2;filter:drop-shadow(0 8px 10px rgba(0,0,0,.55))}
+.cortina::before{content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.30), transparent 22%, transparent 68%, rgba(0,0,0,.38)),
+    repeating-linear-gradient(90deg, #c4333e 0 5%, #7a1820 5% 10%, #a5242e 10% 17%, #d4434e 17% 21%);
+  clip-path:polygon(0 0, 100% 0, 96% 14%, 80% 34%, 50% 54%, 46% 61%, 62% 76%, 86% 90%, 100% 100%, 0 100%)}
+.cortina.izq{left:-17%}
+.cortina.der{right:-17%;transform:scaleX(-1)}
+.lazo{position:absolute;top:56%;width:19%;height:4.6%;border-radius:45%;z-index:3;
+  background:linear-gradient(180deg,#f2d688,#c9a24a 45%,#8f6a22);box-shadow:0 2px 4px rgba(0,0,0,.55), inset 0 -2px 0 rgba(0,0,0,.25)}
+.lazo.izq{left:-19.5%}.lazo.der{right:-19.5%}
+/* la cenefa: una banda y una fila de medios discos colgando, con filo dorado */
+.cenefa{position:absolute;left:-16%;right:-16%;top:-4%;height:13%;z-index:4;filter:drop-shadow(0 5px 6px rgba(0,0,0,.45));
+  background:
+    radial-gradient(ellipse 50% 100% at 50% 0, #8d222c 95%, rgba(0,0,0,0) 100%) 0 100% / 12.5% 46% repeat-x,
+    radial-gradient(ellipse 50% 100% at 50% 0, #d1ab55 95%, rgba(0,0,0,0) 100%) 0 100% / 12.5% 52% repeat-x,
+    linear-gradient(180deg,#b3363f,#8d222c) 0 0 / 100% 56% no-repeat}
+.riel{position:absolute;left:-19%;right:-19%;top:-6%;height:2.4%;border-radius:6px;z-index:5;
+  background:linear-gradient(180deg,#e9c973,#a37a2a 60%,#6f4f18);box-shadow:0 3px 5px rgba(0,0,0,.5)}
+.riel::before,.riel::after{content:'';position:absolute;top:-80%;width:4%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#f6df9a,#a97e2c 70%);box-shadow:0 2px 3px rgba(0,0,0,.5)}
+.riel::before{left:-1%}.riel::after{right:-1%}
 /* sillones */
 .sillon{position:absolute;height:auto;filter:drop-shadow(0 12px 14px rgba(0,0,0,.55))}
 .sillon.rojo{left:4%;bottom:33%;width:38%;max-width:260px}
@@ -330,7 +347,8 @@ body.arrastrando{cursor:grabbing}
 
 /* pantallas angostas (celular vertical): ventana y sillones más grandes */
 @media (max-width: 640px) and (orientation: portrait){
-  .ventana{width:min(84%, 520px);top:3%}
+  .ventanal{width:min(74%, 520px);top:4%}
+  #pista-sala{top:32%}
   .sillon.rojo{width:50%;left:0;bottom:32%}
   .sillon.amarillo{width:52%;right:-2%;bottom:31%}
   .alfombra{top:66%}
@@ -348,13 +366,18 @@ body.arrastrando{cursor:grabbing}
   <div class="pared"></div>
   <div class="suelo"></div>
   <div class="centro">
-    <div class="ventana">
-      <svg class="luna" viewBox="0 0 100 100" aria-hidden="true">
-        <defs><mask id="mluna"><rect width="100" height="100" fill="#fff"/><circle cx="66" cy="42" r="36" fill="#000"/></mask></defs>
-        <circle cx="50" cy="50" r="42" fill="#f1e6c6" mask="url(#mluna)"/>
-      </svg>
-      <div class="cortina"></div>
+    <div class="ventanal">
+      <div class="ventana">
+        <svg class="luna" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><mask id="mluna"><rect width="100" height="100" fill="#fff"/><circle cx="66" cy="42" r="36" fill="#000"/></mask></defs>
+          <circle cx="50" cy="50" r="42" fill="#f1e6c6" mask="url(#mluna)"/>
+        </svg>
+      </div>
+      <div class="cortina izq"></div>
+      <div class="cortina der"></div>
+      <i class="lazo izq"></i><i class="lazo der"></i>
       <div class="cenefa"></div>
+      <div class="riel"></div>
     </div>
     <svg class="sillon rojo" viewBox="0 0 200 200" aria-hidden="true">
       <defs><linearGradient id="gr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5363c"/><stop offset="1" stop-color="#5a171c"/></linearGradient></defs>

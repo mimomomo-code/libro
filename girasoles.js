@@ -56,6 +56,36 @@
     return { c, S };
   }
 
+  // Un limón: óvalo con las dos puntas, poros y una hojita.
+  function spriteLimon(r, dpr){
+    const w = r * 1.9, h = r * 1.25, pad = 6, S = Math.ceil(w + pad * 2);
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(S * dpr);
+    const ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr); ctx.translate(S / 2, S / 2);
+    const g = ctx.createRadialGradient(-w * .18, -h * .22, r * .1, 0, 0, w * .6);
+    g.addColorStop(0, '#fbec72'); g.addColorStop(.6, '#efd233'); g.addColorStop(1, '#c9a616');
+    ctx.fillStyle = g; ctx.strokeStyle = '#a88a10'; ctx.lineWidth = .8;
+    ctx.beginPath();
+    ctx.moveTo(-w / 2, 0);
+    ctx.bezierCurveTo(-w / 2, -h * .68, w / 2, -h * .68, w / 2, 0);
+    ctx.bezierCurveTo(w / 2, h * .68, -w / 2, h * .68, -w / 2, 0);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e6c81f';
+    for (const s of [-1, 1]){ ctx.beginPath(); ctx.ellipse(s * (w / 2 - r * .02), 0, r * .13, r * .09, 0, 0, 6.2832); ctx.fill(); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(160,125,10,.28)';
+    for (let i = 0; i < 26; i++){
+      const a = i * 2.39996, d = Math.sqrt(i / 26);
+      ctx.beginPath(); ctx.arc(Math.cos(a) * d * w * .4, Math.sin(a) * d * h * .38, r * .035, 0, 6.2832); ctx.fill();
+    }
+    ctx.save(); ctx.translate(w * .34, -h * .42); ctx.rotate(-.7);
+    ctx.fillStyle = '#4f8f2c'; ctx.strokeStyle = '#2f5f18'; ctx.lineWidth = .7;
+    ctx.beginPath(); ctx.ellipse(0, 0, r * .34, r * .14, 0, 0, 6.2832); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-r * .3, 0); ctx.lineTo(r * .3, 0); ctx.stroke();
+    ctx.restore();
+    return { c, S };
+  }
+
   const ADORNO = (() => {
     let s = '<svg class="adorno-girasol" viewBox="0 0 60 60" aria-hidden="true"><g fill="#e8ad25" stroke="#b9800e" stroke-width=".6">' +
       '<path id="ptl" d="M30 30C26 22 26 12 30 5C34 12 34 22 30 30z"/>';
@@ -67,31 +97,35 @@
     op = op || {};
     const capa = document.createElement('div');
     capa.id = 'girasoles';
-    capa.innerHTML = '<canvas class="posados"></canvas><canvas class="cayendo"></canvas><div class="aviso">Toca</div>' +
+    // tres lienzos: el manto posado, los limones posados (encima, para que no queden tapados) y lo que cae
+    capa.innerHTML = '<canvas class="posados"></canvas><canvas class="frutas"></canvas><canvas class="cayendo"></canvas><div class="aviso">Toca</div>' +
       '<div class="nota papel">' + ADORNO + '<p></p><span class="pie">Toca para volver a la sala</span></div>';
     capa.querySelector('.nota p').textContent = op.nota || '';
     document.body.appendChild(capa);
-    const cvP = capa.querySelector('.posados'), cvC = capa.querySelector('.cayendo');
-    const ctxP = cvP.getContext('2d'), ctxC = cvC.getContext('2d');
+    const cvP = capa.querySelector('.posados'), cvF = capa.querySelector('.frutas'), cvC = capa.querySelector('.cayendo');
+    const ctxP = cvP.getContext('2d'), ctxF = cvF.getContext('2d'), ctxC = cvC.getContext('2d');
+    const MAX_LIMONES = 12;
 
-    let W = 0, H = 0, dpr = 1, D = 40, r = 20, colW = 28, ncol = 0, alturas = null, colsLlenas = 0, pico = 40, esc = 1;
-    let SPR = [];
+    let W = 0, H = 0, dpr = 1, D = 40, r = 20, colW = 28, ncol = 0, alturas = null, colsLlenas = 0, pico = 40, esc = 1, total = 400;
+    let SPR = [], LIM = [];
     function medir(){
       W = innerWidth; H = innerHeight; dpr = Math.min(devicePixelRatio || 1, 2);
       D = Math.max(36, Math.min(66, Math.min(W, H) * 0.115)); r = D / 2;
       colW = D * 0.5; ncol = Math.ceil(W / colW) + 1;
       esc = H / 900;
       SPR = []; for (let i = 0; i < 10; i++) SPR.push(sprite(r * (0.8 + R() * 0.4), PAL[i % PAL.length], 12 + (R() * 6 | 0), dpr));
-      for (const cv of [cvP, cvC]){ cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
-      ctxP.setTransform(dpr, 0, 0, dpr, 0, 0); ctxC.setTransform(dpr, 0, 0, dpr, 0, 0);
+      LIM = [spriteLimon(r * 1.05, dpr), spriteLimon(r * .9, dpr), spriteLimon(r * 1.15, dpr)];
+      for (const cv of [cvP, cvF, cvC]){ cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      for (const cx of [ctxP, ctxF, ctxC]) cx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // cuántas flores hacen falta y a qué ritmo para llenar en ~12 s
-      const porCol = Math.ceil((H + r) / (D * 0.42)), total = porCol * ncol;
+      const porCol = Math.ceil((H + r) / (D * 0.42)); total = porCol * ncol;
       pico = Math.max(12, (total - 36) / 9.5);
     }
     medir();
     alturas = new Float32Array(ncol);
 
     let t = 0, acum = 0, vivos = [], lleno = false, notaVisible = false, terminado = false, raf = 0, ultimo = 0;
+    let soltados = 0, limones = 0;
     const colLlena = c => alturas[c] >= H + r;
 
     function soltarUno(colPref, rapida){
@@ -107,21 +141,33 @@
         if (c < 0){ for (let i = 0; i < ncol; i++) if (!colLlena(i)){ c = i; break; } }
       }
       if (c < 0) return false;
-      const spr = SPR[R() * SPR.length | 0];
-      vivos.push({
-        x: c * colW + (R() - .5) * colW * .5, y: -r * 1.4,
-        destino: H - alturas[c] - r * .55,
-        spr, vy: (rapida ? 320 : 90 + R() * 120) * esc, g: 380 * esc, vmax: (380 + R() * 170) * esc,
-        f: R() * 6.28, fv: .8 + R() * 1.6, amp: (14 + R() * 26), rot: R() * 6.28, spin: (R() - .5) * 2.4,
-      });
+      // los limones (12 como mucho) van repartidos a lo largo de toda la lluvia, no en las ráfagas
+      const limon = !rapida && limones < MAX_LIMONES && soltados >= total * (limones + .5) / MAX_LIMONES;
+      soltados++;
+      if (limon){
+        limones++;
+        vivos.push({
+          limon: true, x: c * colW + (R() - .5) * colW * .5, y: -r * 1.4,
+          destino: H - alturas[c] - r * .55,
+          spr: LIM[R() * LIM.length | 0], vy: (160 + R() * 120) * esc, g: 520 * esc, vmax: (520 + R() * 160) * esc,
+          f: R() * 6.28, fv: .5 + R(), amp: (4 + R() * 8), rot: (R() - .5) * 1.2, spin: (R() - .5) * 1.2,
+        });
+      } else {
+        vivos.push({
+          x: c * colW + (R() - .5) * colW * .5, y: -r * 1.4,
+          destino: H - alturas[c] - r * .55,
+          spr: SPR[R() * SPR.length | 0], vy: (rapida ? 320 : 90 + R() * 120) * esc, g: 380 * esc, vmax: (380 + R() * 170) * esc,
+          f: R() * 6.28, fv: .8 + R() * 1.6, amp: (14 + R() * 26), rot: R() * 6.28, spin: (R() - .5) * 2.4,
+        });
+      }
       alturas[c] += D * .42;
       if (colLlena(c)) colsLlenas++;
       return true;
     }
     function posar(p){
-      const S = p.spr.S;
-      ctxP.save(); ctxP.translate(p.x, p.destino); ctxP.rotate(p.rot);
-      ctxP.drawImage(p.spr.c, -S / 2, -S / 2, S, S); ctxP.restore();
+      const S = p.spr.S, cx = p.limon ? ctxF : ctxP;
+      cx.save(); cx.translate(p.x, p.destino); cx.rotate(p.rot);
+      cx.drawImage(p.spr.c, -S / 2, -S / 2, S, S); cx.restore();
     }
     function paso(dt){
       t += dt;
@@ -169,11 +215,12 @@
     }
     // si la pantalla cambia (giro del celular) se estira el manto ya posado
     function redim(){
-      const viejo = document.createElement('canvas'); viejo.width = cvP.width; viejo.height = cvP.height;
-      viejo.getContext('2d').drawImage(cvP, 0, 0);
+      const copia = cv => { const v = document.createElement('canvas'); v.width = cv.width; v.height = cv.height; v.getContext('2d').drawImage(cv, 0, 0); return v; };
+      const viejoP = copia(cvP), viejoF = copia(cvF);
       const W0 = W, H0 = H, alt0 = alturas, n0 = ncol;
       medir();
-      ctxP.drawImage(viejo, 0, 0, viejo.width, viejo.height, 0, 0, W, H);
+      ctxP.drawImage(viejoP, 0, 0, viejoP.width, viejoP.height, 0, 0, W, H);
+      ctxF.drawImage(viejoF, 0, 0, viejoF.width, viejoF.height, 0, 0, W, H);
       alturas = new Float32Array(ncol); colsLlenas = 0;
       for (let c = 0; c < ncol; c++){ const c0 = Math.min(n0 - 1, Math.round(c * (n0 - 1) / Math.max(1, ncol - 1))); alturas[c] = alt0[c0] * H / H0; if (colLlena(c)) colsLlenas++; }
       for (const p of vivos){ p.x *= W / W0; p.destino *= H / H0; }

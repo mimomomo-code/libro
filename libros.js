@@ -30,7 +30,7 @@ const LIBROS = [
     tipo: "girasoles",
     titulo: "21 Sep 2026",
     tapa: "girasol",
-    nota: "ññiñiñiñiñite quiero muchichichichísimo tanto y más que estas pocas flores",
+    nota: "ññiñiñiñiñite quiero muchichichichisimo tanto y mas que estas pocas flores",
     estante: { lado: "der", fila: 0, col: 5 },
   },
 ];

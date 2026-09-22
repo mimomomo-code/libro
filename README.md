@@ -29,10 +29,12 @@ El catálogo vive en `libros.js`. Cada libro tiene un `id`, un `tipo`, un
 - `tipo: "poema"` se lee página a página. Su contenido sigue en `poema.js`
   (título, autor, dedicatoria, páginas, efectos, música), igual que antes.
 - `tipo: "girasoles"` es el libro **21 Sep 2026**: al abrirlo caen girasoles
-  hasta llenar la pantalla (un toque durante la lluvia suelta una ráfaga).
-  Cuando está llena, un toque muestra la `nota`; otro toque limpia todo y el
-  libro queda en la mesa. Las flores que aterrizan se pintan una sola vez en
-  un lienzo aparte, así que no se arrastra ni con mil flores.
+  hasta llenar la pantalla, y entre ellos, repartidos a lo largo de la lluvia,
+  hasta 12 limones que quedan encima del manto (un toque durante la lluvia
+  suelta una ráfaga). Cuando está llena, un toque muestra la `nota`; otro
+  toque limpia todo y el libro queda en la mesa. Las flores que aterrizan se
+  pintan una sola vez en un lienzo aparte, así que no se arrastra ni con mil
+  flores.
 
 Colores de tapa: `burdeos`, `verde`, `azul`, `marron`, `negro`, `girasol`.
 
