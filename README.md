@@ -47,7 +47,10 @@ igual en cualquier pantalla.
 
 Los sillones, la mesa y la alfombra tienen su imagen ilustrada en `assets/`
 (WebP con fondo transparente); `DECORACION` en `libros.js` dice qué archivo
-mira cada pieza y `PROMPTS.md` guarda los prompts con que se generaron. Si
+mira cada pieza y `PROMPTS.md` guarda los prompts con que se generaron. Los
+girasoles y los limones de la lluvia también son ilustrados (`girasol_1-4.webp`
+y `limon_1-3.webp`, listados en `ARTE_GIRASOLES`); sin ellos vuelve el dibujo
+por código. Si
 falta un archivo, la pieza vuelve a su dibujo en CSS/SVG. La mesa manda su
 propia proporción (nunca más del 30 % del alto de la sala) y los libros se
 apoyan en su tapa; la alfombra rellena el suelo en pantalla ancha y en
