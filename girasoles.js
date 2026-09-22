@@ -1,0 +1,208 @@
+// =====================================================================
+//  LOS GIRASOLES. Al abrir el libro "21 Sep 2026" caen girasoles hasta
+//  llenar la pantalla. Para que no se arrastre ni con mil flores, hay
+//  DOS lienzos: en "cayendo" solo se dibujan las que están en el aire
+//  (unas decenas) y cada flor que aterriza se pinta UNA sola vez en
+//  "posados", que ya no se vuelve a tocar. Las flores mismas son
+//  sprites pre-dibujados: cada frame es un drawImage por flor en el aire.
+//
+//  Uso: GIRASOLES.mostrar({ nota, alTerminar, lleno, conNota })
+//    - nota: el texto que aparece al tocar cuando la pantalla está llena.
+//    - alTerminar: se llama cuando la persona toca de nuevo y todo se limpia.
+//    - lleno / conNota: solo para capturas (pantalla llena de golpe / nota a la vista).
+// =====================================================================
+(function(){
+  'use strict';
+  const R = Math.random;
+  const PAL = [
+    ['#f3c231', '#e0a21b', '#b7820f'],
+    ['#f7cd46', '#e8ae23', '#c28c12'],
+    ['#efb928', '#d99a14', '#a87410'],
+    ['#f9d65a', '#efb92a', '#c69316'],
+  ];
+  const suave = x => x * x * (3 - 2 * x);
+
+  // Un girasol pre-dibujado: dos coronas de pétalos, disco y semillas en espiral.
+  function sprite(r, pal, petalos, dpr){
+    const pad = 4, S = Math.ceil((r + pad) * 2);
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(S * dpr);
+    const ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr); ctx.translate(S / 2, S / 2);
+    const paso = Math.PI * 2 / petalos;
+    for (let capa = 0; capa < 2; capa++){
+      const k = capa ? .8 : 1, off = capa ? paso / 2 : 0;
+      ctx.fillStyle = capa ? pal[0] : pal[1];
+      ctx.strokeStyle = pal[2]; ctx.lineWidth = .7;
+      for (let i = 0; i < petalos; i++){
+        ctx.save(); ctx.rotate(i * paso + off);
+        ctx.beginPath();
+        ctx.moveTo(r * .22 * k, 0);
+        ctx.bezierCurveTo(r * .45 * k, -r * .21 * k, r * .86 * k, -r * .17 * k, r * k, 0);
+        ctx.bezierCurveTo(r * .86 * k, r * .17 * k, r * .45 * k, r * .21 * k, r * .22 * k, 0);
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+      }
+    }
+    const g = ctx.createRadialGradient(-r * .08, -r * .08, r * .04, 0, 0, r * .38);
+    g.addColorStop(0, '#6d4118'); g.addColorStop(.65, '#3f2209'); g.addColorStop(1, '#261204');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r * .37, 0, Math.PI * 2); ctx.fill();
+    const N = Math.max(24, Math.round(r * 1.7));
+    for (let i = 0; i < N; i++){
+      const a = i * 2.39996, d = r * .34 * Math.sqrt(i / N);
+      ctx.fillStyle = i % 2 ? 'rgba(140,92,34,.6)' : 'rgba(18,9,2,.6)';
+      ctx.beginPath(); ctx.arc(Math.cos(a) * d, Math.sin(a) * d, r * .028 + .3, 0, 6.2832); ctx.fill();
+    }
+    return { c, S };
+  }
+
+  const ADORNO = (() => {
+    let s = '<svg class="adorno-girasol" viewBox="0 0 60 60" aria-hidden="true"><g fill="#e8ad25" stroke="#b9800e" stroke-width=".6">' +
+      '<path id="ptl" d="M30 30C26 22 26 12 30 5C34 12 34 22 30 30z"/>';
+    for (let a = 30; a < 360; a += 30) s += '<use href="#ptl" transform="rotate(' + a + ' 30 30)"/>';
+    return s + '</g><circle cx="30" cy="30" r="9" fill="#4a2a0e"/><circle cx="30" cy="30" r="5.5" fill="#2e1806"/></svg>';
+  })();
+
+  function mostrar(op){
+    op = op || {};
+    const capa = document.createElement('div');
+    capa.id = 'girasoles';
+    capa.innerHTML = '<canvas class="posados"></canvas><canvas class="cayendo"></canvas><div class="aviso">Toca</div>' +
+      '<div class="nota papel">' + ADORNO + '<p></p><span class="pie">Toca para volver a la sala</span></div>';
+    capa.querySelector('.nota p').textContent = op.nota || '';
+    document.body.appendChild(capa);
+    const cvP = capa.querySelector('.posados'), cvC = capa.querySelector('.cayendo');
+    const ctxP = cvP.getContext('2d'), ctxC = cvC.getContext('2d');
+
+    let W = 0, H = 0, dpr = 1, D = 40, r = 20, colW = 28, ncol = 0, alturas = null, colsLlenas = 0, pico = 40, esc = 1;
+    let SPR = [];
+    function medir(){
+      W = innerWidth; H = innerHeight; dpr = Math.min(devicePixelRatio || 1, 2);
+      D = Math.max(36, Math.min(66, Math.min(W, H) * 0.115)); r = D / 2;
+      colW = D * 0.5; ncol = Math.ceil(W / colW) + 1;
+      esc = H / 900;
+      SPR = []; for (let i = 0; i < 10; i++) SPR.push(sprite(r * (0.8 + R() * 0.4), PAL[i % PAL.length], 12 + (R() * 6 | 0), dpr));
+      for (const cv of [cvP, cvC]){ cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      ctxP.setTransform(dpr, 0, 0, dpr, 0, 0); ctxC.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // cuántas flores hacen falta y a qué ritmo para llenar en ~12 s
+      const porCol = Math.ceil((H + r) / (D * 0.42)), total = porCol * ncol;
+      pico = Math.max(12, (total - 36) / 9.5);
+    }
+    medir();
+    alturas = new Float32Array(ncol);
+
+    let t = 0, acum = 0, vivos = [], lleno = false, notaVisible = false, terminado = false, raf = 0, ultimo = 0;
+    const colLlena = c => alturas[c] >= H + r;
+
+    function soltarUno(colPref, rapida){
+      let c = -1;
+      if (colPref >= 0 && colPref < ncol && !colLlena(colPref)) c = colPref;
+      else {
+        // dos candidatas al azar y se queda la más baja: así el manto sube parejo
+        for (let k = 0; k < 6 && c < 0; k++){
+          const a = R() * ncol | 0, b = R() * ncol | 0;
+          const ca = !colLlena(a), cb = !colLlena(b);
+          if (ca && cb) c = alturas[a] <= alturas[b] ? a : b; else if (ca) c = a; else if (cb) c = b;
+        }
+        if (c < 0){ for (let i = 0; i < ncol; i++) if (!colLlena(i)){ c = i; break; } }
+      }
+      if (c < 0) return false;
+      const spr = SPR[R() * SPR.length | 0];
+      vivos.push({
+        x: c * colW + (R() - .5) * colW * .5, y: -r * 1.4,
+        destino: H - alturas[c] - r * .55,
+        spr, vy: (rapida ? 320 : 90 + R() * 120) * esc, g: 380 * esc, vmax: (380 + R() * 170) * esc,
+        f: R() * 6.28, fv: .8 + R() * 1.6, amp: (14 + R() * 26), rot: R() * 6.28, spin: (R() - .5) * 2.4,
+      });
+      alturas[c] += D * .42;
+      if (colLlena(c)) colsLlenas++;
+      return true;
+    }
+    function posar(p){
+      const S = p.spr.S;
+      ctxP.save(); ctxP.translate(p.x, p.destino); ctxP.rotate(p.rot);
+      ctxP.drawImage(p.spr.c, -S / 2, -S / 2, S, S); ctxP.restore();
+    }
+    function paso(dt){
+      t += dt;
+      if (colsLlenas < ncol){
+        const ritmo = 3 + (pico - 3) * suave(Math.min(1, t / 5));
+        acum += ritmo * dt;
+        while (acum >= 1){ acum -= 1; if (!soltarUno(-1, false)) break; }
+      }
+      ctxC.clearRect(0, 0, W, H);
+      for (let i = vivos.length - 1; i >= 0; i--){
+        const p = vivos[i];
+        p.vy = Math.min(p.vmax, p.vy + p.g * dt); p.y += p.vy * dt;
+        p.f += p.fv * dt; p.x += Math.sin(p.f) * p.amp * dt; p.rot += p.spin * dt;
+        if (p.y >= p.destino){ posar(p); vivos[i] = vivos[vivos.length - 1]; vivos.pop(); continue; }
+        const S = p.spr.S;
+        ctxC.save(); ctxC.translate(p.x, p.y); ctxC.rotate(p.rot);
+        ctxC.drawImage(p.spr.c, -S / 2, -S / 2, S, S); ctxC.restore();
+      }
+      if (!lleno && colsLlenas >= ncol && !vivos.length){
+        lleno = true;
+        setTimeout(() => { if (!terminado) capa.classList.add('lleno'); }, 400);
+      }
+    }
+    function bucle(now){
+      raf = 0;
+      const dt = Math.min(.05, (now - ultimo) / 1000); ultimo = now;
+      paso(dt);
+      if (!terminado && !(lleno && !vivos.length)) raf = requestAnimationFrame(bucle);
+    }
+    function arrancar(){ if (!raf && !terminado){ ultimo = performance.now(); raf = requestAnimationFrame(bucle); } }
+
+    function rafaga(x){
+      const c0 = Math.round(x / colW);
+      for (let k = 0; k < 12; k++) soltarUno(Math.max(0, Math.min(ncol - 1, c0 + (R() * 7 | 0) - 3)), true);
+      arrancar();
+    }
+    function mostrarNota(){ notaVisible = true; capa.classList.add('nota-visible'); }
+    function terminar(){
+      if (terminado) return;
+      terminado = true;
+      if (raf) cancelAnimationFrame(raf);
+      removeEventListener('keydown', teclas); removeEventListener('resize', redim);
+      capa.classList.add('fuera');
+      setTimeout(() => { capa.remove(); if (op.alTerminar) op.alTerminar(); }, 1050);
+    }
+    // si la pantalla cambia (giro del celular) se estira el manto ya posado
+    function redim(){
+      const viejo = document.createElement('canvas'); viejo.width = cvP.width; viejo.height = cvP.height;
+      viejo.getContext('2d').drawImage(cvP, 0, 0);
+      const W0 = W, H0 = H, alt0 = alturas, n0 = ncol;
+      medir();
+      ctxP.drawImage(viejo, 0, 0, viejo.width, viejo.height, 0, 0, W, H);
+      alturas = new Float32Array(ncol); colsLlenas = 0;
+      for (let c = 0; c < ncol; c++){ const c0 = Math.min(n0 - 1, Math.round(c * (n0 - 1) / Math.max(1, ncol - 1))); alturas[c] = alt0[c0] * H / H0; if (colLlena(c)) colsLlenas++; }
+      for (const p of vivos){ p.x *= W / W0; p.destino *= H / H0; }
+      if (!terminado) arrancar();
+    }
+    function teclas(e){ if (e.key === 'Escape'){ e.preventDefault(); terminar(); } }
+
+    let pd = null;
+    capa.addEventListener('pointerdown', e => { if (e.button === 0) pd = { x: e.clientX, y: e.clientY }; });
+    capa.addEventListener('pointerup', e => {
+      if (!pd) return;
+      const lejos = Math.hypot(e.clientX - pd.x, e.clientY - pd.y) > 18; pd = null;
+      if (lejos || terminado) return;
+      if (notaVisible) terminar();
+      else if (lleno) mostrarNota();
+      else rafaga(e.clientX);
+    });
+    capa.addEventListener('pointercancel', () => { pd = null; });
+    addEventListener('keydown', teclas);
+    addEventListener('resize', redim);
+
+    if (op.lleno){          // para capturas: el manto ya puesto
+      let guarda = 0; while (!lleno && guarda++ < 100000) paso(1 / 30);
+      capa.classList.add('lleno');
+      if (op.conNota) mostrarNota();
+    } else arrancar();
+
+    return { terminar };
+  }
+
+  window.GIRASOLES = { mostrar };
+})();

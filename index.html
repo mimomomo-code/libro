@@ -21,10 +21,18 @@
 html,body{margin:0;height:100%;background:#120d0b;overflow:hidden;
   -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 body{font-family:'Cormorant Garamond',Garamond,'EB Garamond',Georgia,'Times New Roman',serif;color:var(--tinta)}
-body.instantaneo *{transition:none !important;animation:none !important}
+body.instantaneo #libro,body.instantaneo #libro *{transition:none !important;animation:none !important}
 
-/* ---------- la mesa ---------- */
-#escena{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+/* ---------- las dos capas: la sala y el lector ---------- */
+#sala,#lector{position:fixed;inset:0;overflow:hidden;transition:opacity .7s ease,visibility .7s}
+#sala{z-index:1}
+#lector{z-index:10;opacity:0;visibility:hidden}
+body.en-lector #lector{opacity:1;visibility:visible}
+body.en-lector #sala{opacity:0;visibility:hidden}
+body.sin-fundido #sala,body.sin-fundido #lector{transition:none}
+
+/* ---------- la mesa del lector ---------- */
+#escena{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   perspective:2400px;perspective-origin:50% 45%;overflow:hidden;cursor:pointer;
   background:
     radial-gradient(ellipse 70% 55% at 50% 42%, rgba(130,95,60,.38), transparent 70%),
@@ -35,6 +43,7 @@ body.instantaneo *{transition:none !important;animation:none !important}
 /* ---------- el libro ---------- */
 #libro{position:relative;width:var(--pw);height:var(--ph);transform-style:preserve-3d;
   transition:transform var(--dur) cubic-bezier(.65,0,.35,1)}
+#libro.escondido{opacity:0}
 body[data-modo="2"] #libro{width:calc(var(--pw)*2)}
 body[data-modo="2"] #libro.cerrado{transform:translateX(calc(var(--pw) * -0.5))}
 
@@ -149,20 +158,183 @@ body.centro .verso{padding-left:0;text-indent:0}
   animation-delay:calc(var(--espera, 0ms) + var(--i, 0) * 130ms)}
 @keyframes aparecer{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 
-/* ---------- chrome ---------- */
-#barra{position:fixed;left:0;right:0;bottom:max(14px, env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;gap:18px;
+/* ---------- chrome del lector ---------- */
+#barra{position:absolute;left:0;right:0;bottom:max(14px, env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;gap:18px;
   font-family:Cinzel,serif;font-size:13px;letter-spacing:.2em;color:rgba(212,176,106,.75);opacity:0;transition:opacity .6s;pointer-events:none}
 body.leyendo #barra{opacity:1;pointer-events:auto}
 #barra button{background:none;border:1px solid rgba(212,176,106,.35);color:rgba(212,176,106,.85);width:38px;height:38px;border-radius:50%;
   font:400 26px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 0 3px;transition:background .2s,border-color .2s}
 #barra button:hover{background:rgba(212,176,106,.12);border-color:rgba(212,176,106,.7)}
 #num{min-width:64px;text-align:center}
-#musica-btn{font-size:19px !important;padding-bottom:2px !important;transition:opacity .4s,background .2s,border-color .2s}
+#pista,#pista-sala{position:fixed;left:50%;top:max(18px, env(safe-area-inset-top));transform:translateX(-50%);max-width:70vw;text-align:center;
+  font-family:Cinzel,serif;font-size:12px;letter-spacing:.16em;color:rgba(240,213,154,.7);opacity:0;transition:opacity .8s;pointer-events:none;z-index:35}
+#pista{position:absolute}
+#pista.ver,#pista-sala.ver{opacity:1}
+body.en-lector #pista-sala{opacity:0}
+#pista-sala{text-shadow:0 1px 6px rgba(0,0,0,.8);color:rgba(240,213,154,.85);max-width:86vw}
+/* volver a la sala */
+#volver{position:absolute;left:max(14px, env(safe-area-inset-left));top:max(12px, env(safe-area-inset-top));z-index:30;width:40px;height:40px;border-radius:50%;
+  background:rgba(18,13,11,.55);border:1px solid rgba(212,176,106,.4);color:rgba(240,213,154,.9);
+  font:400 28px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 3px 4px 0;transition:background .2s,border-color .2s}
+#volver:hover{background:rgba(212,176,106,.16);border-color:rgba(212,176,106,.8)}
+/* la música se oye en la sala y en el lector: un solo botón */
+#musica-btn{position:fixed;right:max(14px, env(safe-area-inset-right));bottom:max(14px, env(safe-area-inset-bottom));z-index:50;width:38px;height:38px;border-radius:50%;
+  background:rgba(18,13,11,.5);border:1px solid rgba(212,176,106,.35);color:rgba(212,176,106,.85);
+  font:400 19px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 0 2px;transition:opacity .4s,background .2s,border-color .2s}
+#musica-btn:hover{background:rgba(212,176,106,.12);border-color:rgba(212,176,106,.7)}
 #musica-btn.apagada{opacity:.35}
-#pista{position:fixed;left:50%;top:max(18px, env(safe-area-inset-top));transform:translateX(-50%);max-width:88vw;text-align:center;
-  font-family:Cinzel,serif;font-size:12px;letter-spacing:.16em;color:rgba(240,213,154,.7);opacity:0;transition:opacity .8s;pointer-events:none}
-#pista.ver{opacity:1}
 
+/* =====================================================================
+   LA SALA: dos librerías, la ventana con la luna, los sillones y la mesa
+   ===================================================================== */
+#sala{--lib:clamp(84px, 23vw, 230px);--lw:clamp(15px, calc(var(--lib) / 8 * .86), 27px);
+  --lm:clamp(50px, min(9.5vw, 11vh), 104px);background:#1a0d0a;font-family:Cinzel,serif}
+.pared{position:absolute;left:0;right:0;top:0;height:60%;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 35%, rgba(255,130,95,.10), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.22) 0 9px, rgba(255,255,255,.035) 9px 15px, transparent 15px 34px),
+    linear-gradient(180deg,#7b1e27 0%,#5a151c 55%,#3a0d12 100%)}
+.pared::after{content:'';position:absolute;left:0;right:0;bottom:-3px;height:7px;background:#2b1a0f;box-shadow:0 2px 0 #4a2f1a}
+.suelo{position:absolute;left:0;right:0;top:60%;bottom:0;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 11px),
+    linear-gradient(180deg,#3a2314,#24150c 60%,#170d07)}
+.centro{position:absolute;left:var(--lib);right:var(--lib);top:0;bottom:0}
+.alfombra{position:absolute;left:3%;right:3%;top:63%;bottom:2%;border-radius:8px;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 6px, transparent 6px 14px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.08) 0 6px, transparent 6px 14px),
+    linear-gradient(180deg,#5d739a,#4a5d80 60%,#3c4c6b);
+  box-shadow:inset 0 0 0 5px #34446a, inset 0 0 0 7px #7688ad, 0 6px 18px rgba(0,0,0,.4)}
+/* la ventana: un arco de noche con la luna, y la cortina recogida a la derecha */
+.ventana{position:absolute;left:50%;top:4%;transform:translateX(-50%);width:min(66%, 520px);aspect-ratio:5/6;max-height:47%;
+  border-radius:48% 48% 6px 6px / 40% 40% 6px 6px;overflow:hidden;
+  background:
+    radial-gradient(circle at 20% 34%, rgba(255,255,255,.95) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 72% 22%, rgba(255,255,255,.85) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 86% 58%, rgba(255,255,255,.7) 0 .8px, transparent 1.4px),
+    radial-gradient(circle at 38% 74%, rgba(255,255,255,.6) 0 .8px, transparent 1.4px),
+    radial-gradient(circle at 57% 47%, rgba(255,255,255,.55) 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 12% 62%, rgba(255,255,255,.5) 0 .7px, transparent 1.3px),
+    radial-gradient(ellipse at 50% 105%, #2c3572, transparent 70%),
+    linear-gradient(180deg,#1a2050,#121740 60%,#0c1030);
+  box-shadow:inset 0 0 0 4px #3a0e13, inset 0 0 44px rgba(0,0,0,.6), 0 0 0 6px #5a151c, 0 10px 30px rgba(0,0,0,.45)}
+.luna{position:absolute;left:34%;top:15%;width:26%;height:auto;filter:drop-shadow(0 0 14px rgba(241,230,198,.55))}
+.cortina{position:absolute;right:0;top:0;bottom:0;width:40%;
+  background:repeating-linear-gradient(90deg, #8a232c 0 8px, #5e141b 8px 15px, #7a1e26 15px 25px);
+  clip-path:polygon(100% 0, 56% 0, 60% 24%, 76% 44%, 82% 52%, 64% 78%, 56% 100%, 100% 100%);
+  box-shadow:-10px 0 18px rgba(0,0,0,.5)}
+.cortina::after{content:'';position:absolute;left:58%;top:47%;width:36%;height:7%;border-radius:40%;
+  background:linear-gradient(180deg,#e2c072,#a3792c);box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.cenefa{position:absolute;left:-2%;right:-2%;top:-2px;height:15%;
+  background:radial-gradient(circle at 50% 100%, transparent 58%, #7d2028 60%) 0 0 / 14% 100% repeat-x, linear-gradient(180deg,#8a232c,#7d2028);
+  background-blend-mode:normal;box-shadow:0 6px 10px rgba(0,0,0,.35)}
+.cenefa::before{content:'';position:absolute;left:0;right:0;top:0;height:22%;background:linear-gradient(180deg,#a0343d,#8a232c)}
+/* sillones */
+.sillon{position:absolute;height:auto;filter:drop-shadow(0 12px 14px rgba(0,0,0,.55))}
+.sillon.rojo{left:4%;bottom:33%;width:38%;max-width:260px}
+.sillon.amarillo{right:3%;bottom:32%;width:40%;max-width:280px}
+/* librerías: 5 filas y 8 ranuras invisibles por fila */
+.libreria{position:absolute;top:2%;bottom:20%;width:var(--lib);padding:calc(var(--lib) * .07) calc(var(--lib) * .07) 0;
+  background:linear-gradient(180deg,#7a4a2a,#5a3419 30%,#4b2a14);display:grid;grid-template-rows:repeat(5, 1fr);
+  box-shadow:0 14px 34px rgba(0,0,0,.6), inset 0 0 0 2px rgba(0,0,0,.25);z-index:2}
+.libreria[data-lado="izq"]{left:0;border-radius:0 5px 5px 0}
+.libreria[data-lado="der"]{right:0;border-radius:5px 0 0 5px}
+.estante{position:relative;display:grid;grid-template-columns:repeat(8, 1fr);
+  background:linear-gradient(180deg,#20110a,#2e1a0e 55%,#1c0f08);
+  border-bottom:calc(var(--lib) * .045 + 4px) solid #8c5b35;
+  box-shadow:0 3px 0 #4a2a12, inset 0 -6px 12px rgba(0,0,0,.5), inset 0 8px 14px rgba(0,0,0,.45)}
+.ranura{position:relative;transition:box-shadow .2s}
+body.arrastrando .ranura{box-shadow:inset 0 0 0 1px rgba(240,213,154,.10)}
+.ranura.destino::after{content:'';position:absolute;bottom:0;left:50%;width:var(--lw);height:90%;transform:translateX(-50%);
+  border:1.5px dashed rgba(240,213,154,.9);border-bottom:none;border-radius:2px 2px 0 0;background:rgba(240,213,154,.16)}
+/* el lomo de un libro guardado */
+.lomo{position:absolute;bottom:0;left:50%;width:var(--lw);height:90%;transform:translateX(-50%);z-index:2;
+  background:linear-gradient(90deg, var(--c3), var(--c1) 30%, var(--c2) 70%, var(--c3));
+  border-radius:2px 2px 0 0;box-shadow:1px 0 0 rgba(0,0,0,.4), -1px 0 0 rgba(255,255,255,.06), 0 -1px 0 rgba(255,255,255,.08);
+  cursor:pointer;touch-action:none;display:flex;align-items:center;justify-content:center;transition:filter .2s}
+.lomo::before,.lomo::after{content:'';position:absolute;left:12%;right:12%;height:1.5px;background:rgba(240,213,154,.7)}
+.lomo::before{top:7%}.lomo::after{bottom:7%}
+.lomo .rotulo{writing-mode:vertical-rl;text-orientation:mixed;font-family:Cinzel,serif;font-size:clamp(7px, calc(var(--lw) * .42), 10px);
+  letter-spacing:.05em;color:#f0d59a;white-space:nowrap;max-height:84%;overflow:hidden;text-overflow:ellipsis;opacity:.92;text-shadow:0 0 2px rgba(0,0,0,.6)}
+.lomo .toque{position:absolute;inset:-8px -10px}
+.lomo:hover{filter:brightness(1.14)}
+/* la mesa y lo que hay encima */
+.mesa{position:absolute;left:50%;bottom:2.5%;transform:translateX(-50%);width:min(74%, 430px);aspect-ratio:2/1.05;max-height:28%;z-index:3}
+.mesa .pata{position:absolute;top:50%;left:50%;width:4%;height:50%;background:linear-gradient(90deg,#4a2b13,#6b3f1f,#4a2b13);transform-origin:50% 0;border-radius:0 0 3px 3px}
+.mesa .pata.a{transform:translateX(-50%) rotate(28deg)}
+.mesa .pata.b{transform:translateX(-50%) rotate(-28deg)}
+.mesa .pata.c{transform:translateX(-50%);height:47%;filter:brightness(.8)}
+.mesa .tablero{position:absolute;left:0;right:0;top:20%;height:40%;border-radius:50%;transition:box-shadow .25s;
+  background:radial-gradient(ellipse at 42% 35%, #a5703f, #71461f 55%, #55321a);
+  box-shadow:0 7px 0 -1px #4a2b13, 0 9px 0 -1px #2e1a0b, 0 22px 34px rgba(0,0,0,.6), inset 0 -8px 20px rgba(0,0,0,.25)}
+.mesa.destino .tablero{box-shadow:0 7px 0 -1px #4a2b13, 0 9px 0 -1px #2e1a0b, 0 22px 34px rgba(0,0,0,.6), inset 0 -8px 20px rgba(0,0,0,.25), 0 0 0 3px rgba(240,213,154,.6), 0 0 24px rgba(240,213,154,.35)}
+.sobre-mesa{position:absolute;left:0;right:0;top:0;height:40%;display:flex;align-items:flex-end;justify-content:center;gap:6%}
+.lugar{width:var(--lm);display:flex;align-items:flex-end;justify-content:center}
+.piel{background:
+    radial-gradient(ellipse at 28% 18%, rgba(255,255,255,.11), transparent 55%),
+    radial-gradient(ellipse at 82% 92%, rgba(0,0,0,.38), transparent 60%),
+    linear-gradient(160deg, var(--c1), var(--c2) 60%, var(--c3))}
+.libro-mesa{position:relative;width:var(--lm);height:calc(var(--lm) * 1.36);border-radius:2px 5px 5px 2px;cursor:pointer;touch-action:none;
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:10% 8% 10% 14%;transition:filter .2s,transform .2s;
+  box-shadow:4px 4px 0 -1px #e6dcc4, 5px 5px 0 -1px #c9bb9b, 0 18px 24px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.35)}
+.libro-mesa::before{content:'';position:absolute;inset:7% 8% 7% 13%;border:1px solid rgba(212,176,106,.7);outline:1px solid rgba(212,176,106,.3);outline-offset:2px;border-radius:2px;pointer-events:none}
+.libro-mesa::after{content:'';position:absolute;top:0;bottom:0;left:0;width:9%;border-radius:2px 0 0 2px;
+  background:linear-gradient(90deg, rgba(0,0,0,.5), rgba(0,0,0,.08) 45%, rgba(255,255,255,.09) 65%, rgba(0,0,0,.3))}
+.libro-mesa:hover{filter:brightness(1.1);transform:translateY(-2px)}
+.titulo-mesa{position:relative;z-index:1;font-family:Cinzel,serif;font-weight:600;font-size:clamp(7.5px, calc(var(--lm) * .115), 13px);line-height:1.3;letter-spacing:.05em;
+  background:linear-gradient(180deg,#f6e2a6 0%,#d9b463 48%,#a9822f 52%,#f0d58f 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.55));text-wrap:balance}
+.torre{display:flex;flex-direction:column-reverse;align-items:center;gap:1px;min-width:calc(var(--lm) * 1.3)}
+.libro-torre{position:relative;width:calc(var(--lm) * 1.3);height:clamp(8px, calc(var(--lm) * .15), 16px);border-radius:2px;cursor:pointer;touch-action:none;transition:filter .2s;
+  background:linear-gradient(180deg, var(--c1), var(--c2) 60%, var(--c3));
+  box-shadow:0 2px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12), inset -3px 0 0 #e6dcc4, inset -4px 0 0 #c9bb9b}
+.libro-torre::before,.libro-torre::after{content:'';position:absolute;top:28%;bottom:28%;width:1.5px;background:rgba(240,213,154,.7)}
+.libro-torre::before{left:8%}.libro-torre::after{left:14%}
+.libro-torre:nth-child(odd){transform:translateX(-4%)}
+.libro-torre:nth-child(even){transform:translateX(4%)}
+.libro-torre:hover{filter:brightness(1.15)}
+/* vuelos entre la librería y la mesa, y el libro que se arrastra */
+.vuelo{position:fixed;left:0;top:0;z-index:70;pointer-events:none;border-radius:2px;
+  background:linear-gradient(160deg, var(--c1), var(--c2) 60%, var(--c3));box-shadow:0 12px 26px rgba(0,0,0,.55);will-change:left,top,width,height}
+.vuelo.en-vuelo{transition:left .6s cubic-bezier(.5,0,.25,1), top .6s cubic-bezier(.5,0,.25,1), width .6s ease, height .6s ease;animation:arco .6s ease-in-out}
+.vuelo.lento{transition-duration:.8s;animation-duration:.8s}
+@keyframes arco{50%{transform:translateY(-5vh) rotate(-5deg)}}
+.llegando{opacity:0 !important;transition:none !important}
+.fantasma{opacity:.25 !important}
+.arrastre{position:fixed;left:0;top:0;z-index:80;pointer-events:none;width:52px;height:72px;border-radius:2px 5px 5px 2px;
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 6px 8px 9px;
+  box-shadow:0 18px 34px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.35);will-change:transform}
+.arrastre::before{content:'';position:absolute;inset:6px 6px 6px 9px;border:1px solid rgba(212,176,106,.7);border-radius:2px}
+.arrastre .titulo-mesa{font-size:8px}
+body.arrastrando{cursor:grabbing}
+
+/* =====================================================================
+   LOS GIRASOLES: dos lienzos (los posados se pintan una sola vez)
+   ===================================================================== */
+#girasoles{position:fixed;inset:0;z-index:40;background:rgba(22,13,5,.62);opacity:0;animation:capa-entra .8s ease forwards;cursor:pointer;touch-action:none}
+@keyframes capa-entra{to{opacity:1}}
+#girasoles.fuera{transition:opacity 1s ease;opacity:0 !important;pointer-events:none}
+#girasoles canvas{position:absolute;inset:0;width:100%;height:100%}
+#girasoles .aviso{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:Cinzel,serif;letter-spacing:.32em;padding-left:.32em;
+  color:#fff7dc;font-size:19px;opacity:0;text-shadow:0 2px 14px rgba(0,0,0,.8), 0 0 30px rgba(0,0,0,.6);transition:opacity .8s;pointer-events:none}
+#girasoles.lleno:not(.nota-visible) .aviso{opacity:1;animation:latir 1.8s ease-in-out infinite}
+@keyframes latir{50%{transform:translate(-50%,-50%) scale(1.12)}}
+#girasoles .nota{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);width:min(86vw, 440px);padding:28px 26px 20px;border-radius:3px;
+  text-align:center;opacity:0;transition:opacity .7s,transform .7s;box-shadow:0 30px 70px rgba(0,0,0,.65), inset 0 0 0 1px rgba(120,90,50,.25);pointer-events:none}
+#girasoles.nota-visible .nota{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#girasoles .nota .adorno-girasol{width:52px;height:52px;display:block;margin:0 auto 6px}
+#girasoles .nota p{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(20px, 5.4vw, 27px);font-style:italic;font-weight:500;line-height:1.4;color:var(--tinta);margin:.3em 0 .7em;overflow-wrap:anywhere}
+#girasoles .nota .pie{display:block;font-family:Cinzel,serif;font-size:10px;letter-spacing:.18em;color:var(--folio);text-transform:uppercase}
+
+/* pantallas angostas (celular vertical): ventana y sillones más grandes */
+@media (max-width: 640px) and (orientation: portrait){
+  .ventana{width:min(84%, 520px);top:3%}
+  .sillon.rojo{width:50%;left:0;bottom:32%}
+  .sillon.amarillo{width:52%;right:-2%;bottom:31%}
+  .alfombra{top:66%}
+}
 @media (prefers-reduced-motion: reduce){
   :root{--dur:.3s}
   .viva .verso,.viva .titulo-pagina{animation-duration:.25s;animation-delay:0ms}
@@ -170,40 +342,107 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
 </style>
 </head>
 <body data-modo="1">
-<div id="escena">
-  <div id="libro" class="cerrado">
-    <div id="contratapa" class="cuero"></div>
-    <div id="canto-izq" class="canto"></div>
-    <div id="canto-der" class="canto"></div>
-    <div id="izq" class="pagina papel lado-izq oculta"></div>
-    <div id="der" class="pagina papel lado-der"></div>
-    <div id="tapa">
-      <div class="cara frente cuero">
-        <svg class="adorno" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h46M74 6h46" stroke="currentColor" stroke-width="1" fill="none"/><path d="M60 1l5 5-5 5-5-5z" fill="currentColor"/></svg>
-        <h1 id="tapa-titulo">Libro</h1>
-        <div id="tapa-autor"></div>
-        <svg class="adorno" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h46M74 6h46" stroke="currentColor" stroke-width="1" fill="none"/><path d="M60 1l5 5-5 5-5-5z" fill="currentColor"/></svg>
-      </div>
-      <div class="cara dorso"></div>
+
+<!-- ================= LA SALA ================= -->
+<div id="sala">
+  <div class="pared"></div>
+  <div class="suelo"></div>
+  <div class="centro">
+    <div class="ventana">
+      <svg class="luna" viewBox="0 0 100 100" aria-hidden="true">
+        <defs><mask id="mluna"><rect width="100" height="100" fill="#fff"/><circle cx="66" cy="42" r="36" fill="#000"/></mask></defs>
+        <circle cx="50" cy="50" r="42" fill="#f1e6c6" mask="url(#mluna)"/>
+      </svg>
+      <div class="cortina"></div>
+      <div class="cenefa"></div>
+    </div>
+    <svg class="sillon rojo" viewBox="0 0 200 200" aria-hidden="true">
+      <defs><linearGradient id="gr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5363c"/><stop offset="1" stop-color="#5a171c"/></linearGradient></defs>
+      <rect x="40" y="20" width="120" height="124" rx="14" fill="url(#gr1)"/>
+      <rect x="52" y="34" width="96" height="86" rx="10" fill="#8b2a30" opacity=".9"/>
+      <path d="M60 60h80M60 88h80" stroke="#6a1d22" stroke-width="2" opacity=".6"/>
+      <rect x="18" y="98" width="42" height="70" rx="16" fill="#8d2c31"/>
+      <rect x="140" y="98" width="42" height="70" rx="16" fill="#8d2c31"/>
+      <rect x="50" y="122" width="100" height="44" rx="10" fill="#b03c42"/>
+      <rect x="24" y="160" width="152" height="18" rx="6" fill="#4b1216"/>
+      <rect x="34" y="176" width="14" height="12" rx="3" fill="#2e1a0e"/><rect x="152" y="176" width="14" height="12" rx="3" fill="#2e1a0e"/>
+    </svg>
+    <svg class="sillon amarillo" viewBox="0 0 200 240" aria-hidden="true">
+      <defs>
+        <linearGradient id="gy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7b76a"/><stop offset="1" stop-color="#9d7b36"/></linearGradient>
+        <pattern id="phojas" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+          <ellipse cx="8" cy="8" rx="6" ry="2.6" fill="#7a5e26" opacity=".6"/>
+          <ellipse cx="20" cy="19" rx="5" ry="2.2" fill="#6d5220" opacity=".5" transform="rotate(60 20 19)"/>
+          <circle cx="19" cy="6" r="1.4" fill="#6d5220" opacity=".55"/>
+        </pattern>
+      </defs>
+      <path d="M30 40Q30 10 70 12L130 12Q170 10 170 40L170 150L30 150Z" fill="url(#gy)"/>
+      <path d="M30 40Q30 10 70 12L130 12Q170 10 170 40L170 150L30 150Z" fill="url(#phojas)"/>
+      <path d="M30 60Q8 80 14 150L30 150Z" fill="#b8974a"/><path d="M170 60Q192 80 186 150L170 150Z" fill="#b8974a"/>
+      <rect x="8" y="140" width="46" height="60" rx="18" fill="#c9a85a"/><rect x="8" y="140" width="46" height="60" rx="18" fill="url(#phojas)"/>
+      <rect x="146" y="140" width="46" height="60" rx="18" fill="#c9a85a"/><rect x="146" y="140" width="46" height="60" rx="18" fill="url(#phojas)"/>
+      <rect x="44" y="150" width="112" height="46" rx="10" fill="#d4b467"/><rect x="44" y="150" width="112" height="46" rx="10" fill="url(#phojas)"/>
+      <rect x="16" y="196" width="168" height="16" rx="5" fill="#8a6a2c"/>
+      <rect x="26" y="210" width="16" height="16" rx="3" fill="#3a2612"/><rect x="158" y="210" width="16" height="16" rx="3" fill="#3a2612"/>
+    </svg>
+    <div class="alfombra"></div>
+    <div class="mesa">
+      <div class="pata c"></div><div class="pata a"></div><div class="pata b"></div>
+      <div class="tablero"></div>
+      <div class="sobre-mesa"><div class="torre"></div><div class="lugar"></div></div>
     </div>
   </div>
+  <div class="libreria" data-lado="izq"></div>
+  <div class="libreria" data-lado="der"></div>
 </div>
-<div id="barra">
-  <button id="atras" type="button" aria-label="Página anterior">&lsaquo;</button>
-  <span id="num"></span>
-  <button id="adelante" type="button" aria-label="Página siguiente">&rsaquo;</button>
-  <button id="musica-btn" type="button" aria-label="Música" title="Música" hidden>&#9835;</button>
+<div id="pista-sala"></div>
+
+<!-- ================= EL LECTOR ================= -->
+<div id="lector">
+  <div id="escena">
+    <div id="libro" class="cerrado">
+      <div id="contratapa" class="cuero"></div>
+      <div id="canto-izq" class="canto"></div>
+      <div id="canto-der" class="canto"></div>
+      <div id="izq" class="pagina papel lado-izq oculta"></div>
+      <div id="der" class="pagina papel lado-der"></div>
+      <div id="tapa">
+        <div class="cara frente cuero">
+          <svg class="adorno" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h46M74 6h46" stroke="currentColor" stroke-width="1" fill="none"/><path d="M60 1l5 5-5 5-5-5z" fill="currentColor"/></svg>
+          <h1 id="tapa-titulo">Libro</h1>
+          <div id="tapa-autor"></div>
+          <svg class="adorno" viewBox="0 0 120 12" aria-hidden="true"><path d="M0 6h46M74 6h46" stroke="currentColor" stroke-width="1" fill="none"/><path d="M60 1l5 5-5 5-5-5z" fill="currentColor"/></svg>
+        </div>
+        <div class="cara dorso"></div>
+      </div>
+    </div>
+  </div>
+  <div id="barra">
+    <button id="atras" type="button" aria-label="Página anterior">&lsaquo;</button>
+    <span id="num"></span>
+    <button id="adelante" type="button" aria-label="Página siguiente">&rsaquo;</button>
+  </div>
+  <div id="pista"></div>
+  <button id="volver" type="button" aria-label="Volver a la sala" title="Volver a la sala">&lsaquo;</button>
 </div>
-<div id="pista"></div>
+<button id="musica-btn" type="button" aria-label="Música" title="Música" hidden>&#9835;</button>
 
 <script src="poema.js"></script>
+<script src="libros.js"></script>
 <script>
+// Colores de cuero compartidos por el lector y la sala.
+window.TAPAS = {
+  burdeos:['#6b2630','#4a1a20','#33111a'], verde:['#2f5a44','#1f3f2f','#142a20'],
+  azul:['#2b3f6b','#1e2c4d','#141d33'], marron:['#6b4a2b','#4a321c','#2f1f10'], negro:['#3d3d3d','#242424','#151515'],
+  girasol:['#a1741f','#6e4d13','#452f0a']
+};
+
+// =====================================================================
+//  EL LECTOR: el libro que se abre y pasa páginas. Vive escondido detrás
+//  de la sala y la sala lo llama con LECTOR.mostrar(datos).
+// =====================================================================
 (function(){
   'use strict';
-  const L = (typeof LIBRO === 'object' && LIBRO) ? LIBRO : {};
-  const paginas = Array.isArray(L.paginas) && L.paginas.length ? L.paginas
-    : ['Todavía no hay poema.\nAbre poema.js y escribe el tuyo.'];
-  const n = paginas.length + 2;               // portadilla + páginas + fin
   const $ = s => document.querySelector(s);
   const cuerpo = document.body, libro = $('#libro'), tapa = $('#tapa'), der = $('#der'), izq = $('#izq');
   const num = $('#num'), pista = $('#pista'), escena = $('#escena');
@@ -213,24 +452,27 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
   const DUR = reducido ? 300 : 1150;
   document.documentElement.style.setProperty('--dur', DUR + 'ms');
   const R = Math.random;
+  const raiz = document.documentElement.style;
 
   let modo = 1, cur = 0, abierto = false, ocupado = false, pistaT = 0, pasadas = 0, PW = 340, PH = 480;
+  let L = {}, paginas = [], n = 2, titulo = 'Libro';
+  const activo = () => cuerpo.classList.contains('en-lector');
 
-  // ---- ajustes del poema.js ----
-  const TAPAS = {
-    burdeos:['#6b2630','#4a1a20','#33111a'], verde:['#2f5a44','#1f3f2f','#142a20'],
-    azul:['#2b3f6b','#1e2c4d','#141d33'], marron:['#6b4a2b','#4a321c','#2f1f10'], negro:['#3d3d3d','#242424','#151515']
-  };
-  const t = TAPAS[L.tapa] || TAPAS.burdeos;
-  const raiz = document.documentElement.style;
-  raiz.setProperty('--tapa1', t[0]); raiz.setProperty('--tapa2', t[1]); raiz.setProperty('--tapa3', t[2]);
-  if (L.tamano > 0) raiz.setProperty('--escala', L.tamano);
-  if (L.alinear === 'centro') cuerpo.classList.add('centro');
-  const titulo = L.titulo || 'Sin título';
-  document.title = titulo + (L.autor ? ' · ' + L.autor : '');
-  $('#tapa-titulo').textContent = titulo;
-  $('#tapa-autor').textContent = L.autor || '';
-  if (L.tapa_solo_titulo) $('#tapa-autor').hidden = true;
+  // ---- cargar un libro (los ajustes de poema.js) ----
+  function cargar(datos){
+    L = (datos && typeof datos === 'object') ? datos : {};
+    paginas = Array.isArray(L.paginas) && L.paginas.length ? L.paginas
+      : ['Todavía no hay poema.\nAbre poema.js y escribe el tuyo.'];
+    n = paginas.length + 2;               // portadilla + páginas + fin
+    const t = TAPAS[L.tapa] || TAPAS.burdeos;
+    raiz.setProperty('--tapa1', t[0]); raiz.setProperty('--tapa2', t[1]); raiz.setProperty('--tapa3', t[2]);
+    raiz.setProperty('--escala', L.tamano > 0 ? L.tamano : 1);
+    cuerpo.classList.toggle('centro', L.alinear === 'centro');
+    titulo = L.titulo || 'Sin título';
+    $('#tapa-titulo').textContent = titulo;
+    $('#tapa-autor').textContent = L.autor || '';
+    $('#tapa-autor').hidden = !!L.tapa_solo_titulo;
+  }
 
   // =====================================================================
   //  EFECTOS DE PÁGINA: partículas en un canvas detrás del texto
@@ -408,6 +650,7 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
     const cv = el.querySelector('canvas.lienzo');
     if (cv){ el._efecto = new Escena(cv, cv.dataset.efecto, PW, PH); el._efecto.start(); }
   }
+  function pararEfectos(){ [der, izq].forEach(el => { if (el._efecto){ el._efecto.stop(); el._efecto = null; } }); }
   function prepararCara(cara, copia){
     const cv = cara.querySelector('canvas.lienzo'); if (!cv) return;
     if (copia && copia.width){ cv.width = copia.width; cv.height = copia.height; cv.getContext('2d').drawImage(copia, 0, 0); }
@@ -575,8 +818,8 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
       libro.classList.remove('abierto'); libro.classList.add('cerrado');
       cuerpo.classList.remove('leyendo');
       barra();
-      mostrarPista('Toca el libro para abrirlo', 0);
-      esperar(tapa, () => { cur = 0; render(); ocupado = false; });
+      pista.classList.remove('ver');
+      esperar(tapa, () => { cur = 0; render(); ocupado = false; if (LECTOR.alCerrar) LECTOR.alCerrar(); });
     }));
   }
   function adelante(){
@@ -630,16 +873,20 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
   escena.addEventListener('pointercancel', () => { pd = null; });
   $('#atras').addEventListener('click', atras);
   $('#adelante').addEventListener('click', adelante);
+  $('#volver').addEventListener('click', () => { if (LECTOR.alVolver) LECTOR.alVolver(); });
   addEventListener('keydown', e => {
+    if (!activo()) return;
     arrancarMusica();
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter' || e.key === 'PageDown'){ e.preventDefault(); adelante(); }
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace'){ e.preventDefault(); atras(); }
-    else if (e.key === 'Escape'){ cerrar(); }
+    else if (e.key === 'Escape'){ if (abierto) cerrar(); else if (!ocupado && LECTOR.alVolver) LECTOR.alVolver(); }
   });
   addEventListener('resize', medir);
 
   // ---- música de fondo: un mp3 propio en bucle sin costura (Web Audio) ----
-  const M = (L.musica && typeof L.musica === 'object' && L.musica.archivo) ? L.musica : null;
+  // Se configura en poema.js (bloque "musica") y suena en la sala y en el lector.
+  const LB = (typeof LIBRO === 'object' && LIBRO) ? LIBRO : {};
+  const M = (LB.musica && typeof LB.musica === 'object' && LB.musica.archivo) ? LB.musica : null;
   const btnM = $('#musica-btn');
   const VOL = (M && M.volumen != null) ? Math.max(0, Math.min(1, +M.volumen)) : 0.35;
   const CRUCE = 3;                       // segundos de solape entre una vuelta y la siguiente
@@ -685,22 +932,54 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
     if (audioEl && !mSilencio){ if (document.hidden) audioEl.pause(); else audioEl.play().catch(() => {}); }
   });
 
-  // ---- arranque (?p=N abre directo en esa página) ----
-  cuerpo.classList.add('instantaneo');
-  medir();
-  const p = q.has('p') ? Math.max(0, Math.min(n - 1, parseInt(q.get('p'), 10) || 0)) : -1;
-  if (p >= 0){
-    abierto = true; cur = p;
-    libro.classList.add('abierto'); libro.classList.remove('cerrado');
-    cuerpo.classList.add('leyendo');
-    if (modo === 1) tapa.classList.add('oculta');
-    render();
-  } else {
-    render();
-    mostrarPista('Toca el libro para abrirlo', 0);
+  // ---- la puerta que usa la sala ----
+  function reposar(){          // el libro cerrado en la portadilla, sin animar
+    cuerpo.classList.add('instantaneo');
+    document.querySelectorAll('.hoja').forEach(h => h.remove());
+    ocupado = false; abierto = false; cur = 0; pasadas = 0;
+    libro.classList.remove('abierto'); libro.classList.add('cerrado');
+    tapa.classList.remove('oculta');
+    cuerpo.classList.remove('leyendo');
+    pista.classList.remove('ver');
+    requestAnimationFrame(() => requestAnimationFrame(() => cuerpo.classList.remove('instantaneo')));
   }
-  requestAnimationFrame(() => requestAnimationFrame(() => cuerpo.classList.remove('instantaneo')));
+  window.LECTOR = {
+    alVolver: null,            // la persona pulsó "volver" (o Esc con el libro cerrado)
+    alCerrar: null,            // el libro terminó de cerrarse solo (Fin, o atrás en la portadilla)
+    activo,
+    estaAbierto: () => abierto,
+    musica: arrancarMusica,
+    rectLibro: () => tapa.getBoundingClientRect(),
+    esconderLibro: si => libro.classList.toggle('escondido', !!si),
+    // Prepara el libro en la mesa del lector y devuelve dónde queda la tapa (para que la sala
+    // haga volar el libro hasta ahí). Con pagina >= 0 se abre directo en esa página.
+    mostrar(datos, op){
+      op = op || {};
+      cargar(datos);
+      reposar();
+      medir();
+      if (op.pagina >= 0){
+        abierto = true; cur = Math.min(n - 1, op.pagina | 0);
+        libro.classList.add('abierto'); libro.classList.remove('cerrado');
+        cuerpo.classList.add('leyendo');
+        if (modo === 1) tapa.classList.add('oculta');
+      }
+      render();
+      if (!abierto) mostrarPista('Toca el libro para abrirlo', 0);
+      document.title = titulo + (L.autor ? ' · ' + L.autor : '');
+      return tapa.getBoundingClientRect();
+    },
+    ocultar(){
+      pararEfectos();
+      reposar();
+      render();
+      document.title = 'Libro';
+    }
+  };
+  medir();
 })();
 </script>
+<script src="girasoles.js"></script>
+<script src="sala.js"></script>
 </body>
 </html>

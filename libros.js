@@ -1,0 +1,36 @@
+// =====================================================================
+//  LA LIBRERÍA. Cada elemento es un libro que aparece en los estantes de
+//  la sala. Se toca para llevarlo a la mesa; en la mesa se toca para
+//  abrirlo y se arrastra de vuelta a la librería para guardarlo.
+//
+//  - id: nombre interno único (sin espacios ni tildes). Con él el navegador
+//        recuerda en qué ranura dejaste cada libro.
+//  - tipo: "poema"      se lee página a página; el contenido vive en poema.js.
+//          "girasoles"  al abrirlo caen girasoles hasta llenar la pantalla;
+//                       un toque muestra la nota y otro toque la guarda.
+//  - titulo: lo que se lee en el lomo y en la tapa. El poema toma el suyo
+//            de poema.js si no se indica aquí.
+//  - tapa: "burdeos", "verde", "azul", "marron", "negro" o "girasol".
+//  - nota: (solo girasoles) el texto que aparece cuando la pantalla se llena.
+//  - estante: dónde nace el libro la PRIMERA vez: lado "izq" o "der",
+//             fila 0-4 (0 = la de arriba) y columna 0-7 (0 = la de la
+//             izquierda). Después cada persona lo mueve donde quiera y su
+//             navegador recuerda el orden.
+// =====================================================================
+
+const LIBROS = [
+  {
+    id: "poema",
+    tipo: "poema",
+    datos: (typeof LIBRO === "object" && LIBRO) ? LIBRO : null,
+    estante: { lado: "izq", fila: 0, col: 1 },
+  },
+  {
+    id: "girasoles",
+    tipo: "girasoles",
+    titulo: "21 Sep 2026",
+    tapa: "girasol",
+    nota: "ññiñiñiñiñite quiero muchichichichísimo tanto y más que estas pocas flores",
+    estante: { lado: "der", fila: 0, col: 5 },
+  },
+];
