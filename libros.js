@@ -54,7 +54,7 @@ const LIBROS = [
     // tras la última limpia todo. Se pueden añadir más líneas a la lista.
     notas: [
       "ññiñiñiñiñite quiero muchichichichisimo tanto y mas que estas pocas flores",
-      "pd: y para que algun dia estas flores se vuelvan real",
+      "ojala algun dia estas flores se vuelvan reales",
     ],
     estante: { lado: "der", fila: 0, col: 5 },
   },
