@@ -330,7 +330,7 @@
   function abrirGirasoles(l){
     bloqueado = true;
     pistaS.classList.remove('ver');
-    GIRASOLES.mostrar({ nota: l.nota, lleno: q.has('lleno'), conNota: q.has('nota'), alTerminar: () => { bloqueado = false; } });
+    GIRASOLES.mostrar({ notas: Array.isArray(l.notas) ? l.notas : [l.nota], lleno: q.has('lleno'), conNota: q.has('nota') ? (q.get('nota') || '1') : '', alTerminar: () => { bloqueado = false; } });
   }
 
   // ---- prueba automática de la lógica (?test=1) ----

@@ -11,7 +11,8 @@
 //  - titulo: lo que se lee en el lomo y en la tapa. El poema toma el suyo
 //            de poema.js si no se indica aquí.
 //  - tapa: "burdeos", "verde", "azul", "marron", "negro" o "girasol".
-//  - nota: (solo girasoles) el texto que aparece cuando la pantalla se llena.
+//  - notas: (solo girasoles) los textos que aparecen, uno por toque, cuando
+//           la pantalla se llena (la primera es la nota; las demás, posdatas).
 //  - estante: dónde nace el libro la PRIMERA vez: lado "izq" o "der",
 //             fila 0-4 (0 = la de arriba) y columna 0-7 (0 = la de la
 //             izquierda). Después cada persona lo mueve donde quiera y su
@@ -49,7 +50,12 @@ const LIBROS = [
     tipo: "girasoles",
     titulo: "21 Sep 2026",
     tapa: "girasol",
-    nota: "ññiñiñiñiñite quiero muchichichichisimo tanto y mas que estas pocas flores",
+    // Las notas salen una por toque cuando la pantalla está llena; el toque
+    // tras la última limpia todo. Se pueden añadir más líneas a la lista.
+    notas: [
+      "ññiñiñiñiñite quiero muchichichichisimo tanto y mas que estas pocas flores",
+      "pd: y para que algun dia estas flores se vuelvan real",
+    ],
     estante: { lado: "der", fila: 0, col: 5 },
   },
 ];

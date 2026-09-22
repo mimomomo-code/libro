@@ -31,8 +31,9 @@ El catálogo vive en `libros.js`. Cada libro tiene un `id`, un `tipo`, un
 - `tipo: "girasoles"` es el libro **21 Sep 2026**: al abrirlo caen girasoles
   hasta llenar la pantalla, y entre ellos, repartidos a lo largo de la lluvia,
   hasta 12 limones que quedan encima del manto (un toque durante la lluvia
-  suelta una ráfaga). Cuando está llena, un toque muestra la `nota`; otro
-  toque limpia todo y el libro queda en la mesa. Las flores que aterrizan se
+  suelta una ráfaga). Cuando está llena, cada toque muestra la siguiente de
+  las `notas` (la primera es la nota, las demás posdatas); el toque tras la
+  última limpia todo y el libro queda en la mesa. Las flores que aterrizan se
   pintan una sola vez en un lienzo aparte, así que no se arrastra ni con mil
   flores.
 
@@ -108,7 +109,7 @@ guardan nada en el navegador):
 | `index.html?mesa=poema,girasoles` | la sala con esos libros en la mesa (el primero de pie) |
 | `index.html?abrir=poema` | el lector con el poema cerrado |
 | `index.html?p=3` | el poema abierto en la página 3 (`?modo=2` fuerza doble página) |
-| `index.html?abrir=girasoles&lleno=1` | la pantalla ya llena de girasoles (`&nota=1` con la nota a la vista) |
+| `index.html?abrir=girasoles&lleno=1` | la pantalla ya llena de girasoles (`&nota=1` con la nota a la vista, `&nota=2` la posdata) |
 | `index.html?limpio=1` | ignora lo que el navegador recuerda |
 | `index.html?test=1` | prueba automática de la sala (toques, torre, ranuras, arrastres y vuelos); el resultado sale arriba |
 

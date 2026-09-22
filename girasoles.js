@@ -6,10 +6,11 @@
 //  "posados", que ya no se vuelve a tocar. Las flores mismas son
 //  sprites pre-dibujados: cada frame es un drawImage por flor en el aire.
 //
-//  Uso: GIRASOLES.mostrar({ nota, alTerminar, lleno, conNota })
-//    - nota: el texto que aparece al tocar cuando la pantalla está llena.
-//    - alTerminar: se llama cuando la persona toca de nuevo y todo se limpia.
-//    - lleno / conNota: solo para capturas (pantalla llena de golpe / nota a la vista).
+//  Uso: GIRASOLES.mostrar({ notas, alTerminar, lleno, conNota })
+//    - notas: los textos que aparecen, uno por toque, cuando la pantalla está
+//      llena (la primera es la nota, las siguientes posdatas).
+//    - alTerminar: se llama cuando la persona toca tras la última y todo se limpia.
+//    - lleno / conNota: solo para capturas (pantalla llena de golpe / nota N a la vista).
 // =====================================================================
 (function(){
   'use strict';
@@ -116,8 +117,16 @@
     capa.id = 'girasoles';
     // tres lienzos: el manto posado, los limones posados (encima, para que no queden tapados) y lo que cae
     capa.innerHTML = '<canvas class="posados"></canvas><canvas class="frutas"></canvas><canvas class="cayendo"></canvas><div class="aviso">Toca</div>' +
-      '<div class="nota papel">' + ADORNO + '<p></p><span class="pie">Toca para volver a la sala</span></div>';
-    capa.querySelector('.nota p').textContent = op.nota || '';
+      '<div class="nota papel">' + ADORNO + '<p></p><span class="pie"></span></div>';
+    const NOTAS = (Array.isArray(op.notas) ? op.notas : [op.nota]).filter(t => t != null && String(t).trim());
+    const notaP = capa.querySelector('.nota p'), notaPie = capa.querySelector('.nota .pie');
+    let notaIdx = -1;
+    function ponerNota(i){
+      notaIdx = i;
+      notaP.textContent = NOTAS[i] || '';
+      capa.classList.toggle('posdata', i > 0);
+      notaPie.textContent = i < NOTAS.length - 1 ? 'Toca para seguir' : 'Toca para volver a la sala';
+    }
     document.body.appendChild(capa);
     const cvP = capa.querySelector('.posados'), cvF = capa.querySelector('.frutas'), cvC = capa.querySelector('.cayendo');
     const ctxP = cvP.getContext('2d'), ctxF = cvF.getContext('2d'), ctxC = cvC.getContext('2d');
@@ -224,7 +233,17 @@
       for (let k = 0; k < 12; k++) soltarUno(Math.max(0, Math.min(ncol - 1, c0 + (R() * 7 | 0) - 3)), true);
       arrancar();
     }
-    function mostrarNota(){ notaVisible = true; capa.classList.add('nota-visible'); }
+    let cambiando = false;
+    function mostrarNota(){
+      if (!NOTAS.length){ terminar(); return; }
+      notaVisible = true; ponerNota(0); capa.classList.add('nota-visible');
+    }
+    // la nota se va y llega la siguiente (la posdata) con un fundido corto
+    function siguienteNota(){
+      if (cambiando) return;
+      cambiando = true; capa.classList.remove('nota-visible');
+      setTimeout(() => { ponerNota(notaIdx + 1); capa.classList.add('nota-visible'); cambiando = false; }, 420);
+    }
     function terminar(){
       if (terminado) return;
       terminado = true;
@@ -254,7 +273,7 @@
       if (!pd) return;
       const lejos = Math.hypot(e.clientX - pd.x, e.clientY - pd.y) > 18; pd = null;
       if (lejos || terminado) return;
-      if (notaVisible) terminar();
+      if (notaVisible){ if (notaIdx < NOTAS.length - 1) siguienteNota(); else if (!cambiando) terminar(); }
       else if (lleno) mostrarNota();
       else rafaga(e.clientX);
     });
@@ -265,7 +284,7 @@
     if (op.lleno){          // para capturas: el manto ya puesto
       let guarda = 0; while (!lleno && guarda++ < 100000) paso(1 / 30);
       capa.classList.add('lleno');
-      if (op.conNota) mostrarNota();
+      if (op.conNota){ mostrarNota(); const k = Math.min(NOTAS.length - 1, (parseInt(op.conNota, 10) || 1) - 1); if (k > 0) ponerNota(k); }
     } else arrancar();
 
     return { terminar };
