@@ -28,6 +28,15 @@ const DECORACION = {
   alfombra: "assets/alfombra.webp",    // vista en perspectiva, con el borde de abajo más ancho
 };
 
+// Girasoles y limones ilustrados para la lluvia del libro "21 Sep 2026".
+// Si estas imágenes existen (fondo transparente, cada flor o fruto solo y
+// centrado), la lluvia las usa en lugar de las flores dibujadas por código;
+// si falta alguna, se ignora, y si no hay ninguna vuelve el dibujo.
+const ARTE_GIRASOLES = {
+  girasoles: ["assets/girasol_1.webp", "assets/girasol_2.webp", "assets/girasol_3.webp", "assets/girasol_4.webp"],
+  limones: ["assets/limon_1.webp", "assets/limon_2.webp", "assets/limon_3.webp"],
+};
+
 const LIBROS = [
   {
     id: "poema",

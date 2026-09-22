@@ -297,10 +297,10 @@ body.en-lector #pista-sala{opacity:0}
   background:var(--tex-madera-h, none) 0 0 / 190px 190px, linear-gradient(180deg,#9a6a3f,#7d4f2c);background-blend-mode:multiply, normal}
 .ranura{position:relative;transition:box-shadow .2s}
 body.arrastrando .ranura{box-shadow:inset 0 0 0 1px rgba(240,213,154,.10)}
-.ranura.destino::after{content:'';position:absolute;bottom:0;left:50%;width:var(--lw);height:90%;transform:translateX(-50%);
+.ranura.destino::after{content:'';position:absolute;bottom:0;left:50%;width:var(--lw);height:90%;max-height:130px;transform:translateX(-50%);
   border:1.5px dashed rgba(240,213,154,.9);border-bottom:none;border-radius:2px 2px 0 0;background:rgba(240,213,154,.16)}
 /* el lomo de un libro guardado */
-.lomo{position:absolute;bottom:0;left:50%;width:var(--lw);height:90%;transform:translateX(-50%);z-index:2;
+.lomo{position:absolute;bottom:0;left:50%;width:var(--lw);height:90%;max-height:130px;transform:translateX(-50%);z-index:2;
   background:var(--tex-cuero, none) 0 0 / 90px 90px, linear-gradient(90deg, var(--c3), var(--c1) 30%, var(--c2) 70%, var(--c3));
   background-blend-mode:multiply, normal;
   border-radius:2px 2px 0 0;box-shadow:1px 0 0 rgba(0,0,0,.4), -1px 0 0 rgba(255,255,255,.06), 0 -1px 0 rgba(255,255,255,.08);
@@ -391,15 +391,23 @@ body.arrastrando{cursor:grabbing}
 #girasoles .nota p{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(20px, 5.4vw, 27px);font-style:italic;font-weight:500;line-height:1.4;color:var(--tinta);margin:.3em 0 .7em;overflow-wrap:anywhere}
 #girasoles .nota .pie{display:block;font-family:Cinzel,serif;font-size:10px;letter-spacing:.18em;color:var(--folio);text-transform:uppercase}
 
-/* pantallas angostas (celular vertical): ventana y sillones más grandes */
+/* pantallas angostas (celular vertical): la escena se agrupa como en el dibujo:
+   librerías más estrechas y de piso a techo, el suelo más alto, la ventana grande,
+   los sillones justo debajo y la alfombra con la mesa a continuación */
 @media (max-width: 640px) and (orientation: portrait){
-  .ventanal{width:min(74%, 520px);top:4%}
-  #pista-sala{top:32%}
-  .sillon.rojo{width:50%;left:0;bottom:32%}
-  .sillon.amarillo{width:52%;right:-2%;bottom:31%}
-  .alfombra{top:66%}
-  .alfombra.con-imagen{left:3%;right:3%;top:66%}
+  #sala{--lib:clamp(72px, 20vw, 230px)}
+  .libreria{top:1.5%;bottom:5%}
+  .pared{height:52%}
+  .suelo{top:52%}
+  .ventanal{width:min(86%, 520px);top:3%;max-height:32%}
+  #pista-sala{top:31%;font-size:11px;max-width:80vw}
+  .sillon.rojo{width:56%;left:-3%;bottom:44%}
+  .sillon.amarillo{width:58%;right:-4%;bottom:43%}
+  .alfombra{top:55%;bottom:1%}
+  .alfombra.con-imagen{left:3%;right:3%;top:55%}
   .alfombra .foto{object-fit:cover;object-position:50% 100%}
+  .luz-luna{top:50%;height:48%}
+  .mesa{bottom:4%}
 }
 @media (prefers-reduced-motion: reduce){
   :root{--dur:.3s}

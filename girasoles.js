@@ -86,6 +86,23 @@
     return { c, S };
   }
 
+  // Girasoles y limones ilustrados (ARTE_GIRASOLES en libros.js): se precargan al abrir la
+  // página y, si están, cada uno se escala a un sprite del tamaño que pide la pantalla.
+  const ARTE = (typeof ARTE_GIRASOLES === 'object' && ARTE_GIRASOLES) ? ARTE_GIRASOLES : {};
+  const cargadas = { girasoles: [], limones: [] };
+  for (const k of ['girasoles', 'limones']) for (const ruta of (Array.isArray(ARTE[k]) ? ARTE[k] : [])){
+    const im = new Image(); im.onload = () => cargadas[k].push(im); im.onerror = () => {}; im.src = ruta;
+  }
+  function spriteImagen(im, ancho, dpr){
+    const k = ancho / Math.max(im.naturalWidth, im.naturalHeight);
+    const w = im.naturalWidth * k, h = im.naturalHeight * k, S = Math.ceil(Math.max(w, h) + 8);
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(S * dpr);
+    const ctx = c.getContext('2d'); ctx.scale(dpr, dpr);
+    ctx.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
+    return { c, S };
+  }
+
   const ADORNO = (() => {
     let s = '<svg class="adorno-girasol" viewBox="0 0 60 60" aria-hidden="true"><g fill="#e8ad25" stroke="#b9800e" stroke-width=".6">' +
       '<path id="ptl" d="M30 30C26 22 26 12 30 5C34 12 34 22 30 30z"/>';
@@ -113,8 +130,11 @@
       D = Math.max(36, Math.min(66, Math.min(W, H) * 0.115)); r = D / 2;
       colW = D * 0.5; ncol = Math.ceil(W / colW) + 1;
       esc = H / 900;
-      SPR = []; for (let i = 0; i < 10; i++) SPR.push(sprite(r * (0.8 + R() * 0.4), PAL[i % PAL.length], 12 + (R() * 6 | 0), dpr));
-      LIM = [spriteLimon(r * 1.05, dpr), spriteLimon(r * .9, dpr), spriteLimon(r * 1.15, dpr)];
+      SPR = []; LIM = [];
+      if (cargadas.girasoles.length) for (let i = 0; i < 10; i++) SPR.push(spriteImagen(cargadas.girasoles[i % cargadas.girasoles.length], D * (0.85 + R() * 0.35), dpr));
+      else for (let i = 0; i < 10; i++) SPR.push(sprite(r * (0.8 + R() * 0.4), PAL[i % PAL.length], 12 + (R() * 6 | 0), dpr));
+      if (cargadas.limones.length) for (let i = 0; i < 6; i++) LIM.push(spriteImagen(cargadas.limones[i % cargadas.limones.length], r * (1.8 + R() * 0.5), dpr));
+      else LIM = [spriteLimon(r * 1.05, dpr), spriteLimon(r * .9, dpr), spriteLimon(r * 1.15, dpr)];
       for (const cv of [cvP, cvF, cvC]){ cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
       for (const cx of [ctxP, ctxF, ctxC]) cx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // cuántas flores hacen falta y a qué ritmo para llenar en ~12 s

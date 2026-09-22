@@ -55,6 +55,39 @@ isolated on a plain transparent background, high resolution
 
 Mismo prompt negativo que el rojo.
 
+## Girasoles y limones de la lluvia
+
+La lluvia del libro "21 Sep 2026" dibuja las flores por código. Si en
+`assets/` hay `girasol_1.webp` … `girasol_4.webp` y `limon_1.webp` …
+`limon_3.webp` (los nombres los fija `ARTE_GIRASOLES` en `libros.js`), los usa
+en su lugar. Pueden venir varios en una misma imagen separados por huecos
+vacíos: se recortan igual que los sillones. Cada flor o fruto entero, visto
+desde arriba, sin tallo ni sombra.
+
+```
+four sunflowers seen from directly above, each one a separate whole flower,
+arranged in a row with clear empty gaps between them, slight natural variation
+in size and petal shape, golden yellow petals, dark brown seed head with a
+spiral pattern, storybook illustration style, matte, soft even lighting, no
+stems, no leaves, no shadow, isolated on a plain transparent background, high
+resolution
+```
+
+```
+three whole lemons, side view, each one a separate fruit with a single small
+green leaf attached, arranged in a row with clear empty gaps between them,
+bright yellow dimpled peel, storybook illustration style, matte, soft even
+lighting, no shadow, isolated on a plain transparent background, high
+resolution
+```
+
+Prompt negativo para los dos:
+
+```
+photo, photorealistic, glossy, text, watermark, stems, vase, bouquet,
+overlapping, touching, cropped, cut off, background, table, shadow, blurry
+```
+
 ## Mesa y alfombra (ya cableadas)
 
 `assets/mesa.webp` (vista de frente; los libros se apoyan a un 19 % de su
