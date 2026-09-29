@@ -36,8 +36,54 @@ El catálogo vive en `libros.js`. Cada libro tiene un `id`, un `tipo`, un
   última limpia todo y el libro queda en la mesa. Las flores que aterrizan se
   pintan una sola vez en un lienzo aparte, así que no se arrastra ni con mil
   flores.
+- `tipo: "album"` se lee página a página como el poema, pero sus páginas se
+  escriben en el propio `libros.js` (lista `paginas`, una entrada por página):
+  `{ foto: "assets/album/x.webp", pie: "..." }` pega una foto con marco blanco,
+  un poco ladeada, y la frase manuscrita debajo si hay `pie`;
+  `{ dibujo: "assets/suenos/x.webp" }` pone un dibujo con fondo transparente
+  directo sobre el papel; `{ blanca: true, texto: "..." }` es una hoja en
+  blanco con una frase arriba y renglones para seguir escribiendo; y también
+  valen páginas de texto como las del poema. Tocar una foto o un dibujo lo
+  abre en la **lupa** (pantalla completa; pellizco, doble toque o rueda para
+  acercar; toque fuera para cerrar). Las imágenes se piden al abrir el libro.
+  Así están hechos **Sueños** (los dibujos de Paint, un sueño por página y la
+  hoja en blanco "añadamos mas sueños juntos") y **Álbum de fotos** (una foto
+  por plana: la primera cita en videollamada, la primera pasarela y el intento
+  de cómic; el pie va en la primera foto de cada tanda). `lomo` da un rótulo
+  corto para el lomo cuando el título no cabe.
 
 Colores de tapa: `burdeos`, `verde`, `azul`, `marron`, `negro`, `girasol`.
+
+Para preparar imágenes nuevas: fotos a 1280 px de lado mayor en WebP (calidad
+82, ~130 KB cada una); dibujos con el blanco vuelto transparente en WebP sin
+pérdida (`assets/suenos/` pesa 31 KB entre los seis).
+
+## El candado del álbum
+
+El **Álbum de fotos** lleva candado: en la librería y en la mesa se le ve un
+candadito, y al tocarlo pide un número antes de abrirse. El navegador recuerda
+el número, así que solo se escribe una vez por celular.
+
+No es solo una cortina: las fotos están **cifradas** en `assets/album/*.bin`
+(AES-256-GCM con una clave derivada del número por PBKDF2, 250 000 vueltas).
+Lo que viaja a GitHub es ilegible sin el número, y el número no aparece en
+ningún archivo del repositorio. Un número de seis cifras frena a cualquier
+curioso y a un intento razonable de adivinarlo; no frena a alguien con mucho
+tiempo y una tarjeta gráfica probando el millón de combinaciones, así que si
+algún día hiciera falta más, basta un número más largo.
+
+Las fotos sin cifrar viven en `privado/album/` (carpeta fuera de git). Para
+**añadir fotos**: copiarlas ahí (jpg, png o webp, nombre corto sin espacios) y
+correr `python _tools/candado_album.py` desde la carpeta del proyecto: pide el
+número, convierte a WebP lo que haga falta, cifra lo nuevo y al final imprime
+las líneas `{ foto: "assets/album/nombre.bin" }` que faltan en `libros.js`.
+Luego `git add -A`, commit y push. `--nueva-clave` cambia el número (se
+recifra todo y cada celular tendrá que volver a escribirlo).
+
+Para probarlo en la computadora hay que servir la carpeta por http (por
+ejemplo `python -m http.server` y abrir `http://localhost:8000/`): abierto
+como archivo, el navegador no deja leer los `.bin`. `?abrir=album&clave=N`
+abre sin preguntar (solo para probar; no guarda nada).
 
 ## Texturas y sillones ilustrados
 
@@ -109,6 +155,7 @@ guardan nada en el navegador):
 | `index.html?mesa=poema,girasoles` | la sala con esos libros en la mesa (el primero de pie) |
 | `index.html?abrir=poema` | el lector con el poema cerrado |
 | `index.html?p=3` | el poema abierto en la página 3 (`?modo=2` fuerza doble página) |
+| `index.html?abrir=album&p=5` | un álbum abierto en su página 5 (`&lupa=1` con esa foto ya en la lupa; también `abrir=suenos`); el álbum con candado necesita `&clave=N` y servirse por http |
 | `index.html?abrir=girasoles&lleno=1` | la pantalla ya llena de girasoles (`&nota=1` con la nota a la vista, `&nota=2` la posdata) |
 | `index.html?limpio=1` | ignora lo que el navegador recuerda |
 | `index.html?test=1` | prueba automática de la sala (toques, torre, ranuras, arrastres y vuelos); el resultado sale arriba |

@@ -9,7 +9,7 @@
 <title>Libro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --pw:340px; --ph:480px; --escala:1; --dur:1.15s;
@@ -164,6 +164,39 @@ body.centro .verso{padding-left:0;text-indent:0}
   animation-delay:calc(var(--espera, 0ms) + var(--i, 0) * 130ms)}
 @keyframes aparecer{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 
+/* ---------- páginas con imagen: fotos pegadas, dibujos sobre el papel y la hoja en blanco ---------- */
+/* el marco blanco es el propio <img> (padding + fondo): así el borde abraza la foto sea apaisada o vertical */
+.contenido.foto,.contenido.dibujo{padding:7% 6% 10%}
+.marco{display:flex;flex-direction:column;align-items:center;max-width:100%;transform:rotate(var(--giro, 0deg))}
+.dibujo .marco{transform:none}
+.marco img{display:block;max-width:100%;max-height:calc(var(--ph) * .66);width:auto;height:auto;-webkit-user-drag:none}
+.foto img{padding:calc(var(--pw) * .028) calc(var(--pw) * .028) calc(var(--pw) * .034);background:#fbf8f1;
+  box-shadow:0 1px 2px rgba(60,40,20,.28), 0 8px 18px rgba(60,40,20,.3), inset 0 0 0 1px rgba(0,0,0,.06)}
+.dibujo img{max-width:92%}
+.con-pie .marco img{max-height:calc(var(--ph) * .56)}
+.pie{font-family:Caveat,'Cormorant Garamond',cursive;font-weight:500;font-size:calc(var(--ph) * .04 * var(--escala));line-height:1.2;
+  color:#3a2d23;margin:.6em .3em 0;max-width:100%;text-wrap:balance}
+.dibujo .pie{margin-top:.9em}
+/* la hoja en blanco: una frase manuscrita arriba y renglones tenues para seguir escribiendo */
+.contenido.hoja-blanca{justify-content:flex-start;padding-top:15%}
+.hoja-blanca .manuscrito{font-family:Caveat,'Cormorant Garamond',cursive;font-weight:600;font-size:calc(var(--ph) * .054 * var(--escala));
+  line-height:1.25;color:#3a2d23;margin:0;text-wrap:balance}
+.hoja-blanca .renglones{width:78%;height:50%;margin-top:6%;
+  background:repeating-linear-gradient(180deg, transparent 0, transparent calc(var(--ph) * .06 - 1px), rgba(110,80,45,.2) calc(var(--ph) * .06 - 1px), rgba(110,80,45,.2) calc(var(--ph) * .06))}
+.viva .marco,.viva .manuscrito{opacity:0;animation:asomar .9s ease forwards;animation-delay:var(--espera, 0ms)}
+@keyframes asomar{from{opacity:0}to{opacity:1}}
+/* la lupa */
+#lupa{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(10,7,6,.94);
+  touch-action:none;overflow:hidden;cursor:zoom-out}
+#lupa[hidden]{display:none}
+#lupa img{max-width:100%;max-height:100%;width:auto;height:auto;display:block;cursor:grab;transform-origin:50% 50%;will-change:transform;
+  box-shadow:0 12px 40px rgba(0,0,0,.6);-webkit-user-drag:none}
+#lupa .cerrar{position:absolute;right:max(14px, env(safe-area-inset-right));top:max(12px, env(safe-area-inset-top));width:40px;height:40px;border-radius:50%;
+  background:rgba(18,13,11,.55);border:1px solid rgba(212,176,106,.4);color:rgba(240,213,154,.9);
+  font:400 26px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 0 3px}
+#lupa .pista-lupa{position:absolute;left:0;right:0;bottom:max(16px, env(safe-area-inset-bottom));text-align:center;font-family:Cinzel,serif;font-size:11px;
+  letter-spacing:.14em;color:rgba(240,213,154,.6);pointer-events:none;padding:0 10%}
+
 /* ---------- chrome del lector ---------- */
 #barra{position:absolute;left:0;right:0;bottom:max(14px, env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;gap:18px;
   font-family:Cinzel,serif;font-size:13px;letter-spacing:.2em;color:rgba(212,176,106,.75);opacity:0;transition:opacity .6s;pointer-events:none}
@@ -189,6 +222,35 @@ body.en-lector #pista-sala{opacity:0}
   font:400 19px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 0 2px;transition:opacity .4s,background .2s,border-color .2s}
 #musica-btn:hover{background:rgba(212,176,106,.12);border-color:rgba(212,176,106,.7)}
 #musica-btn.apagada{opacity:.35}
+
+/* ---------- el candado: la cerradura que pide el número, y los candaditos del lomo y de la mesa ---------- */
+#candado{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:20px;   /* por encima de la pista de la sala (35) */
+  background:rgba(8,5,4,.74);backdrop-filter:blur(2px)}
+#candado[hidden]{display:none}
+.cerradura{width:min(86vw, 350px);padding:26px 22px 20px;border-radius:8px;text-align:center;color:#f0d59a;font-family:Cinzel,serif;
+  background:var(--tex-cuero, none) 0 0 / 220px 220px, linear-gradient(160deg,#4a2a18,#2a170d 60%,#1a0e08);background-blend-mode:multiply, normal;
+  border:1px solid rgba(212,176,106,.55);box-shadow:0 0 0 4px rgba(0,0,0,.35), 0 30px 60px rgba(0,0,0,.7), inset 0 0 0 1px rgba(0,0,0,.4)}
+.cerradura .cierre{width:46px;height:46px;margin:0 auto 10px;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.cerradura .tit{font-size:14px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px}
+.cerradura .sub{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:rgba(240,213,154,.8);margin-bottom:16px}
+.cerradura .cifra{display:block;width:100%;text-align:center;font:600 30px/1.3 Cinzel,serif;letter-spacing:.42em;padding:10px 0 10px .42em;
+  color:#f6e2a6;background:rgba(0,0,0,.45);border:1px solid rgba(212,176,106,.45);border-radius:6px;outline:none;caret-color:#f0d59a;
+  user-select:text;-webkit-user-select:text}
+.cerradura .cifra:focus{border-color:rgba(212,176,106,.9);box-shadow:0 0 0 3px rgba(212,176,106,.18)}
+.cerradura .aviso{min-height:1.4em;margin:10px 0 4px;font-family:'Cormorant Garamond',serif;font-size:16px;color:rgba(240,213,154,.85)}
+.cerradura .botones{display:flex;gap:10px;justify-content:center;margin-top:8px}
+.cerradura button{font-family:Cinzel,serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;padding:9px 18px;border-radius:20px;cursor:pointer;
+  background:rgba(0,0,0,.35);border:1px solid rgba(212,176,106,.45);color:#f0d59a}
+.cerradura button.abrir{background:linear-gradient(180deg,#d9b463,#a9822f);color:#2a170d;border-color:#f0d59a}
+.cerradura button:disabled{opacity:.5;cursor:default}
+.cerradura.tiembla{animation:tiembla .5s}
+@keyframes tiembla{0%,100%{transform:none}20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+.candado-lomo,.candado-mesa{position:absolute;left:50%;transform:translateX(-50%);aspect-ratio:1;pointer-events:none;z-index:2;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7 10V7a5 5 0 0 1 10 0v3' fill='none' stroke='%23f0d59a' stroke-width='2'/><rect x='5' y='10' width='14' height='11' rx='2' fill='%23f0d59a'/><circle cx='12' cy='15.5' r='1.6' fill='%233a2410'/></svg>") center / contain no-repeat;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.7))}
+.candado-lomo{bottom:11%;width:64%}
+.candado-mesa{bottom:11%;width:24%}
+.candado-mesa.abierto{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7 10V7a5 5 0 0 1 10 0v1' fill='none' stroke='%23f0d59a' stroke-width='2'/><rect x='5' y='10' width='14' height='11' rx='2' fill='%23f0d59a'/><circle cx='12' cy='15.5' r='1.6' fill='%233a2410'/></svg>")}
 
 /* =====================================================================
    LA SALA: dos librerías, la ventana con la luna, los sillones y la mesa
@@ -509,8 +571,26 @@ body.arrastrando{cursor:grabbing}
   </div>
   <div id="pista"></div>
   <button id="volver" type="button" aria-label="Volver a la sala" title="Volver a la sala">&lsaquo;</button>
+  <!-- la lupa: una foto del álbum a pantalla completa (toque en la foto); pellizco o rueda para acercar -->
+  <div id="lupa" hidden>
+    <img alt="" draggable="false">
+    <button class="cerrar" type="button" aria-label="Cerrar">&times;</button>
+    <div class="pista-lupa">Pellizca o toca dos veces para acercar · toca fuera para cerrar</div>
+  </div>
 </div>
 <button id="musica-btn" type="button" aria-label="Música" title="Música" hidden>&#9835;</button>
+
+<!-- ================= EL CANDADO (candado.js) ================= -->
+<div id="candado" hidden>
+  <div class="cerradura" role="dialog" aria-label="Este libro tiene candado">
+    <svg class="cierre" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="#d4b06a" stroke-width="2"/><rect x="5" y="10" width="14" height="11" rx="2" fill="#d4b06a"/><circle cx="12" cy="15.5" r="1.6" fill="#3a2410"/></svg>
+    <div class="tit">Este libro tiene candado</div>
+    <div class="sub">Escribe el número para abrirlo</div>
+    <input class="cifra" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="12" aria-label="Número del candado">
+    <div class="aviso"></div>
+    <div class="botones"><button type="button" class="cancelar">Volver</button><button type="button" class="abrir">Abrir</button></div>
+  </div>
+</div>
 
 <script src="poema.js"></script>
 <script src="libros.js"></script>
@@ -557,6 +637,10 @@ window.TAPAS = {
     $('#tapa-titulo').textContent = titulo;
     $('#tapa-autor').textContent = L.autor || '';
     $('#tapa-autor').hidden = !!L.tapa_solo_titulo;
+    // las imágenes del libro se piden ya, para que al pasar la hoja no aparezca una página vacía
+    // (un libro con candado ya las tiene descifradas en memoria)
+    if (!L._precarga && !L.candado) L._precarga = paginas.filter(p => p && typeof p === 'object' && (p.foto || p.dibujo))
+      .map(p => { const im = new Image(); im.decoding = 'async'; im.src = String(p.foto || p.dibujo); return im; });
   }
 
   // =====================================================================
@@ -757,6 +841,20 @@ window.TAPAS = {
       '<p class="nota">Toca para cerrar el libro</p></div>';
     const p = paginas[i - 1];
     const obj = p && typeof p === 'object';
+    const espera_css = '--espera:' + (espera || 0) + 'ms';
+    // página con imagen: una foto pegada (marco blanco, un poco ladeada; el lado alterna) o un dibujo sobre el papel
+    if (obj && (p.foto || p.dibujo)){
+      const pie = p.pie ? '<div class="pie">' + esc(p.pie) + '</div>' : '';
+      const ruta = String(p.foto || p.dibujo);
+      const src = (L._descifradas && L._descifradas[ruta]) || ruta;       // libro con candado: la copia descifrada en memoria
+      return lienzoDe(p.efecto) + '<div class="contenido ' + (p.foto ? 'foto' : 'dibujo') + (pie ? ' con-pie' : '') + (viva ? ' viva' : '') +
+        '" style="' + espera_css + ';--giro:' + (i % 2 ? -1.3 : 1.1) + 'deg"><div class="marco">' +
+        '<img src="' + esc(src).replace(/"/g, '&quot;') + '" alt="" decoding="async" draggable="false">' + pie +
+        '</div><div class="folio">' + i + '</div></div>';
+    }
+    // hoja en blanco (con una frase manuscrita, si la hay) para seguir escribiendo
+    if (obj && p.blanca) return '<div class="contenido hoja-blanca' + (viva ? ' viva' : '') + '" style="' + espera_css + '">' +
+      (p.texto ? '<p class="manuscrito">' + esc(p.texto) + '</p>' : '') + '<div class="renglones"></div></div>';
     const texto = obj ? String(p.texto || '') : String(p || '');
     const tit = (obj && p.titulo) ? '<h2 class="titulo-pagina" style="--i:0">' + esc(p.titulo) + '</h2>' : '';
     let k = tit ? 1 : 0;
@@ -896,6 +994,7 @@ window.TAPAS = {
   }
   function cerrar(){
     if (ocupado || !abierto) return;
+    cerrarLupa();
     ocupado = true; abierto = false;
     tapa.classList.remove('oculta');
     tapa.getBoundingClientRect();
@@ -943,16 +1042,58 @@ window.TAPAS = {
     }
   }
 
+  // ---- la lupa: una imagen del libro a pantalla completa, con arrastre, pellizco, doble toque y rueda ----
+  const lupa = $('#lupa'), lupaImg = lupa.querySelector('img');
+  const lz = { s: 1, x: 0, y: 0, p: new Map(), d0: 0, s0: 1, movido: false, ultimoTap: 0 };
+  function aplicarLupa(){ lupaImg.style.transform = 'translate(' + lz.x + 'px,' + lz.y + 'px) scale(' + lz.s + ')'; }
+  function abrirLupa(src){
+    lz.s = 1; lz.x = lz.y = 0; lz.p.clear(); aplicarLupa();
+    lupaImg.src = src; lupa.hidden = false;
+  }
+  function cerrarLupa(){ if (lupa.hidden) return; lupa.hidden = true; lupaImg.removeAttribute('src'); lz.p.clear(); }
+  function fijarZoom(s){ lz.s = Math.min(6, Math.max(1, s)); if (lz.s === 1){ lz.x = lz.y = 0; } aplicarLupa(); }
+  lupa.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    try { lupa.setPointerCapture(e.pointerId); } catch (x) {}
+    lz.p.set(e.pointerId, { x: e.clientX, y: e.clientY }); lz.movido = false;
+    if (lz.p.size === 2){ const [a, b] = [...lz.p.values()]; lz.d0 = Math.hypot(a.x - b.x, a.y - b.y) || 1; lz.s0 = lz.s; }
+  });
+  lupa.addEventListener('pointermove', e => {
+    const prev = lz.p.get(e.pointerId); if (!prev) return;
+    if (lz.p.size === 1 && lz.s > 1){ lz.x += e.clientX - prev.x; lz.y += e.clientY - prev.y; }
+    if (Math.abs(e.clientX - prev.x) + Math.abs(e.clientY - prev.y) > 2) lz.movido = true;
+    lz.p.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (lz.p.size === 2){ const [a, b] = [...lz.p.values()]; lz.s = Math.min(6, Math.max(1, lz.s0 * Math.hypot(a.x - b.x, a.y - b.y) / lz.d0)); if (lz.s === 1) lz.x = lz.y = 0; }
+    aplicarLupa();
+  });
+  lupa.addEventListener('pointerup', e => {
+    const tenia = lz.p.delete(e.pointerId); if (!tenia || lz.p.size) return;
+    if (lz.movido) return;
+    const t = performance.now();
+    if (e.target === lupaImg){                       // doble toque en la foto: acerca o vuelve a 1×
+      if (t - lz.ultimoTap < 320){ fijarZoom(lz.s > 1.2 ? 1 : 2.5); lz.ultimoTap = 0; } else lz.ultimoTap = t;
+      return;
+    }
+    cerrarLupa();                                    // toque fuera de la foto (o en la ✕)
+  });
+  lupa.addEventListener('pointercancel', e => { lz.p.delete(e.pointerId); });
+  lupa.addEventListener('wheel', e => { e.preventDefault(); fijarZoom(lz.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
+  lupa.addEventListener('click', e => { if (e.target.classList.contains('cerrar')) cerrarLupa(); });
+
   // ---- entrada: toque, deslizar, teclado, botones ----
   let pd = null;
-  escena.addEventListener('pointerdown', e => { if (e.button !== 0) return; pd = { x: e.clientX, y: e.clientY }; });
+  escena.addEventListener('pointerdown', e => { if (e.button !== 0) return; pd = { x: e.clientX, y: e.clientY, t: e.target }; });
   escena.addEventListener('pointerup', e => {
     if (!pd) return;
     arrancarMusica();
-    const dx = e.clientX - pd.x, dy = e.clientY - pd.y; pd = null;
+    const dx = e.clientX - pd.x, dy = e.clientY - pd.y, t0 = pd.t; pd = null;
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3){ if (dx < 0) adelante(); else atras(); return; }
     if (Math.abs(dx) > 12 || Math.abs(dy) > 12) return;
     if (!abierto){ abrir(); return; }
+    // toque sobre una foto o un dibujo de la página: se abre en la lupa en vez de pasar la hoja
+    const im = t0 && t0.closest ? t0.closest('.marco img') : null;
+    if (im && !ocupado && im.closest('.pagina')){ abrirLupa(im.getAttribute('src')); return; }
     if (e.clientX < innerWidth * 0.25) atras(); else adelante();
   });
   escena.addEventListener('pointercancel', () => { pd = null; });
@@ -964,7 +1105,7 @@ window.TAPAS = {
     arrancarMusica();
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter' || e.key === 'PageDown'){ e.preventDefault(); adelante(); }
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace'){ e.preventDefault(); atras(); }
-    else if (e.key === 'Escape'){ if (abierto) cerrar(); else if (!ocupado && LECTOR.alVolver) LECTOR.alVolver(); }
+    else if (e.key === 'Escape'){ if (!lupa.hidden) cerrarLupa(); else if (abierto) cerrar(); else if (!ocupado && LECTOR.alVolver) LECTOR.alVolver(); }
   });
   addEventListener('resize', medir);
 
@@ -1052,9 +1193,12 @@ window.TAPAS = {
       render();
       if (!abierto) mostrarPista('Toca el libro para abrirlo', 0);
       document.title = titulo + (L.autor ? ' · ' + L.autor : '');
+      // ?lupa=1 (capturas): la imagen de la página abierta ya en la lupa
+      if (abierto && q.has('lupa')){ const im = der.querySelector('.marco img') || izq.querySelector('.marco img'); if (im) abrirLupa(im.getAttribute('src')); }
       return tapa.getBoundingClientRect();
     },
     ocultar(){
+      cerrarLupa();
       pararEfectos();
       reposar();
       render();
@@ -1066,6 +1210,7 @@ window.TAPAS = {
 </script>
 <script src="texturas.js"></script>
 <script src="girasoles.js"></script>
+<script src="candado.js"></script>
 <script src="sala.js"></script>
 </body>
 </html>

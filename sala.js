@@ -10,8 +10,8 @@
 //
 //  Parámetros de la URL (para probar y para capturas; no guardan nada):
 //    ?mesa=poema,girasoles   qué hay en la mesa (el primero de pie)
-//    ?abrir=poema | girasoles   abre ese libro directamente
-//    ?p=N                    abre el poema en la página N (como siempre)
+//    ?abrir=poema | girasoles | suenos | album   abre ese libro directamente
+//    ?p=N                    abre el poema (o el ?abrir= de tipo album) en la página N
 //    ?lleno=1&nota=1         girasoles ya posados / con la nota a la vista
 //    ?limpio=1               ignora lo recordado por el navegador
 //    ?test=1                 prueba automática de la lógica de la sala
@@ -26,13 +26,15 @@
   const TAP = window.TAPAS || {};
   const colores = t => TAP[t] || TAP.burdeos || ['#6b2630', '#4a1a20', '#33111a'];
   const esc = s => String(s).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
-  const SOLO_LECTURA = ['mesa', 'abrir', 'p', 'lleno', 'nota', 'limpio', 'test'].some(k => q.has(k));
+  const SOLO_LECTURA = ['mesa', 'abrir', 'p', 'lleno', 'nota', 'limpio', 'test', 'clave'].some(k => q.has(k));
+  const conCandado = l => !!(l.candado && window.CANDADO);
 
   // ---- el catálogo ----
   const CAT = ((typeof LIBROS !== 'undefined' && Array.isArray(LIBROS)) ? LIBROS : []).map((l, i) => {
     const o = Object.assign({}, l);
     if (!o.id) o.id = 'libro' + i;
     if (o.tipo === 'poema' && o.datos){ o.titulo = o.titulo || o.datos.titulo || 'Sin título'; o.tapa = o.tapa || o.datos.tapa; }
+    if (o.tipo === 'album') o.datos = o;          // el lector lee titulo/tapa/paginas del propio catálogo
     o.titulo = o.titulo || 'Libro';
     if (!TAP[o.tapa]) o.tapa = 'burdeos';
     return o;
@@ -147,7 +149,7 @@
       const l = porId(id), p = estado.estantes[id];
       const lomo = document.createElement('div');
       lomo.className = 'lomo'; lomo.dataset.id = id; lomo.style.cssText = estilo(l); lomo.title = l.titulo;
-      lomo.innerHTML = '<span class="rotulo">' + esc(l.titulo) + '</span><i class="toque"></i>';
+      lomo.innerHTML = '<span class="rotulo">' + esc(l.lomo || l.titulo) + '</span><i class="toque"></i>' + (l.candado ? '<i class="candado-lomo"></i>' : '');
       librerias[p.lado].filas[p.fila][p.col].appendChild(lomo);
       enganchar(lomo, id, 'estante');
     }
@@ -158,7 +160,8 @@
       b.dataset.id = id; b.style.cssText = estilo(l); b.title = l.titulo;
       if (i === 0){
         b.className = 'libro-mesa piel';
-        b.innerHTML = '<span class="titulo-mesa">' + esc(l.titulo) + '</span>';
+        b.innerHTML = '<span class="titulo-mesa">' + esc(l.titulo) + '</span>' +
+          (l.candado ? '<i class="candado-mesa' + (conCandado(l) && CANDADO.listo(l) ? ' abierto' : '') + '"></i>' : '');
         lugar.appendChild(b); enganchar(b, id, 'mesa');
       } else {
         b.className = 'libro-torre';
@@ -296,9 +299,12 @@
   let abiertoId = null;
   function abrirLibro(id){
     const l = porId(id); if (!l || bloqueado) return;
-    if (l.tipo === 'poema') abrirPoema(l, -1, true);
+    // con candado: primero el número (o la clave que recuerda el navegador); las fotos se descifran y recién entonces se abre
+    if (conCandado(l) && !CANDADO.listo(l)){ CANDADO.pedir(l, () => abrirLibro(id)); return; }
+    if (l.tipo === 'poema' || l.tipo === 'album') abrirPoema(l, -1, true);
     else if (l.tipo === 'girasoles') abrirGirasoles(l);
   }
+  document.addEventListener('candado-abierto', () => render());     // el candadito de la mesa pasa a abierto
   function abrirPoema(l, pagina, conVuelo){
     bloqueado = true; abiertoId = l.id;
     pistaS.classList.remove('ver');
@@ -341,6 +347,7 @@
     estado = { mesa: [], estantes: {} };
     for (const l of CAT) colocar(l.id, l.estante);
     ok(pos('poema') === 'izq:0:1' && pos('girasoles') === 'der:0:5', 'nacen en su estante');
+    ok(pos('suenos') === 'izq:1:3' && pos('album') === 'der:1:2' && porId('album').datos.paginas.length === 12, 'los álbumes nacen en su estante con sus páginas');
     aMesa('poema'); ok(estado.mesa.join() === 'poema' && pos('poema') === '-', 'primer libro: de pie en la mesa');
     aMesa('girasoles'); ok(estado.mesa.join() === 'poema,girasoles', 'segundo libro: a la torre');
     aMesa('girasoles'); ok(estado.mesa.join() === 'girasoles,poema', 'toque en la torre: se intercambian');
@@ -401,8 +408,12 @@
   if (abrirQ && porId(abrirQ)){
     if (!estado.mesa.includes(abrirQ)){ aMesa(abrirQ); render(); }
     const l = porId(abrirQ);
-    if (l.tipo === 'poema') abrirPoema(l, q.has('p') ? (parseInt(q.get('p'), 10) || 0) : -1, false);
-    else abrirGirasoles(l);
+    const abrirDirecto = () => {
+      if (l.tipo === 'poema' || l.tipo === 'album') abrirPoema(l, q.has('p') ? (parseInt(q.get('p'), 10) || 0) : -1, false);
+      else abrirGirasoles(l);
+    };
+    if (conCandado(l) && !CANDADO.listo(l)) CANDADO.pedir(l, abrirDirecto, q.get('clave'));   // ?clave=N abre sin preguntar
+    else abrirDirecto();
   }
   if (q.has('test')) autoTest();
 })();
