@@ -10,8 +10,10 @@
 //
 //  Parámetros de la URL (para probar y para capturas; no guardan nada):
 //    ?mesa=poema,girasoles   qué hay en la mesa (el primero de pie)
-//    ?abrir=poema | girasoles | suenos | album   abre ese libro directamente
-//    ?p=N                    abre el poema (o el ?abrir= de tipo album) en la página N
+//    ?abrir=poema | girasoles | suenos | album | calendario   abre ese libro directamente
+//    ?p=N                    abre el poema (o el ?abrir= de tipo album/calendario) en la página N
+//    ?clave=N                el número de un libro con candado (no se guarda)
+//    ?hoy=AAAA-MM-DD         la fecha que el calendario toma por hoy
 //    ?lleno=1&nota=1         girasoles ya posados / con la nota a la vista
 //    ?limpio=1               ignora lo recordado por el navegador
 //    ?test=1                 prueba automática de la lógica de la sala
@@ -34,7 +36,7 @@
     const o = Object.assign({}, l);
     if (!o.id) o.id = 'libro' + i;
     if (o.tipo === 'poema' && o.datos){ o.titulo = o.titulo || o.datos.titulo || 'Sin título'; o.tapa = o.tapa || o.datos.tapa; }
-    if (o.tipo === 'album') o.datos = o;          // el lector lee titulo/tapa/paginas del propio catálogo
+    if (o.tipo === 'album' || o.tipo === 'calendario') o.datos = o;      // el lector lee titulo/tapa/paginas del propio catálogo
     o.titulo = o.titulo || 'Libro';
     if (!TAP[o.tapa]) o.tapa = 'burdeos';
     return o;
@@ -301,8 +303,13 @@
     const l = porId(id); if (!l || bloqueado) return;
     // con candado: primero el número (o la clave que recuerda el navegador); las fotos se descifran y recién entonces se abre
     if (conCandado(l) && !CANDADO.listo(l)){ CANDADO.pedir(l, () => abrirLibro(id)); return; }
-    if (l.tipo === 'poema' || l.tipo === 'album') abrirPoema(l, -1, true);
+    if (esLibroDePaginas(l)) abrirPoema(l, -1, true);
     else if (l.tipo === 'girasoles') abrirGirasoles(l);
+  }
+  // el poema, los álbumes y el calendario se leen en el lector; el calendario escribe sus páginas con la fecha de hoy
+  function esLibroDePaginas(l){
+    if (l.tipo === 'calendario'){ if (window.CALENDARIO) CALENDARIO.preparar(l); return true; }
+    return l.tipo === 'poema' || l.tipo === 'album';
   }
   document.addEventListener('candado-abierto', () => render());     // el candadito de la mesa pasa a abierto
   function abrirPoema(l, pagina, conVuelo){
@@ -348,6 +355,18 @@
     for (const l of CAT) colocar(l.id, l.estante);
     ok(pos('poema') === 'izq:0:1' && pos('girasoles') === 'der:0:5', 'nacen en su estante');
     ok(pos('suenos') === 'izq:1:3' && pos('album') === 'der:1:2' && porId('album').datos.paginas.length === 12, 'los álbumes nacen en su estante con sus páginas');
+    // el calendario: nace con candado y, con unos días de prueba, escribe sus páginas y sus marcas
+    const cal = porId('calendario');
+    ok(!!cal && pos('calendario') === 'izq:0:5' && !!cal.candado && !!cal.cifrado && !!window.CALENDARIO, 'el calendario nace en su estante con candado');
+    if (cal && window.CALENDARIO){
+      const D = { dias: [{ fecha: '2026-10-11', nombre: 'Inicio', inicio: true }, { dia: 30, mes: 9, nombre: 'Autitos', icono: 'auto' }] };
+      const ev = (y, m) => CALENDARIO.eventos(D, y, m).map(e => e.d + ':' + e.nombre).join('|');
+      ok(ev(2026, 9) === '11:Inicio' && ev(2026, 10) === '11:1 mes juntos' && ev(2027, 9) === '11:1 año juntos' && ev(2027, 8) === '11:11 meses juntos|30:Autitos' && ev(2026, 8) === '30:Autitos',
+        'calendario: el inicio marca cada mes y cada año; los días del año se repiten');
+      const px = CALENDARIO.proximos(D, new Date(2026, 9, 7), 3).map(e => e.dias + ':' + e.nombre).join('|');
+      ok(px === '4:Inicio|35:1 mes juntos|65:2 meses juntos' && CALENDARIO.paginas(new Date(2026, 9, 7)).length === 13 && CALENDARIO.paginas(new Date(2026, 9, 7))[1].mes === '2026-10',
+        'calendario: lo que viene se cuenta desde hoy y hay doce meses desde el mes en curso');
+    }
     aMesa('poema'); ok(estado.mesa.join() === 'poema' && pos('poema') === '-', 'primer libro: de pie en la mesa');
     aMesa('girasoles'); ok(estado.mesa.join() === 'poema,girasoles', 'segundo libro: a la torre');
     aMesa('girasoles'); ok(estado.mesa.join() === 'girasoles,poema', 'toque en la torre: se intercambian');
@@ -409,7 +428,7 @@
     if (!estado.mesa.includes(abrirQ)){ aMesa(abrirQ); render(); }
     const l = porId(abrirQ);
     const abrirDirecto = () => {
-      if (l.tipo === 'poema' || l.tipo === 'album') abrirPoema(l, q.has('p') ? (parseInt(q.get('p'), 10) || 0) : -1, false);
+      if (esLibroDePaginas(l)) abrirPoema(l, q.has('p') ? (parseInt(q.get('p'), 10) || 0) : -1, false);
       else abrirGirasoles(l);
     };
     if (conCandado(l) && !CANDADO.listo(l)) CANDADO.pedir(l, abrirDirecto, q.get('clave'));   // ?clave=N abre sin preguntar

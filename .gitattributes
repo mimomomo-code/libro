@@ -1,0 +1,2 @@
+# los hooks son scripts sh: siempre con saltos LF (con CRLF el shebang no arranca)
+_tools/hooks/* text eol=lf

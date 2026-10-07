@@ -185,6 +185,60 @@ body.centro .verso{padding-left:0;text-indent:0}
   background:repeating-linear-gradient(180deg, transparent 0, transparent calc(var(--ph) * .06 - 1px), rgba(110,80,45,.2) calc(var(--ph) * .06 - 1px), rgba(110,80,45,.2) calc(var(--ph) * .06))}
 .viva .marco,.viva .manuscrito{opacity:0;animation:asomar .9s ease forwards;animation-delay:var(--espera, 0ms)}
 @keyframes asomar{from{opacity:0}to{opacity:1}}
+/* ---------- el calendario de días importantes (calendario.js): un mes por página y la página de lo que viene ---------- */
+.contenido.mes,.contenido.proximos{justify-content:flex-start;padding:8.5% 7% 11%}
+.mes-cab{font-family:Cinzel,serif;text-align:center;line-height:1.1;margin-bottom:calc(var(--ph) * .022)}
+.mes-cab .mes-nombre{font-size:calc(var(--ph) * .044 * var(--escala));letter-spacing:.16em;color:var(--tinta)}
+.mes-cab .mes-anio{font-size:calc(var(--ph) * .022 * var(--escala));letter-spacing:.32em;color:var(--tinta2);margin-top:.3em;padding-left:.32em}
+.mes-grid{display:grid;grid-template-columns:repeat(7, 1fr);width:100%;row-gap:calc(var(--ph) * .003)}
+.mes-grid .sem{font-family:Cinzel,serif;font-size:calc(var(--ph) * .019 * var(--escala));letter-spacing:.08em;color:var(--folio);text-align:center;
+  padding-bottom:.55em;margin-bottom:.35em;border-bottom:1px solid rgba(110,80,45,.28)}
+.mes-grid .dia{position:relative;aspect-ratio:1 / .84;display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--ph) * .03 * var(--escala));font-weight:500;color:var(--tinta)}
+.mes-grid .dia b{font-weight:500;position:relative;z-index:1}
+.mes-grid .dia.marcado b{font-weight:600}
+.mes-grid .dia.marcado::before{content:'';position:absolute;left:50%;top:50%;width:72%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #f3dc9c, #d4b06a 70%);box-shadow:0 1px 3px rgba(80,55,20,.3), inset 0 0 0 1px rgba(255,255,255,.35)}
+.mes-grid .dia.marcado.nuestro::before{background:radial-gradient(circle at 40% 35%, #f0a3b5, #d9607e 72%);box-shadow:0 1px 3px rgba(120,30,50,.3), inset 0 0 0 1px rgba(255,255,255,.35)}
+.mes-grid .dia.marcado.nuestro b{color:#fff7f2}
+.mes-grid .dia.hoy::after{content:'';position:absolute;left:50%;top:50%;width:88%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  border:1.5px solid var(--tinta2);box-shadow:0 0 0 2px rgba(243,234,214,.9) inset}
+.mes-grid .dia .ico{position:absolute;right:4%;top:-2%;width:34%;height:34%;z-index:2;filter:drop-shadow(0 1px 1px rgba(60,40,20,.35))}
+.ico{display:inline-block;fill:#b8862b;color:#b8862b;flex:none}
+.ico.corazon{fill:#c9506c}
+.ico.flor{fill:#e0b22c}
+.ico.flor .centro{fill:#7a4a14}
+.ico.auto{fill:#4f6f98}
+.ico.regalo{fill:#b0484f}
+.ico.regalo .cinta{fill:none;stroke:#f3ead6;stroke-width:1.5}
+.mes-lista{list-style:none;margin:calc(var(--ph) * .028) 0 0;padding:0;width:100%;font-size:calc(var(--ph) * .031 * var(--escala));line-height:1.3;text-align:left}
+.mes-lista li{display:flex;align-items:center;gap:.5em;padding:.22em 0;border-bottom:1px dotted rgba(110,80,45,.26)}
+.mes-lista li:last-child{border-bottom:0}
+.mes-lista .n{font-family:Cinzel,serif;font-size:.86em;min-width:1.7em;text-align:right;color:var(--tinta2)}
+.mes-lista .ico{width:1.05em;height:1.05em}
+.mes-lista .t{color:var(--tinta);text-wrap:balance}
+.mes-lista .nuestro .t{font-style:italic;font-weight:600}
+.mes-vacio{margin:calc(var(--ph) * .05) 0 0;font-style:italic;color:var(--tinta2);font-size:calc(var(--ph) * .03 * var(--escala))}
+/* lo que viene: la cuenta de días juntos y la lista de próximos días */
+.juntos{text-align:center;margin:calc(var(--ph) * .02) 0 0}
+.juntos b{display:block;font-family:Cinzel,serif;font-weight:600;font-size:calc(var(--ph) * .125);line-height:1;
+  background:linear-gradient(180deg,#c99a3c 0%,#a9822f 48%,#7d5b1c 52%,#c9a456 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(255,255,255,.5))}
+.juntos b.palabra{font-size:calc(var(--ph) * .08);letter-spacing:.1em}
+.juntos .que{font-family:Cinzel,serif;font-size:calc(var(--ph) * .026 * var(--escala));letter-spacing:.24em;text-transform:uppercase;color:var(--tinta2);margin-top:.45em;padding-left:.24em}
+.juntos .desde{font-style:italic;font-size:calc(var(--ph) * .029 * var(--escala));color:var(--tinta2);margin-top:.3em}
+.prox-tit{font-family:Cinzel,serif;font-size:calc(var(--ph) * .022 * var(--escala));letter-spacing:.3em;text-transform:uppercase;color:var(--folio);
+  margin:calc(var(--ph) * .045) 0 calc(var(--ph) * .01);padding:0 0 .55em;width:100%;border-bottom:1px solid rgba(110,80,45,.28)}
+.juntos + .prox-tit{margin-top:calc(var(--ph) * .03)}
+.prox-lista{list-style:none;margin:0;padding:0;width:100%;text-align:left;font-size:calc(var(--ph) * .031 * var(--escala));line-height:1.28}
+.prox-lista li{display:grid;grid-template-columns:auto auto 1fr;align-items:center;column-gap:.5em;padding:.24em 0;border-bottom:1px dotted rgba(110,80,45,.26)}
+.prox-lista li:last-child{border-bottom:0}
+.prox-lista .cuando{grid-column:1 / 4;font-family:Cinzel,serif;font-size:.62em;letter-spacing:.16em;text-transform:uppercase;color:#a9822f;line-height:1.4}
+.prox-lista .fecha{font-family:Cinzel,serif;font-size:.84em;color:var(--tinta2);white-space:nowrap}
+.prox-lista .ico{width:1.05em;height:1.05em}
+.prox-lista .t{color:var(--tinta);text-wrap:balance}
+.prox-lista .nuestro .t{font-style:italic;font-weight:600}
+.viva .mes-cab,.viva .mes-grid,.viva .mes-lista,.viva .mes-vacio,.viva .juntos,.viva .prox-tit,.viva .prox-lista{opacity:0;animation:asomar .9s ease forwards;animation-delay:var(--espera, 0ms)}
 /* la lupa */
 #lupa{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(10,7,6,.94);
   touch-action:none;overflow:hidden;cursor:zoom-out}
@@ -842,6 +896,8 @@ window.TAPAS = {
     const p = paginas[i - 1];
     const obj = p && typeof p === 'object';
     const espera_css = '--espera:' + (espera || 0) + 'ms';
+    // página del calendario (un mes, o lo que viene): la escribe calendario.js con la fecha de hoy
+    if (obj && (p.mes || p.proximos) && window.CALENDARIO) return lienzoDe(p.efecto) + CALENDARIO.html(p, L, i, viva, espera_css);
     // página con imagen: una foto pegada (marco blanco, un poco ladeada; el lado alterna) o un dibujo sobre el papel
     if (obj && (p.foto || p.dibujo)){
       const pie = p.pie ? '<div class="pie">' + esc(p.pie) + '</div>' : '';
@@ -1210,6 +1266,7 @@ window.TAPAS = {
 </script>
 <script src="texturas.js"></script>
 <script src="girasoles.js"></script>
+<script src="calendario.js"></script>
 <script src="candado.js"></script>
 <script src="sala.js"></script>
 </body>

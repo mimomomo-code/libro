@@ -1,0 +1,15 @@
+#!/bin/sh
+# LA GUARDIA DEL CANDADO. Antes de cada commit revisa lo que va a entrar y lo
+# frena si es algo que debe quedarse en privado/ o viajar cifrado:
+#   - cualquier archivo bajo privado/ (aunque alguien lo fuerce con git add -f)
+#   - imágenes en claro en assets/album/ o assets/calendario/ (ahí solo van .bin y candado.json)
+#   - dias.json o candado.key en cualquier sitio
+# Se instala una vez por clon:  git config core.hooksPath _tools/hooks
+# (el 28 sep 2026 las fotos del álbum entraron en claro al historial y hubo que reescribirlo).
+malos=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^privado/|^assets/(album|calendario)/.*\.(webp|jpe?g|png|gif)$|(^|/)dias\.json$|(^|/)candado\.key$')
+if [ -n "$malos" ]; then
+  echo "CANDADO: estos archivos no pueden subir al repositorio (van en privado/ o cifrados con _tools/candado.py):" >&2
+  echo "$malos" | sed 's/^/   /' >&2
+  exit 1
+fi
+exit 0

@@ -10,6 +10,11 @@
 //                       un toque muestra la nota y otro toque la guarda.
 //          "album"      se lee página a página como el poema, pero las
 //                       páginas se escriben aquí mismo (lista `paginas`).
+//          "calendario" el calendario de días importantes: una página con lo
+//                       que viene (y la cuenta de días juntos) y un mes por
+//                       página. Los días NO están aquí: viven en
+//                       privado/calendario/dias.json (fuera de git) y viajan
+//                       cifrados en `cifrado` (ver calendario.js para el formato).
 //  - titulo: lo que se lee en el lomo y en la tapa. El poema toma el suyo
 //            de poema.js si no se indica aquí.
 //  - lomo: (opcional) rótulo corto para el lomo si el título no cabe.
@@ -29,11 +34,15 @@
 //        `texto de poema`  o  { efecto: "...", texto: `...` }   como en poema.js.
 //    Cualquiera admite `efecto` ("estrellas", "corazones"...) detrás.
 //    También valen `autor`, `dedicatoria` (portadilla), `efecto_fin` y `colofon`.
-//  - candado: (opcional) ruta al candado.json del libro. Sus fotos van cifradas
-//             (.bin) y el libro pide un número antes de abrirse; el navegador
-//             lo recuerda. El número NO está aquí ni en ningún archivo: se
-//             escribe al cifrar con _tools/candado_album.py (ver ese archivo
-//             para añadir fotos nuevas).
+//  - candado: (opcional) ruta al candado.json. Sus fotos van cifradas (.bin) y
+//             el libro pide un número antes de abrirse; el navegador lo
+//             recuerda. Los libros que apuntan al MISMO candado.json comparten
+//             el número (se escribe una sola vez). El número NO está aquí ni
+//             en ningún archivo: se escribe al cifrar con _tools/candado.py
+//             (ver ese archivo para añadir fotos o días nuevos).
+//  - cifrado: (opcional, con candado) un archivo de datos cifrado (.bin con un
+//             JSON dentro) que el candado descifra junto con las fotos; es
+//             como el calendario recibe sus días.
 //  - estante: dónde nace el libro la PRIMERA vez: lado "izq" o "der",
 //             fila 0-4 (0 = la de arriba) y columna 0-7 (0 = la de la
 //             izquierda). Después cada persona lo mueve donde quiera y su
@@ -102,13 +111,13 @@ const LIBROS = [
     // Una foto por plana. El pie va en la primera foto de cada tanda.
     // Con candado: las fotos están cifradas en assets/album/*.bin y las
     // originales viven en privado/album/ (fuera de git). Para añadir fotos:
-    // copiarlas a privado/album/ y correr  python _tools/candado_album.py
+    // copiarlas a privado/album/ y correr  python _tools/candado.py
     id: "album",
     tipo: "album",
     titulo: "Álbum de fotos",
     lomo: "Álbum",
     tapa: "marron",
-    candado: "assets/album/candado.json",
+    candado: "assets/candado.json",
     paginas: [
       { foto: "assets/album/cita_1.bin", pie: "Nuestra primera cita: donde tuvimos la primera videollamada" },
       { foto: "assets/album/cita_2.bin" },
@@ -125,5 +134,20 @@ const LIBROS = [
     ],
     efecto_fin: "corazones",
     estante: { lado: "der", fila: 1, col: 2 },
+  },
+  {
+    // Los días importantes. Se escriben en privado/calendario/dias.json (fuera
+    // de git; el formato está en calendario.js) y se cifran con el mismo
+    // candado del álbum:  python _tools/candado.py   (pide el número una vez).
+    id: "calendario",
+    tipo: "calendario",
+    titulo: "Días importantes",
+    lomo: "Días",
+    tapa: "verde",
+    dedicatoria: "Los días que son nuestros",
+    candado: "assets/candado.json",
+    cifrado: "assets/calendario/dias.bin",
+    efecto_fin: "estrellas",
+    estante: { lado: "izq", fila: 0, col: 5 },
   },
 ];

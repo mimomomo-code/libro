@@ -52,38 +52,72 @@ El catálogo vive en `libros.js`. Cada libro tiene un `id`, un `tipo`, un
   de cómic; el pie va en la primera foto de cada tanda). `lomo` da un rótulo
   corto para el lomo cuando el título no cabe.
 
+- `tipo: "calendario"` es el libro **Días importantes**: se escribe solo cada
+  vez que se abre. La primera página es *Lo que viene*: la cuenta de días
+  juntos (o los que faltan para empezar) y los próximos seis días marcados,
+  con "hoy", "mañana" o "en N días"; después, un mes por página, doce desde el
+  mes en curso, con el día de hoy en un anillo, los días marcados en una
+  moneda (dorada; rosa los nuestros) con su iconito, y debajo la lista del mes.
+  Los días **no están en el código**: viven en `privado/calendario/dias.json`
+  (fuera de git) y viajan cifrados en `assets/calendario/dias.bin` con el
+  mismo candado del álbum. El formato de `dias.json` está en `calendario.js`:
+  `{ "dia": 30, "mes": 9, "nombre": "...", "icono": "auto" }` se repite cada
+  año; `{ "fecha": "2026-10-11", "nombre": "...", "inicio": true }` es un día
+  concreto que además cuenta los días juntos y marca cada mes ("N meses
+  juntos") y cada aniversario ("N años juntos"). Iconos: `corazon`, `flor`,
+  `auto`, `estrella`, `regalo`.
+
 Colores de tapa: `burdeos`, `verde`, `azul`, `marron`, `negro`, `girasol`.
 
 Para preparar imágenes nuevas: fotos a 1280 px de lado mayor en WebP (calidad
 82, ~130 KB cada una); dibujos con el blanco vuelto transparente en WebP sin
 pérdida (`assets/suenos/` pesa 31 KB entre los seis).
 
-## El candado del álbum
+## El candado (álbum y calendario)
 
-El **Álbum de fotos** lleva candado: en la librería y en la mesa se le ve un
-candadito, y al tocarlo pide un número antes de abrirse. El navegador recuerda
-el número, así que solo se escribe una vez por celular.
+El **Álbum de fotos** y **Días importantes** llevan candado: en la librería y
+en la mesa se les ve un candadito, y al tocarlos piden un número antes de
+abrirse. Los dos comparten el mismo candado (`assets/candado.json`), así que
+es un solo número y el navegador lo recuerda: se escribe una vez por celular
+y abre los dos libros.
 
 No es solo una cortina: las fotos están **cifradas** en `assets/album/*.bin`
-(AES-256-GCM con una clave derivada del número por PBKDF2, 250 000 vueltas).
-Lo que viaja a GitHub es ilegible sin el número, y el número no aparece en
-ningún archivo del repositorio. Un número de seis cifras frena a cualquier
-curioso y a un intento razonable de adivinarlo; no frena a alguien con mucho
-tiempo y una tarjeta gráfica probando el millón de combinaciones, así que si
-algún día hiciera falta más, basta un número más largo.
+y los días en `assets/calendario/dias.bin` (AES-256-GCM con una clave derivada
+del número por PBKDF2, 250 000 vueltas). Lo que viaja a GitHub es ilegible sin
+el número, y el número no aparece en ningún archivo del repositorio. Un número
+de seis cifras frena a cualquier curioso y a un intento razonable de
+adivinarlo; no frena a alguien con mucho tiempo y una tarjeta gráfica probando
+el millón de combinaciones, así que si algún día hiciera falta más, basta un
+número más largo.
 
-Las fotos sin cifrar viven en `privado/album/` (carpeta fuera de git). Para
-**añadir fotos**: copiarlas ahí (jpg, png o webp, nombre corto sin espacios) y
-correr `python _tools/candado_album.py` desde la carpeta del proyecto: pide el
-número, convierte a WebP lo que haga falta, cifra lo nuevo y al final imprime
-las líneas `{ foto: "assets/album/nombre.bin" }` que faltan en `libros.js`.
-Luego `git add -A`, commit y push. `--nueva-clave` cambia el número (se
-recifra todo y cada celular tendrá que volver a escribirlo).
+Lo que no se cifra vive en `privado/` (carpeta fuera de git): las fotos en
+`privado/album/` y los días en `privado/calendario/dias.json`. La herramienta
+es `python _tools/candado.py` desde la carpeta del proyecto (`album` o
+`calendario` para hacer solo uno; sin nada, los dos):
+
+- **Añadir fotos**: copiarlas a `privado/album/` (jpg, png o webp, nombre
+  corto sin espacios), correr la herramienta y pegar en `libros.js` las líneas
+  `{ foto: "assets/album/nombre.bin" }` que imprime.
+- **Añadir días**: editar `privado/calendario/dias.json` y correr la
+  herramienta (revisa el formato antes de cifrar).
+- La primera vez pide el número (no se ve al escribirlo) y guarda la clave
+  derivada en `privado/candado.key`, también fuera de git, para no volver a
+  pedirlo en esta computadora; `--olvidar` la borra y `--sin-recordar` no la
+  guarda. `--clave N` lo pasa por parámetro. `--nueva-clave` cambia el número
+  (se recifra todo y cada celular tendrá que volver a escribirlo).
+- Luego `git add -A`, commit y push.
+
+**La guardia del candado**: `_tools/hooks/pre-commit` frena cualquier commit
+que intente subir algo de `privado/`, una imagen en claro en `assets/album/` o
+`assets/calendario/`, un `dias.json` o la `candado.key`. Se instala una vez
+por clon con `git config core.hooksPath _tools/hooks` (en esta computadora ya
+está).
 
 Para probarlo en la computadora hay que servir la carpeta por http (por
 ejemplo `python -m http.server` y abrir `http://localhost:8000/`): abierto
-como archivo, el navegador no deja leer los `.bin`. `?abrir=album&clave=N`
-abre sin preguntar (solo para probar; no guarda nada).
+como archivo, el navegador no deja leer los `.bin`. `?abrir=album&clave=N` o
+`?abrir=calendario&clave=N` abren sin preguntar (solo para probar; no guardan
+nada).
 
 ## Texturas y sillones ilustrados
 
@@ -156,9 +190,10 @@ guardan nada en el navegador):
 | `index.html?abrir=poema` | el lector con el poema cerrado |
 | `index.html?p=3` | el poema abierto en la página 3 (`?modo=2` fuerza doble página) |
 | `index.html?abrir=album&p=5` | un álbum abierto en su página 5 (`&lupa=1` con esa foto ya en la lupa; también `abrir=suenos`); el álbum con candado necesita `&clave=N` y servirse por http |
+| `index.html?abrir=calendario&clave=N&p=2&hoy=2026-10-07` | el calendario abierto en su primer mes (`p=1` es *Lo que viene*); `hoy=` finge la fecha |
 | `index.html?abrir=girasoles&lleno=1` | la pantalla ya llena de girasoles (`&nota=1` con la nota a la vista, `&nota=2` la posdata) |
 | `index.html?limpio=1` | ignora lo que el navegador recuerda |
-| `index.html?test=1` | prueba automática de la sala (toques, torre, ranuras, arrastres y vuelos); el resultado sale arriba |
+| `index.html?test=1` | prueba automática de la sala (toques, torre, ranuras, arrastres, vuelos y las cuentas del calendario); el resultado sale arriba |
 
 ## Publicar en GitHub Pages
 
