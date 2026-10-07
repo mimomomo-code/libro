@@ -245,7 +245,11 @@ body.centro .verso{padding-left:0;text-indent:0}
 .gato .dibujo-gato{transition:opacity .17s}
 .gato .dibujo-gato.cambiando{opacity:0}
 .gato svg{display:block;width:100%;height:auto;overflow:visible;pointer-events:none}
-.gato.izq svg,.gato.izq .dibujo-gato > img,.gato.izq .piezas{transform:scaleX(-1)}
+.gato.izq svg,.gato.izq .dibujo-gato > img,.gato.izq .piezas,.gato.izq .echado-env{transform:scaleX(-1)}
+/* la imagen del ilustrado echado: respira despacio */
+.gato .echado-env img{display:block;width:100%;height:auto;pointer-events:auto;-webkit-user-drag:none;transform-origin:50% 100%;animation:respira 3.4s ease-in-out infinite;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+.gato.mimado .echado-env img{animation:respira .9s ease-in-out}
+@keyframes respira{50%{transform:scale(1.012, 1.035)}}
 .gato svg path,.gato svg ellipse,.gato svg circle,.gato svg rect{pointer-events:visiblePainted}
 .gato svg .sombra{pointer-events:none}
 .gato .dibujo-gato > img{display:block;width:100%;height:auto;pointer-events:auto;-webkit-user-drag:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}

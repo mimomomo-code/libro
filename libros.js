@@ -79,7 +79,11 @@ const ARTE_GIRASOLES = {
 //  - piezas: (opcional) el piezas.json de un gato ILUSTRADO cortado en piezas
 //    con _tools/gato_piezas.py (assets/gatos/<id>/): cola, patas, cuerpo y
 //    cabeza pintados que el esqueleto anima; mientras cargan (o si faltan) se
-//    ve el dibujo. El ilustrado solo tiene la pose de pie.
+//    ve el dibujo. El ilustrado solo tiene la pose de pie...
+//  - echado: (opcional, con piezas) la imagen del mismo gato echado
+//    (_tools/gato_echado.py, assets/gatos/<id>/echado.webp): la muestra al
+//    dormir en el suelo o en el sillón. Sin ella, en vez de echarse se queda
+//    de pie mirando.
 //  - imagen: (opcional) un PNG/WebP del gato entero, de perfil mirando a la
 //    derecha, con fondo transparente (prompts en PROMPTS.md); si existe, el
 //    gato se mueve como recorte de papel en lugar del dibujo.
