@@ -112,6 +112,9 @@ cuando va a la izquierda; no se sienta ni se echa). Reglas:
 
 ### Camino 2: ilustrar MI dibujo en MI pose (ComfyUI, para animar por piezas)
 
+La plantilla GENÉRICA (un gato gris sin manchas, en las tres poses, con
+contornos, siluetas y piezas) está guardada en `_tools/plantillas/gato/` con su
+`LEEME.md`, que explica además cómo añadir un gato nuevo o un animal distinto.
 `node _tools/plantillas_gatos.js` deja en `_capturas/plantillas_gatos/` cada
 gato a 1024 × 683 con fondo transparente: `<id>_<pose>_color.png` (el dibujo),
 `<id>_<pose>_lineas.png` (contornos negros, para ControlNet), `<id>_<pose>_silueta.png`

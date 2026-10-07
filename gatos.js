@@ -108,6 +108,10 @@
     return out + '</g>';
   }
   const PELAJES = {
+    generico: {                                           // el gato genérico: gris liso, sin manchas (plantilla base y respaldo si un pelaje no existe)
+      base: '#a9a098', lejos: '#8a827b', borde: '#4a4440', oreja: '#d9a0a0', ojos: ['#8aa36a', '#8aa36a'], cola: '#a9a098', voz: 1,
+      cuerpo: () => '', cabeza: () => '', colaExtra: () => '', pata: () => '',
+    },
     atigrado: {                                           // atigrado pelo corto gris-marrón, mackerel tabby: rayas oscuras y marcadas, panza y barbilla claras
       base: '#9a8468', lejos: '#7b6850', borde: '#3e3027', oreja: '#d9a0a0', ojos: ['#86a35b', '#86a35b'], cola: '#9a8468', voz: .85,
       cuerpo: (F, u) => {
@@ -175,7 +179,7 @@
   }
   // el SVG completo de un gato en una pose; u = prefijo único para clips y degradados
   function svgGato(def, pose, u){
-    const P = PELAJES[def.pelaje] || PELAJES.atigrado, F = POSES[pose] || POSES.parado;
+    const P = PELAJES[def.pelaje] || PELAJES.generico, F = POSES[pose] || POSES.parado;
     const anca = F.anca ? '<ellipse cx="' + F.anca[0] + '" cy="' + F.anca[1] + '" rx="' + F.anca[2] + '" ry="' + F.anca[3] + '"' : '';
     return '<svg viewBox="0 0 120 80" aria-hidden="true" data-pose="' + pose + '">' +
       '<defs><clipPath id="' + u + '-cuerpo"><path d="' + F.cuerpo + '"/>' + (anca ? anca + '/>' : '') + '</clipPath>' +
@@ -290,9 +294,9 @@
       this.u = 'g-' + this.id.replace(/[^\w-]/g, '');
       const c = def.caracter || {};
       this.car = { pereza: Math.max(0, Math.min(1, c.pereza != null ? +c.pereza : .5)), velocidad: c.velocidad > 0 ? +c.velocidad : 1, sillon: c.sillon || null,
-        voz: c.voz > 0 ? +c.voz : ((PELAJES[def.pelaje] || PELAJES.atigrado).voz || 1) };
+        voz: c.voz > 0 ? +c.voz : ((PELAJES[def.pelaje] || PELAJES.generico).voz || 1) };
       this.el = document.createElement('div');
-      this.el.className = 'gato ' + (PELAJES[def.pelaje] ? def.pelaje : 'atigrado') + ' quieto';
+      this.el.className = 'gato ' + (PELAJES[def.pelaje] ? def.pelaje : 'generico') + ' quieto';
       this.el.dataset.gato = this.id; if (def.nombre) this.el.title = def.nombre;
       this.el.style.setProperty('--paso', f1(.5 / this.car.velocidad) + 's');
       this.el.style.setProperty('--guino', entre(0, 6).toFixed(2) + 's');
