@@ -85,9 +85,9 @@ const ARTE_GIRASOLES = {
 //    gato se mueve como recorte de papel en lugar del dibujo.
 const GATOS = [
   { id: "atigrado", pelaje: "atigrado", piezas: "assets/gatos/atigrado/piezas.json", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
-  { id: "carey", pelaje: "carey", caracter: { pereza: .35, velocidad: 1.15 } },
-  { id: "tricolor", pelaje: "tricolor", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
-  { id: "vancafe", pelaje: "van_cafe", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },
+  { id: "carey", pelaje: "carey", piezas: "assets/gatos/carey/piezas.json", caracter: { pereza: .35, velocidad: 1.15 } },
+  { id: "tricolor", pelaje: "tricolor", piezas: "assets/gatos/tricolor/piezas.json", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
+  { id: "vancafe", pelaje: "van_cafe", piezas: "assets/gatos/vancafe/piezas.json", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },
 ];
 
 const LIBROS = [

@@ -139,12 +139,13 @@ libros ni estorban al arrastrarlos.
 La lista está en `libros.js` (`GATOS`: `id`, `pelaje`, y opcionales `nombre` y
 `caracter`: pereza, velocidad, sillón favorito y tono de voz).
 
-**Los ilustrados.** El atigrado ya no es un dibujo: es una ilustración hecha
-con IA a partir de su foto, cortada en cinco piezas (cola, patas traseras,
-patas delanteras, cuerpo y cabeza) que el mismo esqueleto anima, así que
-camina, mueve la cola y ladea la cabeza con su pelaje pintado; mientras las
-piezas cargan se ve el dibujo, y como solo tiene la pose de pie, en vez de
-sentarse o echarse se queda mirando. Para ilustrar otro gato: generar la
+**Los ilustrados.** Los cuatro ya no son dibujos: son ilustraciones hechas
+con IA a partir de sus fotos, cada una cortada en cinco piezas (cola, patas
+traseras, patas delanteras, cuerpo y cabeza) que el mismo esqueleto anima, así
+que caminan, mueven la cola y ladean la cabeza con su pelaje pintado; mientras
+las piezas cargan se ve el dibujo por código (que sigue siendo el respaldo), y
+como solo tienen la pose de pie, en vez de sentarse o echarse se quedan
+mirando. Para ilustrar un gato nuevo: generar la
 imagen con la receta de `PROMPTS.md` (un solo gato, de perfil mirando a la
 derecha, fondo transparente), correr `python _tools/gato_piezas.py imagen.png
 <id>`, mirar el control en `_capturas/piezas_<id>.png` y apuntar
