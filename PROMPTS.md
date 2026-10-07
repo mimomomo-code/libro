@@ -90,22 +90,44 @@ overlapping, touching, cropped, cut off, background, table, shadow, blurry
 
 ## Los gatos (opcional: hoy van dibujados por código)
 
-`gatos.js` dibuja los cuatro gatos en SVG y los anima (patas, cola, parpadeo,
-siesta en los sillones). No hace falta ninguna imagen. Si se quiere la versión
-ilustrada, basta un archivo por gato y apuntarlo en `GATOS` (`libros.js`,
-campo `imagen`, por ejemplo `assets/gatos/atigrado.webp`): la página lo usa en
-lugar del dibujo y lo mueve como un recorte de papel (balanceo al caminar,
-volteado cuando va a la izquierda). Las fotos reales de referencia están en
-`privado/gatos/referencia/` (fuera de git). Reglas:
+`gatos.js` dibuja los cuatro gatos en SVG en tres poses (de pie, sentado,
+echado) y los anima. No hace falta ninguna imagen. Las fotos reales de
+referencia están en `privado/gatos/referencia/` (fuera de git).
+
+### Camino 1: una imagen por gato (recorte de papel)
+
+Basta un archivo por gato y apuntarlo en `GATOS` (`libros.js`, campo
+`imagen`, por ejemplo `assets/gatos/atigrado.webp`): la página lo usa en lugar
+del dibujo y lo mueve como un recorte de papel (balanceo al caminar, volteado
+cuando va a la izquierda; no se sienta ni se echa). Reglas:
 
 - **Cuerpo entero, de perfil, caminando hacia la DERECHA**, las cuatro patas a
   la vista, cola arriba. Un solo gato por imagen, centrado, con aire
   alrededor. Sin suelo ni sombra: la sombra la pone la página.
 - Mismo estilo que los muebles: ilustración de libro de cuentos, mate, formas
   limpias, luz fría desde arriba a la izquierda. Fondo transparente (o verde
-  `#00ff00` y quitarlo). Unos 800 px de ancho bastan (en pantalla miden 45-120 px).
+  `#00ff00` y quitarlo). Unos 800 px de ancho bastan (en pantalla miden 45-130 px).
 - Un sprite sheet (varios cuadros del paso) NO hace falta ni está soportado:
   el movimiento lo pone el código.
+
+### Camino 2: ilustrar MI dibujo en MI pose (ComfyUI, para animar por piezas)
+
+`node _tools/plantillas_gatos.js` deja en `_capturas/plantillas_gatos/` cada
+gato a 1024 × 683 con fondo transparente: `<id>_<pose>_color.png` (el dibujo),
+`<id>_<pose>_lineas.png` (contornos negros, para ControlNet), `<id>_<pose>_silueta.png`
+(máscara) y, en la pose de pie, la silueta de cada pieza
+(`_pieza_cabeza/cuerpo/cola/patas`). Receta en ComfyUI (SDXL o Flux):
+
+1. **ControlNet lineart o scribble** con `_lineas.png` (peso 0.7-0.9): obliga a
+   la IA a respetar la pose y el encuadre del dibujo.
+2. **IP-Adapter** con la foto del gato real (peso 0.5-0.7): le da el pelaje
+   verdadero. Si no hay IP-Adapter, describirlo en el prompt (tabla de abajo).
+3. Prompt base de abajo + `same pose and framing as the sketch`. Negativo igual.
+4. Quitar el fondo (rembg) y guardar como PNG/WebP **sin recortar ni mover**:
+   mientras el gato quede donde estaba en la plantilla, se puede cortar en
+   piezas con las máscaras `_pieza_*` y montarlo en el esqueleto, con patas,
+   cola y ojos animados pero pintados. Ese montaje se hace cuando exista la
+   primera ilustración (todavía no está programado: primero hay que ver una).
 
 Prompt base (cambiar la descripción del pelaje por la de cada gato):
 

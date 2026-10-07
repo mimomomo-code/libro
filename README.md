@@ -126,17 +126,24 @@ las fotos de los de verdad: el **atigrado** (gris-marrón de rayas marcadas y
 panza clara), la **carey** (brindada, con su mancha naranja en la cara), la
 **tricolor** (blanca con manchas negras y naranjas en el lomo) y la **blanca
 con café** (la gorrita partida por una raya blanca, tres lunares y la cola
-café). Caminan por el suelo entre los sillones y la mesa (más chicos cuanto
-más lejos, y detrás o delante de la mesa según dónde pisen), se paran a
-mirar, se echan a dormir, de vez en cuando saltan a un sillón a hacer la
-siesta y vuelven a bajar. **Tocar un gato** lo detiene, ladea la cabeza y
-suelta corazones. No tocan los libros ni estorban al arrastrarlos.
+café). Cada uno tiene tres dibujos (de pie, sentado y echado) y una receta de
+pelaje que cae bien en las tres poses. Caminan por el suelo entre los sillones
+y la mesa (más chicos cuanto más lejos, y detrás o delante de la mesa según
+dónde pisen), se paran, se sientan a mirar y a acicalarse, mueven una oreja,
+se echan a dormir y se estiran al levantarse, y de vez en cuando saltan a un
+sillón a hacer la siesta y vuelven a bajar. **Tocar un gato** lo detiene, lo
+hace mirar hacia donde tocaste, ladea la cabeza, maúlla (ronronea si estaba
+dormido; el botón ♪ apagado los calla) y suelta corazones. No tocan los
+libros ni estorban al arrastrarlos.
 
-La lista está en `libros.js` (`GATOS`: `id`, `pelaje` y, opcional, `nombre`).
-Si algún día se quieren ilustrados, se les da una `imagen` (PNG/WebP de perfil
-mirando a la derecha, fondo transparente; los prompts están en `PROMPTS.md`)
-y la página la mueve como un recorte de papel. `?gatos=0` los quita y
-`?semilla=N` repite el mismo azar (para capturas).
+La lista está en `libros.js` (`GATOS`: `id`, `pelaje`, y opcionales `nombre` y
+`caracter`: pereza, velocidad, sillón favorito y tono de voz). Si algún día se
+quieren ilustrados, se les da una `imagen` (PNG/WebP de perfil mirando a la
+derecha, fondo transparente) y la página la mueve como un recorte de papel;
+`node _tools/plantillas_gatos.js` genera las plantillas de cada gato (dibujo,
+contornos, silueta y piezas) para pedirle a la IA que los pinte en la misma
+pose, con la receta de `PROMPTS.md`. `?gatos=0` los quita y `?semilla=N`
+repite el mismo azar (para capturas).
 
 ## Texturas y sillones ilustrados
 

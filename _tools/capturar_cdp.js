@@ -1,15 +1,17 @@
 // (vive en _tools/ para que otra sesión lo reutilice) Conduce Edge headless por el protocolo DevTools (Node 22+ trae WebSocket) para esperar de
 // verdad el trabajo asíncrono (descifrado, XHR) y capturar en el momento justo.
-// Uso: node cdp.js [--w 412 --h 915 --movil] paso paso ...
+// Uso: node cdp.js [--w 412 --h 915 --movil --transparente] paso paso ...
 //   pasos: nav:<url> | wait:<expr JS que sea true> | do:<js> | state:<expr> | shot:<png> | sleep:<ms>
+//   --transparente: fondo transparente en los PNG (para plantillas; la página también debe ser transparente)
 const { spawn } = require('child_process');
 const http = require('http');
 const fs = require('fs');
 const args = process.argv.slice(2);
-const opt = { w: 1366, h: 800, movil: false, steps: [] };
+const opt = { w: 1366, h: 800, movil: false, transparente: false, steps: [] };
 for (let i = 0; i < args.length; i++){
   const a = args[i];
   if (a === '--w') opt.w = +args[++i]; else if (a === '--h') opt.h = +args[++i]; else if (a === '--movil') opt.movil = true;
+  else if (a === '--transparente') opt.transparente = true;
   else opt.steps.push(a);
 }
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
@@ -35,6 +37,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   };
   await send('Page.enable'); await send('Runtime.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: opt.w, height: opt.h, deviceScaleFactor: 1, mobile: opt.movil });
+  if (opt.transparente) await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
   for (const st of opt.steps){
     const c = st.indexOf(':'), k = st.slice(0, c), v = st.slice(c + 1);
     if (k === 'nav'){ await send('Page.navigate', { url: v }); await sleep(900); }

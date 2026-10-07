@@ -2,28 +2,36 @@
 //  LOS GATOS. Cuatro gatos dibujados por código (SVG) que viven en la sala:
 //  caminan por el suelo entre los sillones y la mesa (quedan detrás de la
 //  mesa o delante según dónde pisen, y más chicos cuanto más lejos), se
-//  paran a mirar, se echan a dormir, a veces saltan a un sillón a hacer la
-//  siesta y, si se les toca, ronronean corazones. Cada uno con su pelaje:
-//  atigrado (mackerel tabby), carey, van tricolor y van blanco con café.
+//  sientan a mirar, se acicalan, se echan a dormir, se estiran al
+//  levantarse, mueven una oreja, a veces saltan a un sillón a hacer la
+//  siesta y, si se les toca, miran, maúllan (o ronronean si duermen) y
+//  sueltan corazones. Cada uno con su pelaje, sacado de las fotos de los
+//  gatos reales (privado/gatos/referencia/): atigrado (mackerel tabby),
+//  carey brindada, tricolor (calicó) y van blanca con café.
 //
-//  La lista vive en libros.js (GATOS): id, pelaje y, opcionalmente,
-//  `imagen` (un PNG/WebP del gato de cuerpo entero, de perfil mirando a la
-//  derecha, con fondo transparente; los prompts están en PROMPTS.md). Con
-//  imagen, el gato se mueve como un recorte de papel (balanceo al andar) en
-//  lugar del dibujo con patas. Si la imagen falta, queda el dibujo.
+//  TRES DIBUJOS POR GATO (poses): "parado" (el esqueleto que camina: cuatro
+//  patas animables), "sentado" y "echado". Los tres comparten la cabeza y la
+//  receta del pelaje: cada pelaje es una función del MARCO del cuerpo (caja,
+//  línea del lomo, cola), así las rayas y manchas caen bien en cualquier pose.
 //
-//  Parámetros de la URL:  ?gatos=0 (sin gatos)   ?semilla=N (azar repetible,
-//  para capturas)
+//  La lista vive en libros.js (GATOS): id, pelaje, nombre (opcional), caracter
+//  (opcional: pereza 0-1, velocidad, sillon "rojo"/"amarillo", voz) y,
+//  opcionalmente, `imagen` (PNG/WebP del gato entero, de perfil mirando a la
+//  derecha, fondo transparente; prompts en PROMPTS.md): con imagen el gato se
+//  mueve como un recorte de papel en lugar del dibujo.
+//
+//  Parámetros de la URL:
+//    ?gatos=0                        sin gatos
+//    ?semilla=N                      azar repetible (capturas)
+//    ?plantilla=<id>&pose=parado|sentado|echado&estilo=color|lineas|silueta[&pieza=cabeza|cuerpo|cola|patas]
+//                                    dibuja ESE gato a pantalla completa sobre fondo transparente:
+//                                    las plantillas para ilustrarlos con IA (_tools/plantillas_gatos.js)
 // =====================================================================
 (function(){
   'use strict';
   const q = new URLSearchParams(location.search);
   if (q.get('gatos') === '0') return;
   const LISTA = (typeof GATOS !== 'undefined' && Array.isArray(GATOS)) ? GATOS : [];
-  const centro = document.querySelector('#sala .centro'), suelo = document.querySelector('#sala .suelo');
-  const mesa = centro && centro.querySelector('.mesa');
-  if (!LISTA.length || !centro || !suelo || !mesa) return;
-  const cuerpo = document.body;
   const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // azar con semilla opcional (?semilla=N): la misma escena en cada captura
@@ -31,107 +39,191 @@
   const R = semilla > 0 ? () => { semilla = (Math.imul(semilla, 1664525) + 1013904223) >>> 0; return semilla / 4294967296; } : Math.random;
   const entre = (a, b) => a + R() * (b - a);
   const elegir = a => a[Math.floor(R() * a.length)];
-
-  // ---- los sillones: dónde está el asiento (fracción del alto y ancho del sillón) y qué tan grande se ve el gato encima ----
-  const sillones = [...centro.querySelectorAll('.sillon')].map(el => ({
-    el, ocupado: null,
-    asiento: el.classList.contains('amarillo') ? { x: .5, y: .66, ancho: .42 } : { x: .5, y: .62, ancho: .46 },
-  }));
+  const f1 = n => (Math.round(n * 10) / 10).toString();
 
   // =====================================================================
-  //  EL DIBUJO: un gato de perfil mirando a la derecha, en un lienzo de
-  //  120 × 80 (las patas pisan en y = 76). Las piezas llevan clases para
-  //  que el CSS las anime: .cola, .pata (ti, td, di, dd), .torso, .cabeza, .ojos
+  //  EL DIBUJO. Lienzo de 120 × 80, el gato mira a la derecha, pisa en y = 76.
+  //  La cabeza se dibuja en (92, 34) y cada pose la desplaza con `cabeza`.
   // =====================================================================
-  const D = {
-    cuerpo: 'M22 40 C 24 26, 44 22, 60 24 C 76 26, 84 32, 84 44 C 84 56, 72 60, 56 60 L 34 60 C 24 60, 18 52, 22 40 Z',
-    cabeza: 'M77 34 a15 15 0 1 0 30 0 a15 15 0 1 0 -30 0 Z',
-    orejas: 'M80 26 L 82 7 L 93 20 Z M95 19 L 104 5 L 106 25 Z',
-    orejasDentro: 'M83.5 23 L 84.5 12.5 L 90.5 19.5 Z M96.5 21 L 102 10.5 L 103.5 23 Z',
-    cola: 'M20 46 C 6 50, 2 36, 10 24',
-    patas: { ti: 26, td: 33, di: 66, dd: 73 },           // x de cada pata: trasera/delantera, izquierda (lejos) / derecha (cerca)
+  const CABEZA = {
+    cara: 'M77 34 a15 15 0 1 0 30 0 a15 15 0 1 0 -30 0 Z',
+    orejaIzq: 'M80 26 C 79 18, 80 11, 82 7 C 86 11, 90 16, 93 20 Z',
+    orejaDer: 'M95 19 C 97 14, 101 9, 104 5 C 105 12, 106 19, 106 25 Z',
+    dentroIzq: 'M83.5 23 L 84.5 12.5 L 90.5 19.5 Z',
+    dentroDer: 'M96.5 21 L 102 10.5 L 103.5 23 Z',
   };
-  // Los pelajes, sacados de las fotos de los cuatro gatos reales (privado/gatos/referencia/).
-  // `extra` devuelve el SVG de las manchas o rayas, recortado con las siluetas por clip-path.
-  const motas = (lista, colores, u) => '<g clip-path="url(#' + u + '-cuerpo)">' +
-    lista.map((m, i) => '<ellipse cx="' + m[0] + '" cy="' + m[1] + '" rx="' + m[2] + '" ry="' + m[3] + '" fill="' + colores[i % colores.length] + '" opacity=".85" transform="rotate(' + (m[4] || 0) + ' ' + m[0] + ' ' + m[1] + ')"/>').join('') + '</g>';
+  // la pata de pie, en coordenadas locales (x 0-8, cadera en y 50, pisa en 76, con la zarpa hacia delante)
+  const PATA = 'M0 50 h8 v22 c0 2.5 2 4 5 4 h-12 c-1.5 0 -2 -1 -2 -2.5 Z';
+  const POSES = {
+    parado: {
+      cuerpo: 'M22 42 C 22 30, 34 25, 46 26 L 64 26 C 74 26, 82 30, 85 40 C 87 48, 82 56, 72 58 L 38 58 C 28 58, 22 52, 22 42 Z',
+      bbox: [22, 26, 85, 58],
+      espina: [[26, 32], [36, 27], [48, 26], [60, 26], [72, 27], [82, 33]],
+      cola: 'M21 46 C 6 50, 0 36, 9 22 C 10 20, 13 21, 12 24 C 7 34, 12 42, 22 40 Z',
+      colaCentro: 'M21 43 C 9 45, 5 36, 10.5 22',
+      colaOrigen: [21, 43], colaSuelo: false,
+      cabeza: [0, 0],
+      patas: [{ n: 'ti', x: 27, lejos: true }, { n: 'di', x: 66, lejos: true }, { n: 'td', x: 35 }, { n: 'dd', x: 74 }],
+      delante: () => '',
+    },
+    sentado: {
+      // el lomo sube en diagonal desde el anca (abajo a la izquierda) hasta los hombros; el pecho cae vertical sobre las patas delanteras
+      cuerpo: 'M24 56 C 26 42, 44 30, 64 28 C 76 27, 86 33, 86 44 L 86 54 C 86 58, 82 60, 76 60 L 60 60 C 52 60, 44 62, 40 66 C 36 60, 28 58, 24 56 Z',
+      anca: [34, 62, 15, 14],                                   // la cadera redonda: cx cy rx ry (entra en la silueta del cuerpo)
+      bbox: [19, 28, 86, 76],
+      espina: [[24, 52], [34, 40], [48, 31], [64, 28], [78, 30], [85, 38]],
+      cola: 'M21 68 C 12 72, 12 79, 26 79 L 66 79 C 70 79, 70 75.5, 66 75.5 L 30 75.5 C 22 75.5, 21 72, 23 69 Z',
+      colaCentro: 'M22 69 C 16 73, 16 77.3, 28 77.3 L 66 77.3',
+      colaOrigen: [22, 69], colaSuelo: true,
+      cabeza: [-6, -4],
+      patas: [{ n: 'di', x: 70, lejos: true, sentado: true }, { n: 'dd', x: 78, sentado: true }],
+      delante: P => '<ellipse cx="51" cy="74" rx="7" ry="3" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".8"/>',   // la pata trasera asomando bajo el anca
+    },
+    echado: {
+      cuerpo: 'M22 62 C 20 50, 34 46, 54 46 C 72 46, 86 50, 86 62 C 86 70, 80 76, 70 76 L 34 76 C 24 76, 22 70, 22 62 Z',
+      bbox: [22, 46, 86, 76],
+      espina: [[26, 52], [38, 47], [54, 46], [70, 47], [82, 52]],
+      cola: 'M23 68 C 12 72, 14 80, 30 80 L 66 80 C 70 80, 70 76.5, 66 76.5 L 32 76.5 C 24 76.5, 22 73, 24 70 Z',
+      colaCentro: 'M23 69 C 16 73, 17 78.3, 30 78.3 L 66 78.3',
+      colaOrigen: [23, 69], colaSuelo: true,
+      cabeza: [-2, 8],
+      patas: [],
+      delante: P => '<ellipse cx="74" cy="75" rx="7" ry="3" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".8"/>' +
+        '<ellipse cx="85" cy="75" rx="6" ry="3" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".8"/>',
+    },
+  };
+
+  // ---- los pelajes: recetas de manchas y rayas en función del marco F del cuerpo (bbox, espina, clips) ----
+  const rel = (F, fx, fy) => [F.bbox[0] + (F.bbox[2] - F.bbox[0]) * fx, F.bbox[1] + (F.bbox[3] - F.bbox[1]) * fy];
+  const ancho = F => F.bbox[2] - F.bbox[0], alto = F => F.bbox[3] - F.bbox[1];
+  const elipseRel = (F, fx, fy, rx, ry, color, rot, op) => { const p = rel(F, fx, fy); return '<ellipse cx="' + f1(p[0]) + '" cy="' + f1(p[1]) + '" rx="' + f1(ancho(F) * rx) + '" ry="' + f1(alto(F) * ry) + '" fill="' + color + '"' + (op ? ' opacity="' + op + '"' : '') + (rot ? ' transform="rotate(' + rot + ' ' + f1(p[0]) + ' ' + f1(p[1]) + ')"' : '') + '/>'; };
+  // motas brindadas: un reparto fijo por pose (azar propio, no el de la escena) dentro de la caja del cuerpo
+  function motas(F, u, colores, n, semillaLocal){
+    let s = semillaLocal; const r = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
+    let out = '<g clip-path="url(#' + u + '-cuerpo)">';
+    for (let i = 0; i < n; i++){
+      const p = rel(F, .04 + r() * .92, .06 + r() * .88), rx = 1.4 + r() * 1.6, ry = .7 + r() * .6, rot = Math.round(r() * 180);
+      out += '<ellipse cx="' + f1(p[0]) + '" cy="' + f1(p[1]) + '" rx="' + f1(rx) + '" ry="' + f1(ry) + '" fill="' + colores[i % colores.length] + '" opacity=".85" transform="rotate(' + rot + ' ' + f1(p[0]) + ' ' + f1(p[1]) + ')"/>';
+    }
+    return out + '</g>';
+  }
   const PELAJES = {
     atigrado: {                                           // atigrado pelo corto gris-marrón, mackerel tabby: rayas oscuras y marcadas, panza y barbilla claras
-      base: '#9a8468', lejos: '#7b6850', borde: '#3e3027', oreja: '#d9a0a0', ojos: ['#86a35b', '#86a35b'], cola: '#9a8468',
-      extra: u => '<g clip-path="url(#' + u + '-cuerpo)"><path d="M32 60 C 42 50, 72 50, 80 58 Z" fill="#dac8a9" opacity=".9"/>' +
-        '<path d="M24 36 C 40 26, 70 24, 83 36" fill="none" stroke="#3f3129" stroke-width="2.2" opacity=".55"/>' +
-        '<path d="M34 29q3 8 0 14M41 26q4 9 1 18M48 24q4 10 1 20M56 23q4 11 1 22M64 24q4 10 1 20M72 26q4 9 1 17M79 30q3 7 1 13" fill="none" stroke="#3f3129" stroke-width="2.4" stroke-linecap="round" opacity=".88"/></g>' +
-        '<g clip-path="url(#' + u + '-cabeza)"><path d="M85 24l2.4-6 2.4 5 2.4-5 2.4 6" fill="none" stroke="#3f3129" stroke-width="1.7" stroke-linecap="round"/>' +
+      base: '#9a8468', lejos: '#7b6850', borde: '#3e3027', oreja: '#d9a0a0', ojos: ['#86a35b', '#86a35b'], cola: '#9a8468', voz: .85,
+      cuerpo: (F, u) => {
+        const [x0, y0, x1, y1] = F.bbox; let d = '';
+        F.espina.forEach((p, k) => { const L = (y1 - p[1]) * (k === 0 || k === F.espina.length - 1 ? .45 : .72); d += 'M' + p[0] + ' ' + (p[1] + 1) + ' q3 ' + f1(L / 2) + ' 0 ' + f1(L) + ' '; });
+        for (let k = 0; k < F.espina.length - 1; k++){ const a = F.espina[k], b = F.espina[k + 1], sx = (a[0] + b[0]) / 2, sy = (a[1] + b[1]) / 2, L = (y1 - sy) * .6; d += 'M' + f1(sx) + ' ' + f1(sy + 1) + ' q-3 ' + f1(L / 2) + ' 0 ' + f1(L) + ' '; }
+        return '<g clip-path="url(#' + u + '-cuerpo)"><ellipse cx="' + f1((x0 + x1) / 2) + '" cy="' + y1 + '" rx="' + f1((x1 - x0) * .42) + '" ry="' + f1((y1 - y0) * .3) + '" fill="#dac8a9" opacity=".9"/>' +
+          '<path d="M' + F.espina.map(p => p.join(' ')).join(' L ') + '" fill="none" stroke="#3f3129" stroke-width="2.2" opacity=".5"/>' +
+          '<path d="' + d + '" fill="none" stroke="#3f3129" stroke-width="2.3" stroke-linecap="round" opacity=".85"/></g>';
+      },
+      cabeza: u => '<g clip-path="url(#' + u + '-cabeza)"><path d="M85 24l2.4-6 2.4 5 2.4-5 2.4 6" fill="none" stroke="#3f3129" stroke-width="1.7" stroke-linecap="round"/>' +
         '<path d="M81 36l-4 .5M81 40l-4 2M99 24l3-4M103 29l4-2" fill="none" stroke="#3f3129" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>' +
         '<path d="M93 45 C 97 48, 103 47, 106 43 L 106 49 L 92 49 Z" fill="#dac8a9" opacity=".8"/></g>',
-      colaExtra: '<path d="' + D.cola + '" fill="none" stroke="#3f3129" stroke-width="7" stroke-linecap="butt" stroke-dasharray="3 4.5" opacity=".8"/>',
-      pataExtra: x => '<path d="M' + x + ' 60h8M' + x + ' 66h8" stroke="#3f3129" stroke-width="1.6" opacity=".7"/>',
+      colaExtra: (F, u) => '<g clip-path="url(#' + u + '-cola)"><path d="' + F.colaCentro + '" fill="none" stroke="#3f3129" stroke-width="12" stroke-dasharray="3 4.5" opacity=".8"/></g>',
+      pata: () => '<path d="M0 60h8M0 66h8" stroke="#3f3129" stroke-width="1.6" opacity=".7"/>',
     },
     carey: {                                              // carey pelo corto brindada: negro / marrón muy oscuro con motas naranjas finas y la mancha naranja en la cara
-      base: '#2a211c', lejos: '#1a1411', borde: '#120d0b', oreja: '#b98484', ojos: ['#9fae4f', '#9fae4f'], cola: '#2a211c',
-      extra: u => motas([[30, 32, 2.6, 1.1, -30], [37, 28, 3, 1.2, 15], [44, 35, 2.4, 1, -40], [51, 26, 3.2, 1.3, 25], [57, 33, 2.2, 1, 5], [63, 27, 2.8, 1.2, -20],
-          [69, 37, 2.4, 1, 35], [75, 30, 3, 1.3, -5], [80, 43, 2.2, 1, 40], [33, 45, 2.6, 1.1, 20], [43, 51, 2.8, 1.2, -15], [55, 47, 2.2, 1, 30],
-          [65, 53, 2.6, 1.1, 0], [73, 49, 2.4, 1, -35], [28, 53, 2, .9, 10], [49, 41, 2, .9, 50], [61, 42, 1.8, .9, -50], [40, 40, 1.8, .8, 0],
-          [34, 36, 1.6, .8, 60], [47, 30, 1.8, .8, -60], [60, 37, 1.6, .7, 20], [71, 44, 1.8, .8, -10], [78, 36, 1.6, .8, 45], [52, 55, 2, .9, 15],
-          [38, 56, 1.6, .8, -30], [66, 31, 1.6, .7, 70], [26, 44, 1.8, .8, -20], [58, 28, 1.4, .7, 0]],
-          ['#c2702a', '#d98b3c', '#b5651f', '#e0a050'], u) +
-        '<g clip-path="url(#' + u + '-cabeza)"><path d="M93 20 C 102 23, 106 33, 101 46 L 93 44 C 97 36, 95 28, 90 22 Z" fill="#c2702a" opacity=".95"/>' +
+      base: '#2a211c', lejos: '#1a1411', borde: '#120d0b', oreja: '#b98484', ojos: ['#9fae4f', '#9fae4f'], cola: '#2a211c', voz: 1.15,
+      cuerpo: (F, u) => motas(F, u, ['#c2702a', '#d98b3c', '#b5651f', '#e0a050'], 34, 7 + F.bbox[1]),
+      cabeza: u => '<g clip-path="url(#' + u + '-cabeza)"><path d="M93 20 C 102 23, 106 33, 101 46 L 93 44 C 97 36, 95 28, 90 22 Z" fill="#c2702a" opacity=".95"/>' +
         '<ellipse cx="82" cy="40" rx="3" ry="2" fill="#d98b3c" opacity=".8"/><ellipse cx="86" cy="25" rx="2.4" ry="1.5" fill="#c2702a" opacity=".8" transform="rotate(-20 86 25)"/>' +
-        '<path d="M95 19 L 104 5 L 106 25 Z" fill="#c2702a" opacity=".55"/></g>',
-      colaExtra: '<path d="' + D.cola + '" fill="none" stroke="#c2702a" stroke-width="7" stroke-linecap="butt" stroke-dasharray="2 6.5" opacity=".7"/>',
-      pataExtra: (x, lejos, nombre) => nombre === 'td' ? '<ellipse cx="' + (x + 4) + '" cy="58" rx="2.6" ry="1.8" fill="#d98b3c" opacity=".8"/>' : '',
+        '<path d="' + CABEZA.orejaDer + '" fill="#c2702a" opacity=".55"/></g>',
+      colaExtra: (F, u) => '<g clip-path="url(#' + u + '-cola)"><path d="' + F.colaCentro + '" fill="none" stroke="#c2702a" stroke-width="12" stroke-dasharray="2 6.5" opacity=".7"/></g>',
+      pata: (lejos, n) => n === 'td' ? '<ellipse cx="4" cy="58" rx="2.6" ry="1.8" fill="#d98b3c" opacity=".8"/>' : '',
     },
     tricolor: {                                           // tricolor (calicó) pelo corto: blanca de panza, pecho y patas, con manchas grandes negras y naranjas en el lomo y la cara partida
-      base: '#f4efe6', lejos: '#dcd4c7', borde: '#7a6a5a', oreja: '#e3a7a7', ojos: ['#b5b24c', '#b5b24c'], cola: '#2a211d',
-      extra: u => '<g clip-path="url(#' + u + '-cuerpo)"><path d="M28 30 C 40 22, 70 20, 82 32 L 80 44 C 66 40, 50 42, 32 46 Z" fill="#2a211d"/>' +
-        '<ellipse cx="72" cy="29" rx="9" ry="6" fill="#c9742c" transform="rotate(-10 72 29)"/><ellipse cx="30" cy="36" rx="7.5" ry="6.5" fill="#c9742c"/>' +
-        '<ellipse cx="54" cy="44" rx="6" ry="3.5" fill="#c9742c" transform="rotate(10 54 44)"/></g>' +
-        '<g clip-path="url(#' + u + '-cabeza)"><path d="M80 26 L 82 7 L 93 20 L 92 32 L 80 34 Z" fill="#2a211d"/><path d="M95 19 L 104 5 L 106 25 L 107 38 L 99 34 L 97 24 Z" fill="#c9742c"/></g>',
-      colaExtra: '<path d="' + D.cola + '" fill="none" stroke="#c9742c" stroke-width="7" stroke-linecap="butt" stroke-dasharray="0 9 9 100"/>',
-      pataExtra: () => '',
+      base: '#f4efe6', lejos: '#dcd4c7', borde: '#7a6a5a', oreja: '#e3a7a7', ojos: ['#b5b24c', '#b5b24c'], cola: '#2a211d', voz: 1,
+      cuerpo: (F, u) => {
+        const y1 = F.bbox[3], arriba = F.espina.map(p => p[0] + ' ' + (p[1] - 3)), abajo = F.espina.slice().reverse().map(p => p[0] + ' ' + f1(p[1] + (y1 - p[1]) * .55));
+        return '<g clip-path="url(#' + u + '-cuerpo)"><path d="M' + arriba.join(' L ') + ' L ' + abajo.join(' L ') + ' Z" fill="#2a211d"/>' +
+          elipseRel(F, .78, .3, .14, .2, '#c9742c', -10) + elipseRel(F, .12, .5, .12, .22, '#c9742c') + elipseRel(F, .5, .72, .1, .12, '#c9742c', 10) + '</g>';
+      },
+      cabeza: u => '<g clip-path="url(#' + u + '-cabeza)"><path d="M80 26 L 82 7 L 93 20 L 92 32 L 80 34 Z" fill="#2a211d"/><path d="M95 19 L 104 5 L 106 25 L 107 38 L 99 34 L 97 24 Z" fill="#c9742c"/></g>',
+      colaExtra: (F, u) => '<g clip-path="url(#' + u + '-cola)"><path d="' + F.colaCentro + '" fill="none" stroke="#c9742c" stroke-width="12" stroke-dasharray="0 9 9 100"/></g>',
+      pata: () => '',
     },
     van_cafe: {                                           // van turca pelo corto: blanca con café (canela) en la gorrita partida por la raya blanca, tres lunares en el lomo y la cola
-      base: '#f4efe6', lejos: '#dcd4c7', borde: '#7a6a5a', oreja: '#e3a7a7', ojos: ['#a9b35a', '#a9b35a'], cola: '#bf7a3c',
-      extra: u => '<g clip-path="url(#' + u + '-cuerpo)"><ellipse cx="40" cy="30" rx="7" ry="5.5" fill="#bf7a3c" transform="rotate(-15 40 30)"/>' +
-        '<ellipse cx="61" cy="27" rx="6" ry="5" fill="#b86f33"/><ellipse cx="77" cy="44" rx="6.5" ry="5" fill="#bf7a3c" transform="rotate(20 77 44)"/></g>' +
-        '<g clip-path="url(#' + u + '-cabeza)"><path d="M80 26 L 82 7 L 93 20 L 90 29 L 81 31 Z" fill="#bf7a3c"/><path d="M95 19 L 104 5 L 106 25 L 105 31 L 97 29 Z" fill="#bf7a3c"/>' +
+      base: '#f4efe6', lejos: '#dcd4c7', borde: '#7a6a5a', oreja: '#e3a7a7', ojos: ['#a9b35a', '#a9b35a'], cola: '#bf7a3c', voz: 1.05,
+      cuerpo: (F, u) => '<g clip-path="url(#' + u + '-cuerpo)">' + elipseRel(F, .25, .22, .11, .19, '#bf7a3c', -15) + elipseRel(F, .52, .14, .1, .17, '#b86f33') + elipseRel(F, .84, .5, .1, .18, '#bf7a3c', 20) + '</g>',
+      cabeza: u => '<g clip-path="url(#' + u + '-cabeza)"><path d="M80 26 L 82 7 L 93 20 L 90 29 L 81 31 Z" fill="#bf7a3c"/><path d="M95 19 L 104 5 L 106 25 L 105 31 L 97 29 Z" fill="#bf7a3c"/>' +
         '<ellipse cx="83" cy="38" rx="2.8" ry="2" fill="#bf7a3c" opacity=".7"/></g>',
-      colaExtra: '',
-      pataExtra: () => '',
+      colaExtra: () => '',
+      pata: () => '',
     },
   };
-  function pata(nombre, x, P){
-    const lejos = nombre === 'ti' || nombre === 'di';
-    return '<g class="pata ' + nombre + '"><rect x="' + x + '" y="50" width="8" height="26" rx="4" fill="' + (lejos ? P.lejos : P.base) + '" stroke="' + P.borde + '" stroke-width=".8"/>' +
-      P.pataExtra(x, lejos, nombre) + '</g>';
+
+  function svgPata(p, P, u){
+    const color = p.lejos ? P.lejos : P.base;
+    return '<g transform="translate(' + p.x + ' 0)"><g class="pata ' + p.n + '"><path d="' + PATA + '" fill="' + color + '" stroke="' + P.borde + '" stroke-width=".8"/>' + (p.lejos ? '' : P.pata(p.lejos, p.n)) + '</g></g>';
   }
-  function svgGato(def, u){
-    const P = PELAJES[def.pelaje] || PELAJES.atigrado;
-    return '<svg viewBox="0 0 120 80" aria-hidden="true">' +
-      '<defs><clipPath id="' + u + '-cuerpo"><path d="' + D.cuerpo + '"/></clipPath><clipPath id="' + u + '-cabeza"><path d="' + D.cabeza + '"/><path d="' + D.orejas + '"/></clipPath>' +
-      '<linearGradient id="' + u + '-luz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".24"/></linearGradient></defs>' +
-      '<ellipse class="sombra" cx="54" cy="76" rx="36" ry="3.5" fill="rgba(0,0,0,.35)"/>' +
-      '<g class="cola"><path d="' + D.cola + '" fill="none" stroke="' + P.cola + '" stroke-width="7" stroke-linecap="round"/>' + P.colaExtra + '</g>' +
-      pata('ti', D.patas.ti, P) + pata('di', D.patas.di, P) + pata('td', D.patas.td, P) + pata('dd', D.patas.dd, P) +
-      '<g class="torso"><path d="' + D.cuerpo + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>' +
-      '<g class="cabeza"><path d="' + D.orejas + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9" stroke-linejoin="round"/>' +
-      '<path d="' + D.cabeza + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>' +
-      P.extra(u) +
-      '<path d="' + D.orejasDentro + '" fill="' + P.oreja + '" opacity=".9"/>' +
+  function svgCabeza(P, u, F){
+    return '<g class="con-cabeza" transform="translate(' + F.cabeza[0] + ' ' + F.cabeza[1] + ')"><g class="cabeza">' +
+      '<path d="' + CABEZA.orejaIzq + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9" stroke-linejoin="round"/>' +
+      '<g class="oreja"><path d="' + CABEZA.orejaDer + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9" stroke-linejoin="round"/></g>' +
+      '<path d="' + CABEZA.cara + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>' +
+      P.cabeza(u) +
+      '<path d="' + CABEZA.dentroIzq + '" fill="' + P.oreja + '" opacity=".9"/><g class="oreja"><path d="' + CABEZA.dentroDer + '" fill="' + P.oreja + '" opacity=".9"/></g>' +
       '<ellipse cx="99" cy="41" rx="7" ry="5" fill="#fff" opacity=".35"/>' +
       '<g class="ojos"><ellipse cx="86.5" cy="32.5" rx="2.7" ry="3.4" fill="' + P.ojos[0] + '"/><ellipse cx="97.5" cy="31.5" rx="2.7" ry="3.4" fill="' + P.ojos[1] + '"/>' +
-      '<ellipse cx="86.5" cy="32.5" rx="1" ry="3" fill="#1a1512"/><ellipse cx="97.5" cy="31.5" rx="1" ry="3" fill="#1a1512"/>' +
-      '<circle cx="85.6" cy="31.2" r=".8" fill="#fff" opacity=".9"/><circle cx="96.6" cy="30.2" r=".8" fill="#fff" opacity=".9"/></g>' +
+      '<g class="pupilas"><ellipse cx="86.5" cy="32.5" rx="1" ry="3" fill="#1a1512"/><ellipse cx="97.5" cy="31.5" rx="1" ry="3" fill="#1a1512"/>' +
+      '<circle cx="85.6" cy="31.2" r=".8" fill="#fff" opacity=".9"/><circle cx="96.6" cy="30.2" r=".8" fill="#fff" opacity=".9"/></g></g>' +
       '<path d="M99.6 38.6 l-2.4 0 l1.2 1.9 Z" fill="#c97f8a"/><path d="M98.4 40.5 q1.6 2 3.2 0" fill="none" stroke="#3a2a22" stroke-width=".7"/>' +
-      '<path d="M104 39 l9 -2.5 M104.5 41.5 l9.5 1" fill="none" stroke="#fff" stroke-width=".8" opacity=".75"/></g>' +
-      '<path d="' + D.cuerpo + '" fill="url(#' + u + '-luz)"/></g>' +
-      '</svg>';
+      '<path d="M104 39 l9 -2.5 M104.5 41.5 l9.5 1" fill="none" stroke="#fff" stroke-width=".8" opacity=".75"/>' +
+      '</g></g>';
+  }
+  // el SVG completo de un gato en una pose; u = prefijo único para clips y degradados
+  function svgGato(def, pose, u){
+    const P = PELAJES[def.pelaje] || PELAJES.atigrado, F = POSES[pose] || POSES.parado;
+    const anca = F.anca ? '<ellipse cx="' + F.anca[0] + '" cy="' + F.anca[1] + '" rx="' + F.anca[2] + '" ry="' + F.anca[3] + '"' : '';
+    return '<svg viewBox="0 0 120 80" aria-hidden="true" data-pose="' + pose + '">' +
+      '<defs><clipPath id="' + u + '-cuerpo"><path d="' + F.cuerpo + '"/>' + (anca ? anca + '/>' : '') + '</clipPath>' +
+      '<clipPath id="' + u + '-cabeza"><path d="' + CABEZA.cara + '"/><path d="' + CABEZA.orejaIzq + '"/><path d="' + CABEZA.orejaDer + '"/></clipPath>' +
+      '<clipPath id="' + u + '-cola"><path d="' + F.cola + '"/></clipPath>' +
+      '<linearGradient id="' + u + '-luz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".24"/></linearGradient></defs>' +
+      '<ellipse class="sombra" cx="54" cy="76" rx="36" ry="3.5" fill="rgba(0,0,0,.35)"/>' +
+      '<g class="cola' + (F.colaSuelo ? ' suelo' : '') + '" style="transform-origin:' + F.colaOrigen[0] + 'px ' + F.colaOrigen[1] + 'px"><path d="' + F.cola + '" fill="' + P.cola + '" stroke="' + P.borde + '" stroke-width=".8"/>' + P.colaExtra(F, u) + '</g>' +
+      F.patas.map(p => svgPata(p, P, u)).join('') +
+      '<g class="torso">' +
+      (anca ? anca + ' fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>' : '') +
+      '<path class="cuerpo" d="' + F.cuerpo + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>' +
+      (anca ? anca + ' fill="' + P.base + '"/>' : '') +                      // tapa la costura entre el anca y el torso
+      P.cuerpo(F, u) +
+      '<path d="' + F.cuerpo + '" fill="url(#' + u + '-luz)"/>' + (anca ? anca + ' fill="url(#' + u + '-luz)"/>' : '') +
+      '<g class="delante">' + F.delante(P) + '</g>' +
+      svgCabeza(P, u, F) +
+      '</g></svg>';
   }
 
   // =====================================================================
-  //  LA GEOMETRÍA DEL SUELO (en coordenadas del .centro): la caja por donde
-  //  se camina, la huella de la mesa y el tamaño de los gatos
+  //  LAS PLANTILLAS (?plantilla=id&pose=&estilo=&pieza=): el dibujo solo, a
+  //  pantalla completa, sobre fondo transparente, para ilustrarlo con IA
   // =====================================================================
+  if (q.has('plantilla')){
+    const def = LISTA.find(g => g.id === q.get('plantilla')) || { id: q.get('plantilla'), pelaje: q.get('plantilla') };
+    const pose = POSES[q.get('pose')] ? q.get('pose') : 'parado', estilo = q.get('estilo') || 'color', pieza = q.get('pieza') || '';
+    document.documentElement.classList.add('plantilla');
+    document.body.classList.add('plantilla', 'estilo-' + estilo, pieza ? 'pieza-' + pieza : 'pieza-todo');
+    const d = document.createElement('div'); d.id = 'plantilla';
+    d.innerHTML = svgGato(def, pose, 'pl');
+    document.body.appendChild(d);
+    document.title = 'plantilla ' + def.id + ' ' + pose;
+    window.GATOS_SALA = { plantilla: true, svg: (id, p) => svgGato(LISTA.find(g => g.id === id) || { pelaje: id }, p, 'x') };
+    return;
+  }
+
+  // =====================================================================
+  //  LA SALA: geometría del suelo (en coordenadas del .centro)
+  // =====================================================================
+  const centro = document.querySelector('#sala .centro'), suelo = document.querySelector('#sala .suelo');
+  const mesa = centro && centro.querySelector('.mesa');
+  if (!LISTA.length || !centro || !suelo || !mesa) return;
+  const cuerpo = document.body;
+  const sillones = [...centro.querySelectorAll('.sillon')].map(el => ({
+    el, ocupado: null, nombre: el.classList.contains('amarillo') ? 'amarillo' : 'rojo',
+    asiento: el.classList.contains('amarillo') ? { x: .5, y: .66, ancho: .42 } : { x: .5, y: .62, ancho: .46 },
+  }));
   const G = { w: 0, h: 0, caja: null, mesa: null, ancho: 60 };
   function medir(){
     const c = centro.getBoundingClientRect(); if (!c.width || !c.height) return false;
@@ -154,66 +246,120 @@
   const enMesa = (x, y) => { const m = G.mesa; return x > m.left && x < m.right && y > m.top + (m.base - m.top) * .3 && y < m.base + G.h * .012; };
 
   // =====================================================================
-  //  CADA GATO: una maquinita de estados (quieto, anda, echado, salta) y su
-  //  posición normalizada (u, v) dentro de la caja, que sobrevive a los resize
+  //  LA VOZ: maullido y ronroneo sintetizados (Web Audio), al tocar
   // =====================================================================
+  let ac = null;
+  const callados = () => { const b = document.getElementById('musica-btn'); return b && b.classList.contains('apagada'); };
+  function audio(){ if (!ac){ try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } } if (ac && ac.state === 'suspended') ac.resume(); return ac; }
+  function maullar(voz){
+    const a = audio(); if (!a || callados()) return;
+    const t = a.currentTime, f0 = 520 * voz;
+    const o = a.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f0 * 1.6, t + .12); o.frequency.linearRampToValueAtTime(f0 * 1.25, t + .3); o.frequency.linearRampToValueAtTime(f0 * .88, t + .48);
+    const v = a.createOscillator(); v.frequency.value = 6.5; const vg = a.createGain(); vg.gain.value = 9 * voz; v.connect(vg); vg.connect(o.frequency);
+    const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2.2;
+    bp.frequency.setValueAtTime(900 * voz, t); bp.frequency.linearRampToValueAtTime(1900 * voz, t + .16); bp.frequency.linearRampToValueAtTime(1100 * voz, t + .48);
+    const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3400;
+    const g = a.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.13, t + .05); g.gain.setValueAtTime(.13, t + .3); g.gain.exponentialRampToValueAtTime(.001, t + .52);
+    o.connect(bp); bp.connect(lp); lp.connect(g); g.connect(a.destination);
+    o.start(t); v.start(t); o.stop(t + .55); v.stop(t + .55);
+  }
+  function ronronear(){
+    const a = audio(); if (!a || callados()) return;
+    const t = a.currentTime, dur = 1.8, n = a.createBufferSource(), buf = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    n.buffer = buf;
+    const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 240;
+    const am = a.createGain(); am.gain.value = .5;
+    const lfo = a.createOscillator(); lfo.frequency.value = 24; const lg = a.createGain(); lg.gain.value = .5; lfo.connect(lg); lg.connect(am.gain);
+    const g = a.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.4, t + .3); g.gain.setValueAtTime(.4, t + dur - .5); g.gain.linearRampToValueAtTime(0, t + dur);
+    n.connect(lp); lp.connect(am); am.connect(g); g.connect(a.destination);
+    n.start(t); lfo.start(t); n.stop(t + dur); lfo.stop(t + dur);
+  }
+
+  // =====================================================================
+  //  CADA GATO: una maquinita de estados (quieto, anda, sentado, echado,
+  //  estira, salta) y su posición normalizada (u, v) dentro de la caja
+  // =====================================================================
+  const POSE_DE = { quieto: 'parado', anda: 'parado', salta: 'parado', estira: 'parado', sentado: 'sentado', echado: 'echado' };
+  const ESTADOS = Object.keys(POSE_DE);
+  let gatos = [];
   class Gato {
     constructor(def, i, n){
       this.def = def; this.id = def.id || ('gato' + i);
-      const u = 'g-' + this.id.replace(/[^\w-]/g, '');
+      this.u = 'g-' + this.id.replace(/[^\w-]/g, '');
+      const c = def.caracter || {};
+      this.car = { pereza: Math.max(0, Math.min(1, c.pereza != null ? +c.pereza : .5)), velocidad: c.velocidad > 0 ? +c.velocidad : 1, sillon: c.sillon || null,
+        voz: c.voz > 0 ? +c.voz : ((PELAJES[def.pelaje] || PELAJES.atigrado).voz || 1) };
       this.el = document.createElement('div');
       this.el.className = 'gato ' + (PELAJES[def.pelaje] ? def.pelaje : 'atigrado') + ' quieto';
-      this.el.dataset.gato = this.id; this.el.title = def.nombre || '';
-      this.el.style.setProperty('--paso', '.5s');
+      this.el.dataset.gato = this.id; if (def.nombre) this.el.title = def.nombre;
+      this.el.style.setProperty('--paso', f1(.5 / this.car.velocidad) + 's');
       this.el.style.setProperty('--guino', entre(0, 6).toFixed(2) + 's');
-      this.el.innerHTML = svgGato(def, u);
+      this.lienzo = document.createElement('div'); this.lienzo.className = 'dibujo-gato'; this.el.appendChild(this.lienzo);
+      this.svgs = {}; this.pose = ''; this.ponerPose('parado', true);
       if (def.imagen) this.cargarImagen(def.imagen);
-      this.el.addEventListener('pointerup', e => { if (e.button === 0) this.mimar(); });
+      this.el.addEventListener('pointerup', e => { if (e.button === 0) this.mimar(e); });
       centro.appendChild(this.el);
       // nacen repartidos a lo ancho, fuera de la huella de la mesa
-      this.u = (i + .5) / n + entre(-.08, .08); this.v = entre(.2, .95);
-      for (let k = 0; k < 10 && enMesa(this.x, this.y); k++){ this.u = entre(.05, .95); this.v = entre(.15, .95); }
+      this.posU = (i + .5) / n + entre(-.08, .08); this.posV = entre(.2, .95);
+      for (let k = 0; k < 10 && enMesa(this.x, this.y); k++){ this.posU = entre(.05, .95); this.posV = entre(.15, .95); }
       this.dir = R() < .5 ? -1 : 1;
       this.estado = 'quieto'; this.hasta = entre(.5, 4); this.rumbo = null; this.sillon = null; this.enSillon = false; this.salto = null;
+      this.orejaT = entre(2, 7); this.gestoT = entre(2, 5);
       this.pintar();
     }
     cargarImagen(ruta){
       const im = new Image();
-      im.onload = () => { im.alt = ''; im.draggable = false; const svg = this.el.querySelector('svg'); if (svg) svg.remove(); this.el.insertBefore(im, this.el.firstChild); this.el.classList.add('con-imagen'); };
+      im.onload = () => { im.alt = ''; im.draggable = false; this.lienzo.innerHTML = ''; this.lienzo.appendChild(im); this.el.classList.add('con-imagen'); this.conImagen = true; };
       im.onerror = () => {};                               // sin imagen: se queda el dibujo
       im.src = ruta;
     }
-    get x(){ return G.caja.left + this.u * (G.caja.right - G.caja.left); }
-    get y(){ return G.caja.top + this.v * (G.caja.bottom - G.caja.top); }
-    poner(x, y){ this.u = Math.max(0, Math.min(1, (x - G.caja.left) / (G.caja.right - G.caja.left))); this.v = Math.max(0, Math.min(1, (y - G.caja.top) / (G.caja.bottom - G.caja.top))); }
-    cambiar(estado, dur){
-      this.el.classList.remove('quieto', 'anda', 'echado', 'salta'); this.el.classList.add(estado);
-      this.estado = estado; this.hasta = dur;
+    ponerPose(pose, directo){
+      if (this.conImagen || pose === this.pose) return;
+      this.pose = pose;
+      if (!this.svgs[pose]) this.svgs[pose] = svgGato(this.def, pose, this.u + '-' + pose);
+      const cambio = () => { this.lienzo.innerHTML = this.svgs[pose]; this.lienzo.classList.remove('cambiando'); };
+      if (directo) cambio();
+      else { this.lienzo.classList.add('cambiando'); clearTimeout(this.poseT); this.poseT = setTimeout(cambio, 170); }
     }
+    get x(){ return G.caja.left + this.posU * (G.caja.right - G.caja.left); }
+    get y(){ return G.caja.top + this.posV * (G.caja.bottom - G.caja.top); }
+    poner(x, y){ this.posU = Math.max(0, Math.min(1, (x - G.caja.left) / (G.caja.right - G.caja.left))); this.posV = Math.max(0, Math.min(1, (y - G.caja.top) / (G.caja.bottom - G.caja.top))); }
+    cambiar(estado, dur){
+      this.el.classList.remove(...ESTADOS); this.el.classList.add(estado);
+      this.estado = estado; this.hasta = dur;
+      this.ponerPose(POSE_DE[estado]);
+    }
+    gesto(clase, ms){ this.el.classList.remove(clase); void this.el.offsetWidth; this.el.classList.add(clase); setTimeout(() => this.el.classList.remove(clase), ms); }
     // ---- decidir qué hacer al terminar de estar quieto ----
     decidir(){
-      const r = R();
-      if (reducido){ this.cambiar(r < .5 ? 'echado' : 'quieto', entre(6, 14)); return; }
-      const libre = sillones.filter(s => !s.ocupado);
-      if (r < .62 || !libre.length && r < .8){
-        // a caminar hasta un punto del suelo fuera de la huella de la mesa
-        let tu = this.u, tv = this.v;
+      const libres = sillones.filter(s => !s.ocupado);
+      const pref = this.car.sillon ? libres.filter(s => s.nombre === this.car.sillon) : [];
+      if (reducido){ this.cambiar(R() < .5 ? 'echado' : 'sentado', entre(6, 14)); return; }
+      const pesos = [['anda', .5], ['sentado', .16 + .1 * (1 - this.car.pereza)], ['echado', .1 + .26 * this.car.pereza], ['sillon', libres.length ? .12 + (pref.length ? .06 : 0) : 0]];
+      let r = R() * pesos.reduce((s, p) => s + p[1], 0), que = 'anda';
+      for (const p of pesos){ if ((r -= p[1]) <= 0){ que = p[0]; break; } }
+      if (que === 'anda'){
+        // a caminar hasta un punto del suelo fuera de la huella de la mesa y lejos de los demás
+        let tu = this.posU, tv = this.posV;
         for (let k = 0; k < 12; k++){
           tu = entre(.03, .97); tv = entre(.05, 1);
           const tx = G.caja.left + tu * (G.caja.right - G.caja.left), ty = G.caja.top + tv * (G.caja.bottom - G.caja.top);
-          // ni dentro de la huella de la mesa, ni a dos pasos, ni encima de otro gato
           const lejosDeOtros = gatos.every(o => o === this || o.enSillon || Math.hypot(o.x - tx, o.y - ty) > G.ancho * .9 * escalaEn(ty));
           if (!enMesa(tx, ty) && Math.hypot(tx - this.x, ty - this.y) > G.ancho * .8 && lejosDeOtros) break;
         }
-        this.tu = tu; this.tv = tv; this.rumbo = 'suelo'; this.dir = tu > this.u ? 1 : -1;
+        this.tu = tu; this.tv = tv; this.rumbo = 'suelo'; this.dir = tu > this.posU ? 1 : -1;
         this.cambiar('anda', 0);
-      } else if (r < .8){
-        this.cambiar('echado', entre(6, 16));
+      } else if (que === 'sentado'){
+        this.cambiar('sentado', entre(6, 15)); this.gestoT = entre(1.5, 4);
+      } else if (que === 'echado'){
+        this.cambiar('echado', entre(7, 18));
       } else {
         // al sillón: primero caminar hasta el suelo justo debajo del asiento, después el salto
-        const s = elegir(libre); s.ocupado = this; this.sillon = s;
+        const s = pref.length ? elegir(pref) : elegir(libres); s.ocupado = this; this.sillon = s;
         const p = this.pieDelSillon(s);
-        this.poner(this.x, this.y); this.tu = p.u; this.tv = p.v; this.rumbo = 'sillon'; this.dir = p.x > this.x ? 1 : -1;
+        this.tu = p.u; this.tv = p.v; this.rumbo = 'sillon'; this.dir = p.x > this.x ? 1 : -1;
         this.cambiar('anda', 0);
       }
     }
@@ -224,21 +370,24 @@
     asiento(s){ return { x: s.r.left + s.r.width * s.asiento.x, y: s.r.top + s.r.height * (s.asiento.y + .06), escala: (s.r.width * s.asiento.ancho) / G.ancho }; }
     saltar(desde, hasta, sube){
       this.salto = { x0: desde.x, y0: desde.y, s0: desde.escala, x1: hasta.x, y1: hasta.y, s1: hasta.escala, t: 0, dur: .75, sube };
-      this.dir = hasta.x >= desde.x ? (Math.abs(hasta.x - desde.x) > 2 ? 1 : this.dir) : -1;
+      if (Math.abs(hasta.x - desde.x) > 2) this.dir = hasta.x > desde.x ? 1 : -1;
       this.cambiar('salta', 0);
     }
     // ---- un paso de tiempo ----
-    tic(dt, t){
+    tic(dt){
+      // gestos sueltos: la oreja (en cualquier estado menos andando) y acicalarse (sentado)
+      if (this.estado !== 'anda' && this.estado !== 'salta' && (this.orejaT -= dt) <= 0){ this.orejaT = entre(3, 9); this.gesto('oreja', 500); }
+      if (this.estado === 'sentado' && (this.gestoT -= dt) <= 0){ this.gestoT = entre(3, 7); if (R() < .55) this.gesto('acicala', 2400); }
       if (this.estado === 'salta'){
         const s = this.salto; s.t = Math.min(1, s.t + dt / s.dur);
         if (s.t >= 1){
-          if (s.sube){ this.enSillon = true; this.salto = null; this.cambiar('echado', entre(10, 26)); }
+          if (s.sube){ this.enSillon = true; this.salto = null; this.cambiar(R() < .6 ? 'echado' : 'sentado', entre(10, 26)); this.gestoT = entre(2, 5); }
           else { this.enSillon = false; this.salto = null; this.poner(s.x1, s.y1); this.sillon.ocupado = null; this.sillon = null; this.cambiar('quieto', entre(1, 3)); }
         }
       } else if (this.estado === 'anda'){
         const tx = G.caja.left + this.tu * (G.caja.right - G.caja.left), ty = G.caja.top + this.tv * (G.caja.bottom - G.caja.top);
         const dx = tx - this.x, dy = ty - this.y, d = Math.hypot(dx, dy);
-        const vel = G.h * .075 * escalaEn(this.y);          // más lento cuanto más lejos
+        const vel = G.h * .075 * this.car.velocidad * escalaEn(this.y);          // más lento cuanto más lejos
         if (d <= vel * dt + 1){
           this.poner(tx, ty);
           if (this.rumbo === 'sillon' && this.sillon){ const a = this.asiento(this.sillon); this.saltar({ x: this.x, y: this.y, escala: escalaEn(this.y) }, a, true); }
@@ -251,7 +400,8 @@
         this.hasta -= dt;
         if (this.hasta <= 0){
           if (this.enSillon){ const p = this.pieDelSillon(this.sillon); this.saltar(this.asiento(this.sillon), { x: p.x, y: p.y, escala: escalaEn(p.y) }, false); }
-          else if (this.estado === 'echado') this.cambiar('quieto', entre(1, 3));
+          else if (this.estado === 'echado') this.cambiar('estira', .9);
+          else if (this.estado === 'estira' || this.estado === 'sentado') this.cambiar('quieto', entre(1, 3));
           else this.decidir();
         }
       }
@@ -271,21 +421,23 @@
       this.el.style.zIndex = z;
       this.el.classList.toggle('izq', this.dir < 0);
     }
-    // ---- un toque: se para, ladea la cabeza y suelta corazones ----
-    mimar(){
+    // ---- un toque: mira hacia donde tocaron, se para, ladea la cabeza, maúlla (o ronronea dormido) y suelta corazones ----
+    mimar(e){
+      if (e && !this.enSillon && this.estado !== 'salta'){ const r = this.el.getBoundingClientRect(); const lado = e.clientX < r.left + r.width / 2 ? -1 : 1; if (lado !== this.dir && this.estado !== 'anda') this.dir = lado; }
       if (this.estado === 'anda'){ this.cambiar('quieto', entre(2.5, 5)); }
       else if (this.estado === 'echado' && !this.enSillon){ this.hasta = Math.max(this.hasta, 2); }
-      this.el.classList.remove('mimado'); void this.el.offsetWidth; this.el.classList.add('mimado');
+      if (this.estado === 'echado') ronronear(); else maullar(this.car.voz);
+      this.gesto('mimado', 1000);
       for (let k = 0; k < 3; k++){
         const c = document.createElement('i'); c.className = 'corazon';
         c.style.cssText = 'left:' + entre(30, 62).toFixed(0) + '%;animation-delay:' + (k * 160) + 'ms';
         this.el.appendChild(c); setTimeout(() => c.remove(), 1700 + k * 160);
       }
+      this.pintar();
     }
   }
 
   // ---- arranque ----
-  let gatos = [];
   function arrancar(){
     if (gatos.length) return;
     gatos = LISTA.map((def, i) => new Gato(def, i, LISTA.length));
@@ -293,12 +445,12 @@
     function paso(t){
       const dt = Math.min(.05, (t - ultimo) / 1000); ultimo = t;
       if ((medicion += dt) > 1.5){ medicion = 0; medir(); }
-      if (!document.hidden && !cuerpo.classList.contains('en-lector')) for (const g of gatos) g.tic(dt, t / 1000);
+      if (!document.hidden && !cuerpo.classList.contains('en-lector')) for (const g of gatos) g.tic(dt);
       requestAnimationFrame(paso);
     }
     requestAnimationFrame(paso);
     addEventListener('resize', () => { medir(); for (const g of gatos) g.pintar(); });
   }
-  window.GATOS_SALA = { lista: () => gatos, sillones, medir };
+  window.GATOS_SALA = { lista: () => gatos, sillones, medir, poses: Object.keys(POSES), svg: (id, pose) => svgGato(LISTA.find(g => g.id === id) || { pelaje: id }, pose, 'x-' + pose) };
   if (!medir()){ addEventListener('load', () => { if (medir()) arrancar(); }); } else arrancar();
 })();

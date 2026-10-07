@@ -68,19 +68,22 @@ const ARTE_GIRASOLES = {
   limones: ["assets/limon_1.webp", "assets/limon_2.webp", "assets/limon_3.webp"],
 };
 
-// Los gatos de la sala (gatos.js los dibuja por código y los hace caminar).
+// Los gatos de la sala (gatos.js los dibuja por código y los hace vivir).
 //  - id: nombre interno. - nombre: (opcional) se ve al pasar el ratón.
 //  - pelaje: "atigrado" (mackerel tabby gris-marrón), "carey" (brindada, con la
 //    mancha naranja en la cara), "tricolor" (calicó: blanca con manchas negras
 //    y naranjas) o "van_cafe" (blanca con café en la cabeza, el lomo y la cola).
+//  - caracter: (opcional) pereza 0-1 (cuánto se echa a dormir), velocidad (1 =
+//    normal), sillon ("rojo" o "amarillo": su favorito para la siesta) y voz
+//    (tono del maullido: 1 = normal, menos = más grave).
 //  - imagen: (opcional) un PNG/WebP del gato entero, de perfil mirando a la
 //    derecha, con fondo transparente (prompts en PROMPTS.md); si existe, el
 //    gato se mueve como recorte de papel en lugar del dibujo.
 const GATOS = [
-  { id: "atigrado", pelaje: "atigrado" },
-  { id: "carey", pelaje: "carey" },
-  { id: "tricolor", pelaje: "tricolor" },
-  { id: "vancafe", pelaje: "van_cafe" },
+  { id: "atigrado", pelaje: "atigrado", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
+  { id: "carey", pelaje: "carey", caracter: { pereza: .35, velocidad: 1.15 } },
+  { id: "tricolor", pelaje: "tricolor", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
+  { id: "vancafe", pelaje: "van_cafe", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },
 ];
 
 const LIBROS = [
