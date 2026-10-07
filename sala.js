@@ -358,6 +358,7 @@
     // el calendario: nace con candado y, con unos días de prueba, escribe sus páginas y sus marcas
     const cal = porId('calendario');
     ok(!!cal && pos('calendario') === 'izq:0:5' && !!cal.candado && !!cal.cifrado && !!window.CALENDARIO, 'el calendario nace en su estante con candado');
+    ok(!!window.GATOS_SALA && GATOS_SALA.lista().length === 4 && sala.querySelectorAll('.centro .gato svg').length === 4, 'los cuatro gatos andan por la sala');
     if (cal && window.CALENDARIO){
       const D = { dias: [{ fecha: '2026-10-11', nombre: 'Inicio', inicio: true }, { dia: 30, mes: 9, nombre: 'Autitos', icono: 'auto' }] };
       const ev = (y, m) => CALENDARIO.eventos(D, y, m).map(e => e.d + ':' + e.nombre).join('|');

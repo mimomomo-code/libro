@@ -88,6 +88,49 @@ photo, photorealistic, glossy, text, watermark, stems, vase, bouquet,
 overlapping, touching, cropped, cut off, background, table, shadow, blurry
 ```
 
+## Los gatos (opcional: hoy van dibujados por código)
+
+`gatos.js` dibuja los cuatro gatos en SVG y los anima (patas, cola, parpadeo,
+siesta en los sillones). No hace falta ninguna imagen. Si se quiere la versión
+ilustrada, basta un archivo por gato y apuntarlo en `GATOS` (`libros.js`,
+campo `imagen`, por ejemplo `assets/gatos/atigrado.webp`): la página lo usa en
+lugar del dibujo y lo mueve como un recorte de papel (balanceo al caminar,
+volteado cuando va a la izquierda). Las fotos reales de referencia están en
+`privado/gatos/referencia/` (fuera de git). Reglas:
+
+- **Cuerpo entero, de perfil, caminando hacia la DERECHA**, las cuatro patas a
+  la vista, cola arriba. Un solo gato por imagen, centrado, con aire
+  alrededor. Sin suelo ni sombra: la sombra la pone la página.
+- Mismo estilo que los muebles: ilustración de libro de cuentos, mate, formas
+  limpias, luz fría desde arriba a la izquierda. Fondo transparente (o verde
+  `#00ff00` y quitarlo). Unos 800 px de ancho bastan (en pantalla miden 45-120 px).
+- Un sprite sheet (varios cuadros del paso) NO hace falta ni está soportado:
+  el movimiento lo pone el código.
+
+Prompt base (cambiar la descripción del pelaje por la de cada gato):
+
+```
+storybook illustration of a single short-haired cat walking to the right, full
+body in side view, all four legs visible mid-stride, tail held up, head turned
+slightly toward the viewer, <PELAJE>, matte painterly style, clean shapes, soft
+cool moonlight from the upper left with warm shadows, no floor, no cast shadow,
+isolated on a plain transparent background, high resolution
+```
+
+| Gato | `<PELAJE>` |
+|---|---|
+| atigrado | `grey-brown mackerel tabby with bold narrow dark vertical stripes, ringed tail, pale cream belly and chin, green eyes` |
+| carey | `brindled tortoiseshell, very dark brown almost black coat finely flecked with orange, an orange patch over one side of the face, hazel green eyes` |
+| tricolor | `calico cat, white chest, belly and legs, large black and orange patches over the back and sides, face split black and orange with a white blaze, yellow-green eyes` |
+| van café | `white cat with cinnamon-brown markings: a brown cap over the ears split by a white blaze on the forehead, three round brown spots on the back, solid brown tail, yellow-green eyes` |
+
+Prompt negativo:
+
+```
+photo, photorealistic, glossy, text, watermark, multiple cats, sitting, lying,
+front view, cropped, cut off, floor, shadow, background, blurry
+```
+
 ## Mesa y alfombra (ya cableadas)
 
 `assets/mesa.webp` (vista de frente; los libros se apoyan a un 19 % de su

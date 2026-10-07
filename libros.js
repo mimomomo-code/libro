@@ -68,6 +68,21 @@ const ARTE_GIRASOLES = {
   limones: ["assets/limon_1.webp", "assets/limon_2.webp", "assets/limon_3.webp"],
 };
 
+// Los gatos de la sala (gatos.js los dibuja por código y los hace caminar).
+//  - id: nombre interno. - nombre: (opcional) se ve al pasar el ratón.
+//  - pelaje: "atigrado" (mackerel tabby gris-marrón), "carey" (brindada, con la
+//    mancha naranja en la cara), "tricolor" (calicó: blanca con manchas negras
+//    y naranjas) o "van_cafe" (blanca con café en la cabeza, el lomo y la cola).
+//  - imagen: (opcional) un PNG/WebP del gato entero, de perfil mirando a la
+//    derecha, con fondo transparente (prompts en PROMPTS.md); si existe, el
+//    gato se mueve como recorte de papel en lugar del dibujo.
+const GATOS = [
+  { id: "atigrado", pelaje: "atigrado" },
+  { id: "carey", pelaje: "carey" },
+  { id: "tricolor", pelaje: "tricolor" },
+  { id: "vancafe", pelaje: "van_cafe" },
+];
+
 const LIBROS = [
   {
     id: "poema",

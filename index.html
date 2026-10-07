@@ -239,6 +239,43 @@ body.centro .verso{padding-left:0;text-indent:0}
 .prox-lista .t{color:var(--tinta);text-wrap:balance}
 .prox-lista .nuestro .t{font-style:italic;font-weight:600}
 .viva .mes-cab,.viva .mes-grid,.viva .mes-lista,.viva .mes-vacio,.viva .juntos,.viva .prox-tit,.viva .prox-lista{opacity:0;animation:asomar .9s ease forwards;animation-delay:var(--espera, 0ms)}
+
+/* ---------- los gatos (gatos.js): dibujados por código, caminan por el suelo de la sala y duermen en los sillones ---------- */
+.gato{position:absolute;left:0;top:0;width:var(--gato, 60px);pointer-events:none;transform-origin:50% 100%;will-change:transform;cursor:pointer}
+.gato svg{display:block;width:100%;height:auto;overflow:visible;pointer-events:none}
+.gato.izq svg,.gato.izq img{transform:scaleX(-1)}
+.gato svg path,.gato svg ellipse,.gato svg circle,.gato svg rect{pointer-events:visiblePainted}
+.gato svg .sombra{pointer-events:none}
+.gato img{display:block;width:100%;height:auto;pointer-events:auto;-webkit-user-drag:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+.gato .pata{transform-box:fill-box;transform-origin:50% 8%;transition:transform .4s}
+.gato .torso{transform-box:view-box;transform-origin:54px 60px;transition:transform .4s}
+.gato .cola{transform-box:view-box;transform-origin:20px 46px;transition:transform .4s;animation:cola-mece 2.8s ease-in-out infinite}
+.gato .cabeza{transform-box:view-box;transform-origin:92px 36px}
+.gato .ojos{transform-box:fill-box;transform-origin:50% 50%;animation:parpadeo 6s infinite;animation-delay:var(--guino, 0s)}
+.gato.anda .pata{animation:paso var(--paso, .5s) ease-in-out infinite}
+.gato.anda .pata.ti,.gato.anda .pata.dd{animation-delay:calc(var(--paso, .5s) / -2)}
+.gato.anda .torso{animation:trote calc(var(--paso, .5s) / 2) ease-in-out infinite}
+.gato.anda .cola{animation-duration:calc(var(--paso, .5s) * 2.4)}
+.gato.echado .pata{transform:scaleY(.28)}
+.gato.echado .torso{transform:translateY(11px) scale(1.05, .88)}
+.gato.echado .cola{animation:none;transform:rotate(62deg) scale(.85)}
+.gato.salta .pata{transform:rotate(-30deg)}
+.gato.salta .pata.di,.gato.salta .pata.dd{transform:rotate(30deg)}
+.gato.mimado .cabeza{animation:cabecita .9s ease}
+.gato .corazon{position:absolute;top:-8%;width:24%;aspect-ratio:1;pointer-events:none;opacity:0;animation:corazon 1.4s ease-out forwards;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 21s-7.2-4.7-9.6-9.2C.4 8.2 2.4 4 6.4 4c2.1 0 3.8 1.1 5.6 3 1.8-1.9 3.5-3 5.6-3 4 0 6 4.2 4 7.8C19.2 16.3 12 21 12 21z' fill='%23e06b86'/></svg>") center / contain no-repeat;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.gato.con-imagen.anda img{animation:recorte var(--paso, .5s) ease-in-out infinite}
+.gato.con-imagen.izq.anda img{animation-name:recorte-izq}
+@keyframes paso{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
+@keyframes trote{50%{transform:translateY(-1.6px)}}
+@keyframes cola-mece{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(12deg)}}
+@keyframes parpadeo{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes cabecita{25%{transform:rotate(-12deg)}70%{transform:rotate(9deg)}}
+@keyframes corazon{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-130%) scale(1.05)}}
+@keyframes recorte{50%{transform:translateY(-3%) rotate(2.5deg)}}
+@keyframes recorte-izq{0%,100%{transform:scaleX(-1)}50%{transform:scaleX(-1) translateY(-3%) rotate(-2.5deg)}}
+@media (prefers-reduced-motion: reduce){.gato .pata,.gato .torso,.gato .cola,.gato .ojos,.gato img{animation:none !important}}
 /* la lupa */
 #lupa{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(10,7,6,.94);
   touch-action:none;overflow:hidden;cursor:zoom-out}
@@ -1268,6 +1305,7 @@ window.TAPAS = {
 <script src="girasoles.js"></script>
 <script src="calendario.js"></script>
 <script src="candado.js"></script>
+<script src="gatos.js"></script>
 <script src="sala.js"></script>
 </body>
 </html>
