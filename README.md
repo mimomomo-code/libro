@@ -137,13 +137,21 @@ dormido; el botón ♪ apagado los calla) y suelta corazones. No tocan los
 libros ni estorban al arrastrarlos.
 
 La lista está en `libros.js` (`GATOS`: `id`, `pelaje`, y opcionales `nombre` y
-`caracter`: pereza, velocidad, sillón favorito y tono de voz). Si algún día se
-quieren ilustrados, se les da una `imagen` (PNG/WebP de perfil mirando a la
-derecha, fondo transparente) y la página la mueve como un recorte de papel;
-`node _tools/plantillas_gatos.js` genera las plantillas de cada gato (dibujo,
-contornos, silueta y piezas) para pedirle a la IA que los pinte en la misma
-pose, con la receta de `PROMPTS.md`. `?gatos=0` los quita y `?semilla=N`
-repite el mismo azar (para capturas).
+`caracter`: pereza, velocidad, sillón favorito y tono de voz).
+
+**Los ilustrados.** El atigrado ya no es un dibujo: es una ilustración hecha
+con IA a partir de su foto, cortada en cinco piezas (cola, patas traseras,
+patas delanteras, cuerpo y cabeza) que el mismo esqueleto anima, así que
+camina, mueve la cola y ladea la cabeza con su pelaje pintado; mientras las
+piezas cargan se ve el dibujo, y como solo tiene la pose de pie, en vez de
+sentarse o echarse se queda mirando. Para ilustrar otro gato: generar la
+imagen con la receta de `PROMPTS.md` (un solo gato, de perfil mirando a la
+derecha, fondo transparente), correr `python _tools/gato_piezas.py imagen.png
+<id>`, mirar el control en `_capturas/piezas_<id>.png` y apuntar
+`piezas: "assets/gatos/<id>/piezas.json"` en su entrada de `GATOS`. También
+vale una `imagen` entera sin cortar (se mueve como recorte de papel).
+`node _tools/plantillas_gatos.js` genera las plantillas de referencia de cada
+gato. `?gatos=0` los quita y `?semilla=N` repite el mismo azar (para capturas).
 
 ## Texturas y sillones ilustrados
 

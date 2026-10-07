@@ -358,7 +358,7 @@
     // el calendario: nace con candado y, con unos días de prueba, escribe sus páginas y sus marcas
     const cal = porId('calendario');
     ok(!!cal && pos('calendario') === 'izq:0:5' && !!cal.candado && !!cal.cifrado && !!window.CALENDARIO, 'el calendario nace en su estante con candado');
-    ok(!!window.GATOS_SALA && GATOS_SALA.lista().length === 4 && sala.querySelectorAll('.centro .gato svg').length === 4, 'los cuatro gatos andan por la sala');
+    ok(!!window.GATOS_SALA && GATOS_SALA.lista().length === 4 && sala.querySelectorAll('.centro .gato .dibujo-gato').length === 4, 'los cuatro gatos andan por la sala');
     ok(!!window.GATOS_SALA && GATOS_SALA.poses.join() === 'parado,sentado,echado' && ['parado', 'sentado', 'echado'].every(p => /data-pose="/.test(GATOS_SALA.svg('carey', p)) && GATOS_SALA.svg('carey', p).includes('class="cabeza"')),
       'cada gato se dibuja en tres poses');
     if (cal && window.CALENDARIO){

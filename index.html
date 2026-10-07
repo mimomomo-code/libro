@@ -245,10 +245,29 @@ body.centro .verso{padding-left:0;text-indent:0}
 .gato .dibujo-gato{transition:opacity .17s}
 .gato .dibujo-gato.cambiando{opacity:0}
 .gato svg{display:block;width:100%;height:auto;overflow:visible;pointer-events:none}
-.gato.izq svg,.gato.izq img{transform:scaleX(-1)}
+.gato.izq svg,.gato.izq .dibujo-gato > img,.gato.izq .piezas{transform:scaleX(-1)}
 .gato svg path,.gato svg ellipse,.gato svg circle,.gato svg rect{pointer-events:visiblePainted}
 .gato svg .sombra{pointer-events:none}
-.gato img{display:block;width:100%;height:auto;pointer-events:auto;-webkit-user-drag:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+.gato .dibujo-gato > img{display:block;width:100%;height:auto;pointer-events:auto;-webkit-user-drag:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+/* el gato ilustrado en piezas (assets/gatos/<id>/): cada pieza en su sitio del lienzo, con su pivote, animada como el esqueleto */
+.gato .piezas{position:relative;width:100%}
+.gato .piezas::before{content:'';position:absolute;left:12%;right:10%;bottom:-1.5%;height:7%;border-radius:50%;background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.42), transparent 70%)}
+.gato .pz{position:absolute;display:block;height:auto;pointer-events:auto;-webkit-user-drag:none;transition:transform .4s}
+.gato.anda .pz.patas_tras,.gato.anda .pz.patas_del{animation:paso-pz var(--paso, .5s) ease-in-out infinite}
+.gato.anda .pz.patas_del{animation-delay:calc(var(--paso, .5s) / -2)}
+.gato.anda .pz.cuerpo,.gato.anda .pz.cabeza{animation:trote-pz calc(var(--paso, .5s) / 2) ease-in-out infinite}
+.gato .pz.cola{animation:cola-pz 2.8s ease-in-out infinite}
+.gato.anda .pz.cola{animation-duration:calc(var(--paso, .5s) * 2.4)}
+.gato.salta .pz.patas_tras{transform:rotate(-25deg)}
+.gato.salta .pz.patas_del{transform:rotate(25deg)}
+.gato.estira .pz.patas_del{transform:rotate(30deg)}
+.gato.estira .pz.cuerpo{transform:rotate(6deg)}
+.gato.estira .pz.cola{transform:rotate(-14deg)}
+.gato.mimado .pz.cabeza{animation:cabecita-pz .9s ease}
+@keyframes paso-pz{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}
+@keyframes trote-pz{50%{transform:translateY(-1.5%)}}
+@keyframes cola-pz{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(9deg)}}
+@keyframes cabecita-pz{25%{transform:rotate(-10deg)}70%{transform:rotate(7deg)}}
 .gato .pata{transform-box:fill-box;transform-origin:50% 4%;transition:transform .4s}
 .gato .torso{transform-box:view-box;transform-origin:26px 58px;transition:transform .4s}
 .gato .cola{transition:transform .4s;animation:cola-mece 2.8s ease-in-out infinite}

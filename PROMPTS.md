@@ -126,11 +126,18 @@ gato a 1024 × 683 con fondo transparente: `<id>_<pose>_color.png` (el dibujo),
 2. **IP-Adapter** con la foto del gato real (peso 0.5-0.7): le da el pelaje
    verdadero. Si no hay IP-Adapter, describirlo en el prompt (tabla de abajo).
 3. Prompt base de abajo + `same pose and framing as the sketch`. Negativo igual.
-4. Quitar el fondo (rembg) y guardar como PNG/WebP **sin recortar ni mover**:
-   mientras el gato quede donde estaba en la plantilla, se puede cortar en
-   piezas con las máscaras `_pieza_*` y montarlo en el esqueleto, con patas,
-   cola y ojos animados pero pintados. Ese montaje se hace cuando exista la
-   primera ilustración (todavía no está programado: primero hay que ver una).
+4. Quitar el fondo (rembg) y guardar como PNG. **Ya no hace falta que la pose
+   coincida con la plantilla**: `python _tools/gato_piezas.py <imagen.png> <id>`
+   corta la ilustración por su PROPIA silueta en cinco piezas (cola, patas
+   traseras, patas delanteras, cuerpo y cabeza, con solapes y pivotes) en
+   `assets/gatos/<id>/` más un `piezas.json`, y deja un control en
+   `_capturas/piezas_<id>.png` para mirar los cortes (si el automático falla,
+   admite `--ycut --xsplit --xcola --xcuello --ybarbilla` como fracciones de la
+   caja). En `GATOS` (`libros.js`) se apunta `piezas: "assets/gatos/<id>/piezas.json"`
+   y el esqueleto anima las piezas pintadas; mientras cargan se ve el dibujo.
+   Lo único que la imagen necesita: un solo gato, de cuerpo entero, de perfil
+   mirando a la derecha, las cuatro patas abajo, la cola arriba y el fondo
+   transparente. Así se montó el atigrado (7 oct).
 
 Prompt base (cambiar la descripción del pelaje por la de cada gato):
 

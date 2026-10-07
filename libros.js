@@ -76,11 +76,15 @@ const ARTE_GIRASOLES = {
 //  - caracter: (opcional) pereza 0-1 (cuánto se echa a dormir), velocidad (1 =
 //    normal), sillon ("rojo" o "amarillo": su favorito para la siesta) y voz
 //    (tono del maullido: 1 = normal, menos = más grave).
+//  - piezas: (opcional) el piezas.json de un gato ILUSTRADO cortado en piezas
+//    con _tools/gato_piezas.py (assets/gatos/<id>/): cola, patas, cuerpo y
+//    cabeza pintados que el esqueleto anima; mientras cargan (o si faltan) se
+//    ve el dibujo. El ilustrado solo tiene la pose de pie.
 //  - imagen: (opcional) un PNG/WebP del gato entero, de perfil mirando a la
 //    derecha, con fondo transparente (prompts en PROMPTS.md); si existe, el
 //    gato se mueve como recorte de papel en lugar del dibujo.
 const GATOS = [
-  { id: "atigrado", pelaje: "atigrado", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
+  { id: "atigrado", pelaje: "atigrado", piezas: "assets/gatos/atigrado/piezas.json", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
   { id: "carey", pelaje: "carey", caracter: { pereza: .35, velocidad: 1.15 } },
   { id: "tricolor", pelaje: "tricolor", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
   { id: "vancafe", pelaje: "van_cafe", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },

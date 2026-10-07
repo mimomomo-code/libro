@@ -302,7 +302,7 @@
       this.el.style.setProperty('--guino', entre(0, 6).toFixed(2) + 's');
       this.lienzo = document.createElement('div'); this.lienzo.className = 'dibujo-gato'; this.el.appendChild(this.lienzo);
       this.svgs = {}; this.pose = ''; this.ponerPose('parado', true);
-      if (def.imagen) this.cargarImagen(def.imagen);
+      if (def.piezas) this.cargarPiezas(def.piezas); else if (def.imagen) this.cargarImagen(def.imagen);
       this.el.addEventListener('pointerup', e => { if (e.button === 0) this.mimar(e); });
       centro.appendChild(this.el);
       // nacen repartidos a lo ancho, fuera de la huella de la mesa
@@ -318,6 +318,30 @@
       im.onload = () => { im.alt = ''; im.draggable = false; this.lienzo.innerHTML = ''; this.lienzo.appendChild(im); this.el.classList.add('con-imagen'); this.conImagen = true; };
       im.onerror = () => {};                               // sin imagen: se queda el dibujo
       im.src = ruta;
+    }
+    // el gato ilustrado en piezas (las corta _tools/gato_piezas.py): cola, patas traseras, patas
+    // delanteras, cuerpo y cabeza, cada una en su sitio del lienzo y con su pivote; el CSS las anima
+    cargarPiezas(ruta){
+      fetch(ruta).then(r => r.ok ? r.json() : Promise.reject()).then(meta => {
+        const base = ruta.slice(0, ruta.lastIndexOf('/') + 1), W = meta.lienzo[0], H = meta.lienzo[1];
+        const orden = Object.keys(meta.piezas).sort((a, b) => meta.piezas[a].z - meta.piezas[b].z);
+        const cont = document.createElement('div'); cont.className = 'piezas'; cont.style.aspectRatio = W + ' / ' + H;
+        let faltan = orden.length;
+        for (const nombre of orden){
+          const p = meta.piezas[nombre], im = new Image(); im.alt = ''; im.draggable = false; im.className = 'pz ' + nombre;
+          im.style.cssText = 'left:' + (p.x / W * 100).toFixed(2) + '%;top:' + (p.y / H * 100).toFixed(2) + '%;width:' + (p.w / W * 100).toFixed(2) + '%;' +
+            'transform-origin:' + ((p.pivote[0] - p.x) / p.w * 100).toFixed(1) + '% ' + ((p.pivote[1] - p.y) / p.h * 100).toFixed(1) + '%';
+          im.onload = () => {
+            if (--faltan) return;
+            this.lienzo.innerHTML = ''; this.lienzo.appendChild(cont);
+            this.el.classList.add('con-piezas'); this.conImagen = true; this.conPiezas = true;
+            if (this.estado === 'sentado' || this.estado === 'echado') this.cambiar('quieto', entre(2, 5));   // el ilustrado solo tiene la pose de pie
+          };
+          im.onerror = () => {};                             // si falta una pieza, el gato se queda dibujado
+          im.src = base + nombre + '.webp';
+          cont.appendChild(im);
+        }
+      }).catch(() => {});
     }
     ponerPose(pose, directo){
       if (this.conImagen || pose === this.pose) return;
@@ -356,9 +380,9 @@
         this.tu = tu; this.tv = tv; this.rumbo = 'suelo'; this.dir = tu > this.posU ? 1 : -1;
         this.cambiar('anda', 0);
       } else if (que === 'sentado'){
-        this.cambiar('sentado', entre(6, 15)); this.gestoT = entre(1.5, 4);
+        this.cambiar(this.conImagen ? 'quieto' : 'sentado', entre(6, 15)); this.gestoT = entre(1.5, 4);   // el ilustrado no tiene pose sentada: se queda mirando
       } else if (que === 'echado'){
-        this.cambiar('echado', entre(7, 18));
+        this.cambiar(this.conImagen ? 'quieto' : 'echado', entre(7, 18));
       } else {
         // al sillón: primero caminar hasta el suelo justo debajo del asiento, después el salto
         const s = pref.length ? elegir(pref) : elegir(libres); s.ocupado = this; this.sillon = s;
@@ -385,7 +409,7 @@
       if (this.estado === 'salta'){
         const s = this.salto; s.t = Math.min(1, s.t + dt / s.dur);
         if (s.t >= 1){
-          if (s.sube){ this.enSillon = true; this.salto = null; this.cambiar(R() < .6 ? 'echado' : 'sentado', entre(10, 26)); this.gestoT = entre(2, 5); }
+          if (s.sube){ this.enSillon = true; this.salto = null; this.cambiar(this.conImagen ? 'quieto' : (R() < .6 ? 'echado' : 'sentado'), entre(10, 26)); this.gestoT = entre(2, 5); }
           else { this.enSillon = false; this.salto = null; this.poner(s.x1, s.y1); this.sillon.ocupado = null; this.sillon = null; this.cambiar('quieto', entre(1, 3)); }
         }
       } else if (this.estado === 'anda'){
