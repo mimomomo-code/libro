@@ -69,7 +69,7 @@ const ARTE_GIRASOLES = {
 };
 
 // Los gatos de la sala (gatos.js los dibuja por código y los hace vivir).
-//  - id: nombre interno. - nombre: (opcional) se ve al pasar el ratón.
+//  - id: nombre interno. - nombre: (opcional) aparece sobre el gato al tocarlo (y al pasar el ratón).
 //  - pelaje: "atigrado" (mackerel tabby gris-marrón), "carey" (brindada, con la
 //    mancha naranja en la cara), "tricolor" (calicó: blanca con manchas negras
 //    y naranjas) o "van_cafe" (blanca con café en la cabeza, el lomo y la cola).
@@ -88,10 +88,10 @@ const ARTE_GIRASOLES = {
 //    derecha, con fondo transparente (prompts en PROMPTS.md); si existe, el
 //    gato se mueve como recorte de papel en lugar del dibujo.
 const GATOS = [
-  { id: "atigrado", pelaje: "atigrado", piezas: "assets/gatos/atigrado/piezas.json", echado: "assets/gatos/atigrado/echado.webp", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
-  { id: "carey", pelaje: "carey", piezas: "assets/gatos/carey/piezas.json", echado: "assets/gatos/carey/echado.webp", caracter: { pereza: .35, velocidad: 1.15 } },
-  { id: "tricolor", pelaje: "tricolor", piezas: "assets/gatos/tricolor/piezas.json", echado: "assets/gatos/tricolor/echado.webp", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
-  { id: "vancafe", pelaje: "van_cafe", piezas: "assets/gatos/vancafe/piezas.json", echado: "assets/gatos/vancafe/echado.webp", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },
+  { id: "atigrado", nombre: "Karencito", pelaje: "atigrado", piezas: "assets/gatos/atigrado/piezas.json", echado: "assets/gatos/atigrado/echado.webp", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
+  { id: "carey", nombre: "Elma", pelaje: "carey", piezas: "assets/gatos/carey/piezas.json", echado: "assets/gatos/carey/echado.webp", caracter: { pereza: .35, velocidad: 1.15 } },
+  { id: "tricolor", nombre: "Mia", pelaje: "tricolor", piezas: "assets/gatos/tricolor/piezas.json", echado: "assets/gatos/tricolor/echado.webp", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
+  { id: "vancafe", nombre: "Chunchun", pelaje: "van_cafe", piezas: "assets/gatos/vancafe/piezas.json", echado: "assets/gatos/vancafe/echado.webp", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },
 ];
 
 const LIBROS = [

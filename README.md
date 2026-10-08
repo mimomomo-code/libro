@@ -122,11 +122,12 @@ nada).
 ## Los gatos
 
 Cuatro gatos viven en la sala, dibujados por código (`gatos.js`) a partir de
-las fotos de los de verdad: el **atigrado** (gris-marrón de rayas marcadas y
-panza clara), la **carey** (brindada, con su mancha naranja en la cara), la
-**tricolor** (blanca con manchas negras y naranjas en el lomo) y la **blanca
-con café** (la gorrita partida por una raya blanca, tres lunares y la cola
-café). Cada uno tiene tres dibujos (de pie, sentado y echado) y una receta de
+las fotos de los de verdad: **Karencito**, el atigrado (gris-marrón de rayas
+marcadas y panza clara); **Elma**, la carey (brindada, con su mancha naranja
+en la cara); **Mia**, la tricolor (blanca con manchas negras y naranjas en el
+lomo), y **Chunchun**, la blanca con café (la gorrita partida por una raya
+blanca, tres lunares y la cola café). Al tocar a uno, su nombre aparece un
+momento sobre su cabeza. Cada uno tiene tres dibujos (de pie, sentado y echado) y una receta de
 pelaje que cae bien en las tres poses. Caminan por el suelo entre los sillones
 y la mesa (más chicos cuanto más lejos, y detrás o delante de la mesa según
 dónde pisen), se paran, se sientan a mirar y a acicalarse, mueven una oreja,

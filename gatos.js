@@ -477,6 +477,10 @@
       else if (this.estado === 'echado' && !this.enSillon){ this.hasta = Math.max(this.hasta, 2); }
       if (this.estado === 'echado') ronronear(); else maullar(this.car.voz);
       this.gesto('mimado', 1000);
+      if (this.def.nombre && !this.el.querySelector('.nombre-gato')){         // su nombre, un momento, sobre la cabeza
+        const n = document.createElement('i'); n.className = 'nombre-gato'; n.textContent = this.def.nombre;
+        this.el.appendChild(n); setTimeout(() => n.remove(), 2200);
+      }
       for (let k = 0; k < 3; k++){
         const c = document.createElement('i'); c.className = 'corazon';
         c.style.cssText = 'left:' + entre(30, 62).toFixed(0) + '%;animation-delay:' + (k * 160) + 'ms';
