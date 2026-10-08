@@ -168,22 +168,24 @@ front view, cropped, cut off, floor, shadow, background, blurry
 ## La pared (con su ventana y sus cortinas) y el piso
 
 Hoy la pared, la ventana con cortinas y el piso son CSS. `DECORACION` admite
-tres fondos pintados: `pared` (apaisada 3:2, con la ventana y las cortinas
-dentro: tapa el ventanal CSS; va anclada arriba y se recorta por abajo cuando
-la pantalla es más ancha), `pared_vertical` (opcional: la misma pared en 2:3
-para el celular vertical; sin ella se usa `pared`) y `suelo` (textura
-apaisada, centrada, se recorta por los lados o por arriba y abajo). Se preparan
-con `python _tools/fondo.py <imagen> pared|pared_vertical|suelo` (WebP a 1600
-px en `assets/`, o en `assets/fondos/` si se da una variante) y se activan
-descomentando sus líneas en `libros.js`. Los pedidos en español para ChatGPT,
-con las capturas de referencia (SOLO la pared con su ventana y SOLO el piso
-limpio: los muebles y libreros son piezas sueltas), están en
-`OneDrive\Escritorio\Sala del libro`; ahí vive también el CATÁLOGO de 13 paredes
-(vino, azul noche, esmeralda, rosa, lavanda, perla, chocolate, primavera, verano,
-otoño, invierno, Navidad, San Valentín) y 8 pisos (nogal, roble, cerezo, espiga,
-blancos envejecidos, gris, damero, terracota), un pedido por variante, generado
-por `_tools/catalogo_fondos.py` (añadir una variante = una entrada más en su
-lista y volver a correrlo). En inglés, el prompt base:
+tres piezas pintadas INDEPENDIENTES que se mezclan: `pared` (solo papel tapiz
+con su zócalo, SIN ventana, apaisada 3:2; va anclada abajo para que el zócalo
+caiga en la línea del piso y se recorta por arriba o los lados según la
+pantalla), `ventanal` (la ventana con sus cortinas, cenefa y barra, UNA pieza
+con fondo transparente, vertical; sustituye al ventanal CSS y la caja toma su
+proporción) y `suelo` (textura apaisada, centrada). `pared_vertical` queda
+como opción para una pared distinta en el celular vertical. Se preparan con
+`python _tools/fondo.py <imagen> pared|ventanal|suelo [variante]` (WebP en
+`assets/`, o en `assets/fondos/` con variante; la ventana conserva el alfa y se
+recorta sola al contorno) y se activan descomentando sus líneas en `libros.js`.
+Los pedidos en español para ChatGPT están en `OneDrive\Escritorio\Sala del libro`,
+con el CATÁLOGO de 13 paredes, 12 ventanas y 8 pisos (un pedido por variante,
+generado por `_tools/catalogo_fondos.py`: una variante nueva = una entrada más
+y volver a correrlo). LECCIÓN (8 oct): cada pedido adjunta DOS referencias, el
+boceto de la pieza (la captura del CSS, que NO hay que copiar) y
+`referencia_estilo.png` (sillones, mesa y gato ya pintados: el acabado que sí),
+porque con una sola la IA copió el dibujo plano tal cual. En inglés, el prompt
+base de la pared CON ventana (la versión antigua, por si sirve de punto de partida):
 
 ```
 storybook illustration of the back wall of a cozy reading room at night, front
