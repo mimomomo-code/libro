@@ -42,7 +42,8 @@
   const f1 = n => (Math.round(n * 10) / 10).toString();
 
   // =====================================================================
-  //  EL DIBUJO. Lienzo de 120 × 80, el gato mira a la derecha, pisa en y = 76.
+  //  EL DIBUJO. Lienzo de 120 × 80, el gato mira a la derecha, pisa en y = 76
+  //  (el sentado es DE FRENTE, centrado en x = 60: ver POSES.sentado).
   //  La cabeza se dibuja en (92, 34) y cada pose la desplaza con `cabeza`.
   // =====================================================================
   const CABEZA = {
@@ -67,17 +68,26 @@
       delante: () => '',
     },
     sentado: {
-      // el lomo sube en diagonal desde el anca (abajo a la izquierda) hasta los hombros; el pecho cae vertical sobre las patas delanteras
-      cuerpo: 'M24 56 C 26 42, 44 30, 64 28 C 76 27, 86 33, 86 44 L 86 54 C 86 58, 82 60, 76 60 L 60 60 C 52 60, 44 62, 40 66 C 36 60, 28 58, 24 56 Z',
-      anca: [34, 62, 15, 14],                                   // la cadera redonda: cx cy rx ry (entra en la silueta del cuerpo)
-      bbox: [19, 28, 86, 76],
-      espina: [[24, 52], [34, 40], [48, 31], [64, 28], [78, 30], [85, 38]],
-      cola: 'M21 68 C 12 72, 12 79, 26 79 L 66 79 C 70 79, 70 75.5, 66 75.5 L 30 75.5 C 22 75.5, 21 72, 23 69 Z',
-      colaCentro: 'M22 69 C 16 73, 16 77.3, 28 77.3 L 66 77.3',
-      colaOrigen: [22, 69], colaSuelo: true,
-      cabeza: [-6, -4],
-      patas: [{ n: 'di', x: 70, lejos: true, sentado: true }, { n: 'dd', x: 78, sentado: true }],
-      delante: P => '<ellipse cx="51" cy="74" rx="7" ry="3" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".8"/>',   // la pata trasera asomando bajo el anca
+      // DE FRENTE (8 oct, con la foto de referencia del usuario): el gato sentado erguido mirando a
+      // quien mira, el pecho alto y estrecho bajo la cabeza, las ancas redondas abriéndose a los dos
+      // lados abajo, las patas delanteras rectas y juntas en el medio, la cola enroscada en el suelo a
+      // la derecha. Centrado en x = 60. La cabeza común mira un poco a la derecha: queda como si
+      // ladeara la mirada (y volteado, a la izquierda)
+      frontal: true,
+      cuerpo: 'M46 44 C 41 52, 38 62, 39 69 C 40 75, 44 76, 50 76 L 70 76 C 76 76, 80 75, 81 69 C 82 62, 79 52, 74 44 C 70 39, 50 39, 46 44 Z',
+      ancas: [[44.5, 67.5, 9, 8.5], [75.5, 67.5, 9, 8.5]],      // las dos caderas: cx cy rx ry (entran en la silueta del cuerpo)
+      bbox: [35.5, 40, 84.5, 76],
+      espina: [[44, 47], [52, 41], [60, 40], [68, 41], [76, 47]],   // la línea de los hombros (las recetas frontales no cuelgan rayas de ella)
+      cola: 'M79 70 C 91 71, 95 79, 82 79 L 70 79 C 67.5 79, 67.5 75.5, 70 75.5 L 82 75.5 C 89 75.5, 88 72.5, 79 72.5 Z',
+      colaCentro: 'M79 71.2 C 89 72, 91 77.3, 82 77.3 L 70 77.3',
+      colaOrigen: [79, 71], colaSuelo: true,
+      sombra: [60, 76, 27, 3.2],
+      cabeza: [-32, -3],
+      patas: [],
+      delante: P => {                                            // las dos patas delanteras, rectas y juntas, DELANTE del pecho
+        const pata = x => '<g transform="translate(' + x + ' 0)"><path d="M0 54 h8 v19 a4 3 0 0 1 -8 0 Z" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".8"/>' + P.pata(false, 'fd') + '</g>';
+        return pata(51) + pata(61);
+      },
     },
     echado: {
       cuerpo: 'M22 62 C 20 50, 34 46, 54 46 C 72 46, 86 50, 86 62 C 86 70, 80 76, 70 76 L 34 76 C 24 76, 22 70, 22 62 Z',
@@ -115,6 +125,14 @@
     atigrado: {                                           // atigrado pelo corto gris-marrón, mackerel tabby: rayas oscuras y marcadas, panza y barbilla claras
       base: '#9a8468', lejos: '#7b6850', borde: '#3e3027', oreja: '#d9a0a0', ojos: ['#86a35b', '#86a35b'], cola: '#9a8468', voz: .85,
       cuerpo: (F, u) => {
+        if (F.frontal){
+          // de frente: el pecho crema en el medio (asoma entre la barbilla y las patas) y las rayas
+          // curvas en los dos costados, de los hombros a las ancas; el lomo no se ve
+          const lado = s => ['M' + (60 + s * 13) + ' 43 q' + (s * 7) + ' 5 ' + (s * 9) + ' 13', 'M' + (60 + s * 16) + ' 50 q' + (s * 6) + ' 6 ' + (s * 6) + ' 13',
+            'M' + (60 + s * 19) + ' 58 q' + (s * 4) + ' 6 ' + (s * 3) + ' 12', 'M' + (60 + s * 14) + ' 65 q' + (s * 5) + ' 4 ' + (s * 7) + ' 9'].join(' ');
+          return '<g clip-path="url(#' + u + '-cuerpo)"><ellipse cx="60" cy="62" rx="10" ry="17" fill="#dac8a9" opacity=".9"/>' +
+            '<path d="' + lado(-1) + ' ' + lado(1) + '" fill="none" stroke="#3f3129" stroke-width="2.2" stroke-linecap="round" opacity=".85"/></g>';
+        }
         const [x0, y0, x1, y1] = F.bbox; let d = '';
         F.espina.forEach((p, k) => { const L = (y1 - p[1]) * (k === 0 || k === F.espina.length - 1 ? .45 : .72); d += 'M' + p[0] + ' ' + (p[1] + 1) + ' q3 ' + f1(L / 2) + ' 0 ' + f1(L) + ' '; });
         for (let k = 0; k < F.espina.length - 1; k++){ const a = F.espina[k], b = F.espina[k + 1], sx = (a[0] + b[0]) / 2, sy = (a[1] + b[1]) / 2, L = (y1 - sy) * .6; d += 'M' + f1(sx) + ' ' + f1(sy + 1) + ' q-3 ' + f1(L / 2) + ' 0 ' + f1(L) + ' '; }
@@ -140,6 +158,7 @@
     tricolor: {                                           // tricolor (calicó) pelo corto: blanca de panza, pecho y patas, con manchas grandes negras y naranjas en el lomo y la cara partida
       base: '#f4efe6', lejos: '#dcd4c7', borde: '#7a6a5a', oreja: '#e3a7a7', ojos: ['#b5b24c', '#b5b24c'], cola: '#2a211d', voz: 1,
       cuerpo: (F, u) => {
+        if (F.frontal) return '<g clip-path="url(#' + u + '-cuerpo)">' + elipseRel(F, .17, .32, .2, .34, '#2a211d', 12) + elipseRel(F, .86, .58, .15, .28, '#c9742c', -8) + elipseRel(F, .72, .1, .12, .14, '#2a211d') + '</g>';   // de frente: pecho blanco, negro en el hombro izquierdo, naranja en el costado derecho
         const y1 = F.bbox[3], arriba = F.espina.map(p => p[0] + ' ' + (p[1] - 3)), abajo = F.espina.slice().reverse().map(p => p[0] + ' ' + f1(p[1] + (y1 - p[1]) * .55));
         return '<g clip-path="url(#' + u + '-cuerpo)"><path d="M' + arriba.join(' L ') + ' L ' + abajo.join(' L ') + ' Z" fill="#2a211d"/>' +
           elipseRel(F, .78, .3, .14, .2, '#c9742c', -10) + elipseRel(F, .12, .5, .12, .22, '#c9742c') + elipseRel(F, .5, .72, .1, .12, '#c9742c', 10) + '</g>';
@@ -150,7 +169,9 @@
     },
     van_cafe: {                                           // van turca pelo corto: blanca con café (canela) en la gorrita partida por la raya blanca, tres lunares en el lomo y la cola
       base: '#f4efe6', lejos: '#dcd4c7', borde: '#7a6a5a', oreja: '#e3a7a7', ojos: ['#a9b35a', '#a9b35a'], cola: '#bf7a3c', voz: 1.05,
-      cuerpo: (F, u) => '<g clip-path="url(#' + u + '-cuerpo)">' + elipseRel(F, .25, .22, .11, .19, '#bf7a3c', -15) + elipseRel(F, .52, .14, .1, .17, '#b86f33') + elipseRel(F, .84, .5, .1, .18, '#bf7a3c', 20) + '</g>',
+      cuerpo: (F, u) => F.frontal
+        ? '<g clip-path="url(#' + u + '-cuerpo)">' + elipseRel(F, .1, .36, .08, .13, '#bf7a3c') + elipseRel(F, .93, .5, .07, .1, '#bf7a3c') + '</g>'   // de frente: blanca; los lunares del lomo apenas asoman por los bordes
+        : '<g clip-path="url(#' + u + '-cuerpo)">' + elipseRel(F, .25, .22, .11, .19, '#bf7a3c', -15) + elipseRel(F, .52, .14, .1, .17, '#b86f33') + elipseRel(F, .84, .5, .1, .18, '#bf7a3c', 20) + '</g>',
       cabeza: u => '<g clip-path="url(#' + u + '-cabeza)"><path d="M80 26 L 82 7 L 93 20 L 90 29 L 81 31 Z" fill="#bf7a3c"/><path d="M95 19 L 104 5 L 106 25 L 105 31 L 97 29 Z" fill="#bf7a3c"/>' +
         '<ellipse cx="83" cy="38" rx="2.8" ry="2" fill="#bf7a3c" opacity=".7"/></g>',
       colaExtra: () => '',
@@ -180,21 +201,24 @@
   // el SVG completo de un gato en una pose; u = prefijo único para clips y degradados
   function svgGato(def, pose, u){
     const P = PELAJES[def.pelaje] || PELAJES.generico, F = POSES[pose] || POSES.parado;
-    const anca = F.anca ? '<ellipse cx="' + F.anca[0] + '" cy="' + F.anca[1] + '" rx="' + F.anca[2] + '" ry="' + F.anca[3] + '"' : '';
+    // las caderas redondas (una en el sentado de perfil de antes, dos en el frontal): elipses que se suman a la silueta
+    const ancas = (F.ancas || (F.anca ? [F.anca] : [])).map(a => '<ellipse cx="' + a[0] + '" cy="' + a[1] + '" rx="' + a[2] + '" ry="' + a[3] + '"');
+    const conAncas = resto => ancas.map(a => a + resto).join('');
+    const sombra = F.sombra || [54, 76, 36, 3.5];
     return '<svg viewBox="0 0 120 80" aria-hidden="true" data-pose="' + pose + '">' +
-      '<defs><clipPath id="' + u + '-cuerpo"><path d="' + F.cuerpo + '"/>' + (anca ? anca + '/>' : '') + '</clipPath>' +
+      '<defs><clipPath id="' + u + '-cuerpo"><path d="' + F.cuerpo + '"/>' + conAncas('/>') + '</clipPath>' +
       '<clipPath id="' + u + '-cabeza"><path d="' + CABEZA.cara + '"/><path d="' + CABEZA.orejaIzq + '"/><path d="' + CABEZA.orejaDer + '"/></clipPath>' +
       '<clipPath id="' + u + '-cola"><path d="' + F.cola + '"/></clipPath>' +
       '<linearGradient id="' + u + '-luz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".24"/></linearGradient></defs>' +
-      '<ellipse class="sombra" cx="54" cy="76" rx="36" ry="3.5" fill="rgba(0,0,0,.35)"/>' +
+      '<ellipse class="sombra" cx="' + sombra[0] + '" cy="' + sombra[1] + '" rx="' + sombra[2] + '" ry="' + sombra[3] + '" fill="rgba(0,0,0,.35)"/>' +
       '<g class="cola' + (F.colaSuelo ? ' suelo' : '') + '" style="transform-origin:' + F.colaOrigen[0] + 'px ' + F.colaOrigen[1] + 'px"><path d="' + F.cola + '" fill="' + P.cola + '" stroke="' + P.borde + '" stroke-width=".8"/>' + P.colaExtra(F, u) + '</g>' +
       F.patas.map(p => svgPata(p, P, u)).join('') +
       '<g class="torso">' +
-      (anca ? anca + ' fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>' : '') +
+      conAncas(' fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>') +
       '<path class="cuerpo" d="' + F.cuerpo + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>' +
-      (anca ? anca + ' fill="' + P.base + '"/>' : '') +                      // tapa la costura entre el anca y el torso
+      conAncas(' fill="' + P.base + '"/>') +                                  // tapa la costura entre las ancas y el torso
       P.cuerpo(F, u) +
-      '<path d="' + F.cuerpo + '" fill="url(#' + u + '-luz)"/>' + (anca ? anca + ' fill="url(#' + u + '-luz)"/>' : '') +
+      '<path d="' + F.cuerpo + '" fill="url(#' + u + '-luz)"/>' + conAncas(' fill="url(#' + u + '-luz)"/>') +
       '<g class="delante">' + F.delante(P) + '</g>' +
       svgCabeza(P, u, F) +
       '</g></svg>';

@@ -8,7 +8,7 @@ armado el esqueleto. Las plantillas de cada gato real salen con
 
 | Archivo | Qué es |
 |---|---|
-| `generico_<pose>_color.png` | el dibujo tal cual (parado, sentado, echado) |
+| `generico_<pose>_color.png` | el dibujo tal cual (parado y echado de perfil mirando a la derecha; el sentado DE FRENTE, erguido, patas juntas y cola enroscada a un lado, desde el 8 oct) |
 | `generico_<pose>_lineas.png` | solo contornos negros: la guía de pose para ControlNet (lineart o scribble) |
 | `generico_<pose>_silueta.png` | la silueta en negro: máscara del gato entero |
 | `generico_parado_pieza_<cabeza·cuerpo·cola·patas>.png` | la silueta de cada pieza del esqueleto en la pose de pie, para cortar una ilustración en piezas y animarla |

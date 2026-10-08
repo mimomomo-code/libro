@@ -127,7 +127,8 @@ marcadas y panza clara); **Elma**, la carey (brindada, con su mancha naranja
 en la cara); **Mia**, la tricolor (blanca con manchas negras y naranjas en el
 lomo), y **Chunchun**, la blanca con café (la gorrita partida por una raya
 blanca, tres lunares y la cola café). Al tocar a uno, su nombre aparece un
-momento sobre su cabeza. Cada uno tiene tres dibujos (de pie, sentado y echado) y una receta de
+momento sobre su cabeza. Cada uno tiene tres dibujos (de pie y echado de perfil; sentado DE
+FRENTE, erguido y con las patas juntas, como un gato que te mira) y una receta de
 pelaje que cae bien en las tres poses. Caminan por el suelo entre los sillones
 y la mesa (más chicos cuanto más lejos, y detrás o delante de la mesa según
 dónde pisen), se paran, se sientan a mirar y a acicalarse, mueven una oreja,

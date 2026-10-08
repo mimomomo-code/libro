@@ -7,15 +7,17 @@
 //   <id>_parado_pieza_<cabeza|cuerpo|cola|patas>.png   la silueta de cada pieza del esqueleto
 //                              (para cortar la ilustración en piezas y animarla)
 // Salen en _capturas/plantillas_gatos/ (carpeta fuera de git).
-// Uso: node _tools/plantillas_gatos.js [id ...]      (sin ids: los cuatro)
+// Uso: node _tools/plantillas_gatos.js [--pose parado|sentado|echado] [id ...]      (sin ids: los cuatro; sin --pose: las tres)
 const { spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const RAIZ = path.resolve(__dirname, '..');
 const OUT = path.join(RAIZ, '_capturas', 'plantillas_gatos');
 fs.mkdirSync(OUT, { recursive: true });
-const ids = process.argv.slice(2).length ? process.argv.slice(2) : ['atigrado', 'carey', 'tricolor', 'vancafe'];
-const poses = ['parado', 'sentado', 'echado'], estilos = ['color', 'lineas', 'silueta'], piezas = ['cabeza', 'cuerpo', 'cola', 'patas'];
+const args = process.argv.slice(2), ip = args.indexOf('--pose');
+const soloPose = ip >= 0 ? args.splice(ip, 2)[1] : null;
+const ids = args.length ? args : ['atigrado', 'carey', 'tricolor', 'vancafe'];
+const poses = soloPose ? [soloPose] : ['parado', 'sentado', 'echado'], estilos = ['color', 'lineas', 'silueta'], piezas = poses.includes('parado') ? ['cabeza', 'cuerpo', 'cola', 'patas'] : [];
 const url = 'file:///' + RAIZ.replace(/\\/g, '/') + '/index.html';
 const pasos = [];
 const toma = (id, pose, estilo, pieza) => {

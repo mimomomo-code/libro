@@ -90,8 +90,10 @@ overlapping, touching, cropped, cut off, background, table, shadow, blurry
 
 ## Los gatos (opcional: hoy van dibujados por código)
 
-`gatos.js` dibuja los cuatro gatos en SVG en tres poses (de pie, sentado,
-echado) y los anima. No hace falta ninguna imagen. Las fotos reales de
+`gatos.js` dibuja los cuatro gatos en SVG en tres poses (de pie y echado de
+perfil; sentado DE FRENTE, erguido, con las patas delanteras juntas y la cola
+enroscada a un lado, redibujado el 8 oct a partir de una foto de pose) y los
+anima. No hace falta ninguna imagen. Las fotos reales de
 referencia están en `privado/gatos/referencia/` (fuera de git).
 
 ### Camino 1: una imagen por gato (recorte de papel)
