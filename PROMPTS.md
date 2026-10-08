@@ -174,9 +174,16 @@ la pantalla es más ancha), `pared_vertical` (opcional: la misma pared en 2:3
 para el celular vertical; sin ella se usa `pared`) y `suelo` (textura
 apaisada, centrada, se recorta por los lados o por arriba y abajo). Se preparan
 con `python _tools/fondo.py <imagen> pared|pared_vertical|suelo` (WebP a 1600
-px en `assets/`) y se activan descomentando sus líneas en `libros.js`. Los
-pedidos en español para ChatGPT, con las capturas de referencia, están en
-`OneDrive\Escritorio\Sala del libro`. En inglés:
+px en `assets/`, o en `assets/fondos/` si se da una variante) y se activan
+descomentando sus líneas en `libros.js`. Los pedidos en español para ChatGPT,
+con las capturas de referencia (SOLO la pared con su ventana y SOLO el piso
+limpio: los muebles y libreros son piezas sueltas), están en
+`OneDrive\Escritorio\Sala del libro`; ahí vive también el CATÁLOGO de 13 paredes
+(vino, azul noche, esmeralda, rosa, lavanda, perla, chocolate, primavera, verano,
+otoño, invierno, Navidad, San Valentín) y 8 pisos (nogal, roble, cerezo, espiga,
+blancos envejecidos, gris, damero, terracota), un pedido por variante, generado
+por `_tools/catalogo_fondos.py` (añadir una variante = una entrada más en su
+lista y volver a correrlo). En inglés, el prompt base:
 
 ```
 storybook illustration of the back wall of a cozy reading room at night, front
