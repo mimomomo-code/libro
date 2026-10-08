@@ -103,8 +103,8 @@
 
   const DEC = (typeof DECORACION === 'object' && DECORACION) ? DECORACION : {};
   // fondos: la imagen va como background (no como <img>) en una variable CSS del elemento.
-  // `pared` trae pintadas la ventana y las cortinas (#sala.con-pared esconde el ventanal CSS);
-  // `pared_vertical` es la variante para el celular vertical (opcional: sin ella se usa `pared`)
+  // `pared` es solo papel tapiz con zócalo (sin ventana; la ventana es la pieza `ventanal`, con alfa);
+  // `pared_vertical` es una variante opcional para el celular vertical (sin ella se usa `pared`)
   const FONDOS = { pared: ['pared', '--foto'], pared_vertical: ['pared', '--foto-vertical'], suelo: ['suelo', '--foto'] };
   for (const clave of Object.keys(DEC)){
     const el = document.querySelector('[data-pieza="' + (FONDOS[clave] ? FONDOS[clave][0] : clave) + '"]'), ruta = DEC[clave];
@@ -113,7 +113,7 @@
     if (FONDOS[clave]){
       im.onload = () => {
         el.style.setProperty(FONDOS[clave][1], 'url("' + ruta + '")');
-        if (clave !== 'pared_vertical'){ el.classList.add('con-imagen'); if (clave === 'pared') document.getElementById('sala').classList.add('con-pared'); }
+        if (clave !== 'pared_vertical') el.classList.add('con-imagen');
       };
       im.onerror = () => {};                               // sin imagen: se queda el dibujo CSS
       im.src = ruta; continue;
@@ -124,6 +124,8 @@
       el.insertBefore(im, el.firstChild); el.classList.add('con-imagen');
       if (el.classList.contains('sillon')) vestir(el);
       if (el.classList.contains('mesa')) ajustarMesa();
+      // la ventana ilustrada manda su proporción (el CSS fija ancho y alto máximo; la foto se ajusta dentro sin deformarse)
+      if (el.classList.contains('ventanal')) el.style.aspectRatio = im.naturalWidth + ' / ' + im.naturalHeight;
     };
     im.onerror = () => {};                                 // sin imagen: se queda el dibujo
     im.src = ruta;

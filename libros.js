@@ -57,12 +57,15 @@ const DECORACION = {
   sillon_amarillo: "assets/sillon_amarillo.webp",
   mesa: "assets/mesa.webp",            // vista de frente; los libros se apoyan en su tapa
   alfombra: "assets/alfombra.webp",    // vista en perspectiva, con el borde de abajo más ancho
-  // La pared pintada (trae la ventana y las cortinas: tapa el ventanal CSS) y el piso. Se preparan
-  // con  python _tools/fondo.py <imagen> pared|pared_vertical|suelo  (los pedidos para la IA están en
+  // Los fondos pintados, tres piezas independientes que se mezclan: la pared (SOLO papel tapiz con
+  // zócalo, sin ventana; anclada abajo), la ventana con sus cortinas (pieza con alfa que sustituye al
+  // ventanal CSS) y el piso (textura, centrada). Se preparan con  python _tools/fondo.py <imagen>
+  // pared|ventanal|suelo [variante]  (el catálogo y los pedidos para la IA están en
   // OneDrive\Escritorio\Sala del libro). Mientras no existan quedan apagadas y se ve el dibujo CSS.
-  // pared: "assets/pared.webp",                    // apaisada 3:2, anclada arriba (se recorta por abajo)
-  // pared_vertical: "assets/pared_vertical.webp",  // opcional: la misma pared en 2:3 para el celular vertical
-  // suelo: "assets/suelo.webp",                    // textura apaisada, centrada
+  // pared: "assets/fondos/pared_vino.webp",
+  // ventanal: "assets/fondos/ventana_vino.webp",
+  // suelo: "assets/fondos/suelo_nogal.webp",
+  // pared_vertical: "...",                         // opcional: otra pared en 2:3 solo para el celular vertical
 };
 
 // Girasoles y limones ilustrados para la lluvia del libro "21 Sep 2026".

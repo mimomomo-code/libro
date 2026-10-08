@@ -548,13 +548,16 @@ body.arrastrando .ranura{box-shadow:inset 0 0 0 1px rgba(240,213,154,.10)}
 .mesa.con-imagen.destino .foto{filter:drop-shadow(0 10px 14px rgba(0,0,0,.5)) drop-shadow(0 0 12px rgba(240,213,154,.9))}
 .alfombra.con-imagen{background:none;box-shadow:none;border-radius:0;left:11%;right:11%;top:62%;bottom:1%}
 .alfombra .foto{display:block;width:100%;height:100%;object-fit:fill;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
-/* la pared y el piso con imagen propia (DECORACION pared / pared_vertical / suelo). La pared pintada
-   trae su ventana y sus cortinas, así que tapa el ventanal CSS; va solo en el centro (las librerías
-   cubren los lados) y anclada ARRIBA: lo que se recorte al cambiar de pantalla es el muro liso de
-   abajo, nunca la cenefa ni la barra. El piso es textura: cubre todo el ancho centrado. */
-.fondo-pared{position:absolute;left:0;right:0;top:0;height:60%;pointer-events:none;display:none;background:var(--foto) 50% 0 / cover no-repeat}
+/* la pared, la ventana y el piso con imagen propia (DECORACION pared / ventanal / suelo; pared_vertical
+   opcional). La pared pintada es SOLO papel tapiz con su zócalo (sin ventana): va en el centro (las
+   librerías cubren los lados) y anclada ABAJO, para que el zócalo caiga en la línea del piso; la
+   ventana con sus cortinas es una pieza suelta con alfa que sustituye al ventanal CSS (la caja toma
+   la proporción de la imagen y la foto se ajusta dentro sin deformarse); el piso es textura: cubre
+   todo el ancho centrado. */
+.fondo-pared{position:absolute;left:0;right:0;top:0;height:60%;pointer-events:none;display:none;background:var(--foto) 50% 100% / cover no-repeat}
 .fondo-pared.con-imagen{display:block}
-#sala.con-pared .ventanal{display:none}
+.ventanal.con-imagen > :not(.foto){display:none}
+.ventanal .foto{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 10px 16px rgba(0,0,0,.45))}
 .suelo.con-imagen{background:var(--foto) 50% 50% / cover no-repeat}
 .lugar{width:var(--lm);display:flex;align-items:flex-end;justify-content:center}
 .piel{background:
@@ -653,7 +656,7 @@ body.arrastrando{cursor:grabbing}
   <div class="suelo" data-pieza="suelo"></div>
   <div class="centro">
     <div class="fondo-pared" data-pieza="pared"></div>
-    <div class="ventanal">
+    <div class="ventanal" data-pieza="ventanal">
       <div class="ventana">
         <svg class="luna" viewBox="0 0 100 100" aria-hidden="true">
           <defs><mask id="mluna"><rect width="100" height="100" fill="#fff"/><circle cx="66" cy="42" r="36" fill="#000"/></mask></defs>
