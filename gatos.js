@@ -74,18 +74,22 @@
       // la derecha. Centrado en x = 60. La cabeza común mira un poco a la derecha: queda como si
       // ladeara la mirada (y volteado, a la izquierda)
       frontal: true,
-      cuerpo: 'M46 44 C 41 52, 38 62, 39 69 C 40 75, 44 76, 50 76 L 70 76 C 76 76, 80 75, 81 69 C 82 62, 79 52, 74 44 C 70 39, 50 39, 46 44 Z',
-      ancas: [[44.5, 67.5, 9, 8.5], [75.5, 67.5, 9, 8.5]],      // las dos caderas: cx cy rx ry (entran en la silueta del cuerpo)
-      bbox: [35.5, 40, 84.5, 76],
-      espina: [[44, 47], [52, 41], [60, 40], [68, 41], [76, 47]],   // la línea de los hombros (las recetas frontales no cuelgan rayas de ella)
-      cola: 'M79 70 C 91 71, 95 79, 82 79 L 70 79 C 67.5 79, 67.5 75.5, 70 75.5 L 82 75.5 C 89 75.5, 88 72.5, 79 72.5 Z',
-      colaCentro: 'M79 71.2 C 89 72, 91 77.3, 82 77.3 L 70 77.3',
-      colaOrigen: [79, 71], colaSuelo: true,
-      sombra: [60, 76, 27, 3.2],
-      cabeza: [-32, -3],
+      // PROPORCIONES de la foto: alto y estrecho (el doble de alto que de ancho), la cabeza un tercio
+      // largo de la altura y las patas largas. Para eso esta pose tiene su propio lienzo, más alto
+      // (120 × 96, pisa en y = 92), y la cabeza común va al 80 %
+      viewBox: [120, 96],
+      cuerpo: 'M47 40 C 41 50, 37 68, 38 81 C 39 90, 46 92, 54 92 L 66 92 C 74 92, 81 90, 82 81 C 83 68, 79 50, 73 40 C 69 32, 51 32, 47 40 Z',
+      ancas: [[43.5, 81, 9, 9.5], [76.5, 81, 9, 9.5]],          // las dos caderas: cx cy rx ry (entran en la silueta del cuerpo)
+      bbox: [36, 34, 84, 92],
+      espina: [[46, 41], [53, 35], [60, 34], [67, 35], [74, 41]],   // la línea de los hombros (las recetas frontales no cuelgan rayas de ella)
+      cola: 'M79 86 C 91 87, 95 95, 82 95 L 70 95 C 67.5 95, 67.5 91.5, 70 91.5 L 82 91.5 C 89 91.5, 88 88.5, 79 88.5 Z',
+      colaCentro: 'M79 87.2 C 89 88, 91 93.3, 82 93.3 L 70 93.3',
+      colaOrigen: [79, 87], colaSuelo: true,
+      sombra: [60, 92, 26, 3],
+      cabeza: [-13.6, -1], cabezaEscala: .8,                   // la cara queda centrada en (60, 26), las orejas rozan arriba
       patas: [],
-      delante: P => {                                            // las dos patas delanteras, rectas y juntas, DELANTE del pecho
-        const pata = x => '<g transform="translate(' + x + ' 0)"><path d="M0 54 h8 v19 a4 3 0 0 1 -8 0 Z" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".8"/>' + P.pata(false, 'fd') + '</g>';
+      delante: P => {                                            // las dos patas delanteras, largas, rectas y juntas, DELANTE del pecho
+        const pata = x => '<g transform="translate(' + x + ' 0)"><path d="M0 56 h8 v33 a4 3 0 0 1 -8 0 Z" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".8"/>' + P.pata(false, 'fd') + '</g>';
         return pata(51) + pata(61);
       },
     },
@@ -128,9 +132,9 @@
         if (F.frontal){
           // de frente: el pecho crema en el medio (asoma entre la barbilla y las patas) y las rayas
           // curvas en los dos costados, de los hombros a las ancas; el lomo no se ve
-          const lado = s => ['M' + (60 + s * 13) + ' 43 q' + (s * 7) + ' 5 ' + (s * 9) + ' 13', 'M' + (60 + s * 16) + ' 50 q' + (s * 6) + ' 6 ' + (s * 6) + ' 13',
-            'M' + (60 + s * 19) + ' 58 q' + (s * 4) + ' 6 ' + (s * 3) + ' 12', 'M' + (60 + s * 14) + ' 65 q' + (s * 5) + ' 4 ' + (s * 7) + ' 9'].join(' ');
-          return '<g clip-path="url(#' + u + '-cuerpo)"><ellipse cx="60" cy="62" rx="10" ry="17" fill="#dac8a9" opacity=".9"/>' +
+          const lado = s => ['M' + (60 + s * 11) + ' 40 q' + (s * 6) + ' 8 ' + (s * 8) + ' 18', 'M' + (60 + s * 14) + ' 50 q' + (s * 6) + ' 9 ' + (s * 7) + ' 20',
+            'M' + (60 + s * 17) + ' 62 q' + (s * 5) + ' 9 ' + (s * 5) + ' 20', 'M' + (60 + s * 15) + ' 76 q' + (s * 5) + ' 7 ' + (s * 8) + ' 14'].join(' ');
+          return '<g clip-path="url(#' + u + '-cuerpo)"><ellipse cx="60" cy="68" rx="9" ry="21" fill="#dac8a9" opacity=".9"/>' +
             '<path d="' + lado(-1) + ' ' + lado(1) + '" fill="none" stroke="#3f3129" stroke-width="2.2" stroke-linecap="round" opacity=".85"/></g>';
         }
         const [x0, y0, x1, y1] = F.bbox; let d = '';
@@ -144,7 +148,7 @@
         '<path d="M81 36l-4 .5M81 40l-4 2M99 24l3-4M103 29l4-2" fill="none" stroke="#3f3129" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>' +
         '<path d="M93 45 C 97 48, 103 47, 106 43 L 106 49 L 92 49 Z" fill="#dac8a9" opacity=".8"/></g>',
       colaExtra: (F, u) => '<g clip-path="url(#' + u + '-cola)"><path d="' + F.colaCentro + '" fill="none" stroke="#3f3129" stroke-width="12" stroke-dasharray="3 4.5" opacity=".8"/></g>',
-      pata: () => '<path d="M0 60h8M0 66h8" stroke="#3f3129" stroke-width="1.6" opacity=".7"/>',
+      pata: (lejos, n) => '<path d="' + (n === 'fd' ? 'M0 62h8M0 70h8M0 78h8' : 'M0 60h8M0 66h8') + '" stroke="#3f3129" stroke-width="1.6" opacity=".7"/>',   // anillos (tres en las patas largas del sentado frontal)
     },
     carey: {                                              // carey pelo corto brindada: negro / marrón muy oscuro con motas naranjas finas y la mancha naranja en la cara
       base: '#2a211c', lejos: '#1a1411', borde: '#120d0b', oreja: '#b98484', ojos: ['#9fae4f', '#9fae4f'], cola: '#2a211c', voz: 1.15,
@@ -184,7 +188,7 @@
     return '<g transform="translate(' + p.x + ' 0)"><g class="pata ' + p.n + '"><path d="' + PATA + '" fill="' + color + '" stroke="' + P.borde + '" stroke-width=".8"/>' + (p.lejos ? '' : P.pata(p.lejos, p.n)) + '</g></g>';
   }
   function svgCabeza(P, u, F){
-    return '<g class="con-cabeza" transform="translate(' + F.cabeza[0] + ' ' + F.cabeza[1] + ')"><g class="cabeza">' +
+    return '<g class="con-cabeza" transform="translate(' + F.cabeza[0] + ' ' + F.cabeza[1] + ')' + (F.cabezaEscala ? ' scale(' + F.cabezaEscala + ')' : '') + '"><g class="cabeza">' +
       '<path d="' + CABEZA.orejaIzq + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9" stroke-linejoin="round"/>' +
       '<g class="oreja"><path d="' + CABEZA.orejaDer + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9" stroke-linejoin="round"/></g>' +
       '<path d="' + CABEZA.cara + '" fill="' + P.base + '" stroke="' + P.borde + '" stroke-width=".9"/>' +
@@ -204,8 +208,8 @@
     // las caderas redondas (una en el sentado de perfil de antes, dos en el frontal): elipses que se suman a la silueta
     const ancas = (F.ancas || (F.anca ? [F.anca] : [])).map(a => '<ellipse cx="' + a[0] + '" cy="' + a[1] + '" rx="' + a[2] + '" ry="' + a[3] + '"');
     const conAncas = resto => ancas.map(a => a + resto).join('');
-    const sombra = F.sombra || [54, 76, 36, 3.5];
-    return '<svg viewBox="0 0 120 80" aria-hidden="true" data-pose="' + pose + '">' +
+    const sombra = F.sombra || [54, 76, 36, 3.5], vb = F.viewBox || [120, 80];   // el sentado frontal usa un lienzo más alto
+    return '<svg viewBox="0 0 ' + vb[0] + ' ' + vb[1] + '" aria-hidden="true" data-pose="' + pose + '">' +
       '<defs><clipPath id="' + u + '-cuerpo"><path d="' + F.cuerpo + '"/>' + conAncas('/>') + '</clipPath>' +
       '<clipPath id="' + u + '-cabeza"><path d="' + CABEZA.cara + '"/><path d="' + CABEZA.orejaIzq + '"/><path d="' + CABEZA.orejaDer + '"/></clipPath>' +
       '<clipPath id="' + u + '-cola"><path d="' + F.cola + '"/></clipPath>' +
