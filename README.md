@@ -144,9 +144,13 @@ La lista está en `libros.js` (`GATOS`: `id`, `pelaje`, y opcionales `nombre` y
 con IA a partir de sus fotos, cada una cortada en cinco piezas (cola, patas
 traseras, patas delanteras, cuerpo y cabeza) que el mismo esqueleto anima, así
 que caminan, mueven la cola y ladean la cabeza con su pelaje pintado; mientras
-las piezas cargan se ve el dibujo por código (que sigue siendo el respaldo), y
-como solo tienen la pose de pie, en vez de sentarse o echarse se quedan
-mirando. Para ilustrar un gato nuevo: generar la
+las piezas cargan se ve el dibujo por código (que sigue siendo el respaldo).
+Las poses echada y sentada son una imagen entera cada una (`echado:` y
+`sentado:` en `GATOS`, preparadas con `python _tools/gato_pose.py imagen.png
+<id> echado|sentado`): el gato la muestra con un fundido y respira por CSS (el
+sentado además cabecea al acicalarse); si le falta una, en vez de esa pose se
+queda mirando. En el sillón se apoya hacia la mitad del cojín, arrimado al
+respaldo, y a veces cambia de postura una vez antes de bajar. Para ilustrar un gato nuevo: generar la
 imagen con la receta de `PROMPTS.md` (un solo gato, de perfil mirando a la
 derecha, fondo transparente), correr `python _tools/gato_piezas.py imagen.png
 <id>`, mirar el control en `_capturas/piezas_<id>.png` y apuntar

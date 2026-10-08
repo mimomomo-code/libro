@@ -57,6 +57,12 @@ const DECORACION = {
   sillon_amarillo: "assets/sillon_amarillo.webp",
   mesa: "assets/mesa.webp",            // vista de frente; los libros se apoyan en su tapa
   alfombra: "assets/alfombra.webp",    // vista en perspectiva, con el borde de abajo más ancho
+  // La pared pintada (trae la ventana y las cortinas: tapa el ventanal CSS) y el piso. Se preparan
+  // con  python _tools/fondo.py <imagen> pared|pared_vertical|suelo  (los pedidos para la IA están en
+  // OneDrive\Escritorio\Sala del libro). Mientras no existan quedan apagadas y se ve el dibujo CSS.
+  // pared: "assets/pared.webp",                    // apaisada 3:2, anclada arriba (se recorta por abajo)
+  // pared_vertical: "assets/pared_vertical.webp",  // opcional: la misma pared en 2:3 para el celular vertical
+  // suelo: "assets/suelo.webp",                    // textura apaisada, centrada
 };
 
 // Girasoles y limones ilustrados para la lluvia del libro "21 Sep 2026".
@@ -87,6 +93,8 @@ const ARTE_GIRASOLES = {
 //  - imagen: (opcional) un PNG/WebP del gato entero, de perfil mirando a la
 //    derecha, con fondo transparente (prompts en PROMPTS.md); si existe, el
 //    gato se mueve como recorte de papel en lugar del dibujo.
+// Poses enteras del ilustrado: `echado` (hecha) y `sentado` (pendiente: cuando lleguen las cuatro
+// imágenes, python _tools/gato_pose.py <png> <id> sentado  y apuntar  sentado: "assets/gatos/<id>/sentado.webp").
 const GATOS = [
   { id: "atigrado", nombre: "Karencito", pelaje: "atigrado", piezas: "assets/gatos/atigrado/piezas.json", echado: "assets/gatos/atigrado/echado.webp", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
   { id: "carey", nombre: "Elma", pelaje: "carey", piezas: "assets/gatos/carey/piezas.json", echado: "assets/gatos/carey/echado.webp", caracter: { pereza: .35, velocidad: 1.15 } },

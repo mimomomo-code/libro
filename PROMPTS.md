@@ -163,6 +163,53 @@ photo, photorealistic, glossy, text, watermark, multiple cats, sitting, lying,
 front view, cropped, cut off, floor, shadow, background, blurry
 ```
 
+## La pared (con su ventana y sus cortinas) y el piso
+
+Hoy la pared, la ventana con cortinas y el piso son CSS. `DECORACION` admite
+tres fondos pintados: `pared` (apaisada 3:2, con la ventana y las cortinas
+dentro: tapa el ventanal CSS; va anclada arriba y se recorta por abajo cuando
+la pantalla es más ancha), `pared_vertical` (opcional: la misma pared en 2:3
+para el celular vertical; sin ella se usa `pared`) y `suelo` (textura
+apaisada, centrada, se recorta por los lados o por arriba y abajo). Se preparan
+con `python _tools/fondo.py <imagen> pared|pared_vertical|suelo` (WebP a 1600
+px en `assets/`) y se activan descomentando sus líneas en `libros.js`. Los
+pedidos en español para ChatGPT, con las capturas de referencia, están en
+`OneDrive\Escritorio\Sala del libro`. En inglés:
+
+```
+storybook illustration of the back wall of a cozy reading room at night, front
+view at eye level, 3:2 landscape, dark burgundy wine damask wallpaper with a
+faint diamond pattern, dark wood baseboard along the bottom edge, a tall
+round-arched window with a dark wooden frame in the center showing a deep blue
+night sky with small stars and a glowing cream crescent moon, red velvet
+pleated curtains tied back at mid height with gold ribbons on both sides, a
+scalloped red valance with gold trim and a gold curtain rod with round finials
+above, the window centered taking about half the width and the upper two
+thirds, the lower third plain wallpaper, soft cool moonlight from the window
+with warm shadows, matte painterly style, clean shapes, muted cozy palette, no
+furniture, no floor, no people, no text, no frame, fills the whole canvas
+```
+
+Para la vertical, cambiar `3:2 landscape` por `2:3 portrait` y `about half the
+width` por `about four fifths of the width` (y adjuntar la apaisada para que
+salga la misma pared).
+
+```
+storybook illustration of a dark walnut wooden plank floor seen from the front
+at seated eye level in gentle perspective, planks running away from the viewer
+and converging slightly, subtle wood grain, matte worn finish, warm brown, dim
+even night lighting, no moonlight pool, no reflections, floor only edge to
+edge, no wall, no baseboard, no rug, no furniture, no objects, no shadows, no
+text, 3:2 landscape
+```
+
+Prompt negativo para los dos:
+
+```
+photo, photorealistic, glossy, text, watermark, frame, border, furniture,
+people, cats, rug, lamp, cropped, blurry
+```
+
 ## Mesa y alfombra (ya cableadas)
 
 `assets/mesa.webp` (vista de frente; los libros se apoyan a un 19 % de su

@@ -102,10 +102,22 @@
   addEventListener('resize', ajustarMesa);
 
   const DEC = (typeof DECORACION === 'object' && DECORACION) ? DECORACION : {};
+  // fondos: la imagen va como background (no como <img>) en una variable CSS del elemento.
+  // `pared` trae pintadas la ventana y las cortinas (#sala.con-pared esconde el ventanal CSS);
+  // `pared_vertical` es la variante para el celular vertical (opcional: sin ella se usa `pared`)
+  const FONDOS = { pared: ['pared', '--foto'], pared_vertical: ['pared', '--foto-vertical'], suelo: ['suelo', '--foto'] };
   for (const clave of Object.keys(DEC)){
-    const el = document.querySelector('[data-pieza="' + clave + '"]'), ruta = DEC[clave];
+    const el = document.querySelector('[data-pieza="' + (FONDOS[clave] ? FONDOS[clave][0] : clave) + '"]'), ruta = DEC[clave];
     if (!el || !ruta) continue;
     const im = new Image();
+    if (FONDOS[clave]){
+      im.onload = () => {
+        el.style.setProperty(FONDOS[clave][1], 'url("' + ruta + '")');
+        if (clave !== 'pared_vertical'){ el.classList.add('con-imagen'); if (clave === 'pared') document.getElementById('sala').classList.add('con-pared'); }
+      };
+      im.onerror = () => {};                               // sin imagen: se queda el dibujo CSS
+      im.src = ruta; continue;
+    }
     im.onload = () => {
       im.alt = ''; im.draggable = false; im.className = 'foto';
       const svg = el.querySelector('svg'); if (svg) svg.remove();

@@ -224,9 +224,13 @@
   const mesa = centro && centro.querySelector('.mesa');
   if (!LISTA.length || !centro || !suelo || !mesa) return;
   const cuerpo = document.body;
+  // `asiento`: dónde apoya el gato (fracciones de la caja del sillón ILUSTRADO; el dibujo SVG de
+  // respaldo tiene otra proporción y solo tiene que quedar razonable). La `y` es el punto de apoyo:
+  // en el club rojo el cojín va del 38 % al 65 % de alto, en el orejero amarillo del 58 % al 74 %;
+  // el gato se apoya hacia la mitad del cojín, arrimado al respaldo, no en la orilla
   const sillones = [...centro.querySelectorAll('.sillon')].map(el => ({
     el, ocupado: null, nombre: el.classList.contains('amarillo') ? 'amarillo' : 'rojo',
-    asiento: el.classList.contains('amarillo') ? { x: .5, y: .66, ancho: .42 } : { x: .5, y: .62, ancho: .46 },
+    asiento: el.classList.contains('amarillo') ? { x: .5, y: .60, ancho: .39 } : { x: .5, y: .48, ancho: .43 },
   }));
   const G = { w: 0, h: 0, caja: null, mesa: null, ancho: 60 };
   function medir(){
@@ -244,6 +248,12 @@
     G.ancho = Math.max(56, Math.min(c.width * .34, 130));     // en celular ~85 px (un tercio del centro); en PC tope 130
     centro.style.setProperty('--gato', G.ancho.toFixed(1) + 'px');
     return true;
+  }
+  // el sillón cambia de alto cuando carga su imagen de DECORACION (el SVG de respaldo es más
+  // cuadrado): se vuelve a medir en cuanto cambia, no solo en el repaso de cada 1.5 s
+  if (typeof ResizeObserver === 'function'){
+    const ro = new ResizeObserver(() => { if (medir()) for (const g of gatos) g.pintar(); });
+    for (const s of sillones) ro.observe(s.el);
   }
   const escalaEn = y => { const c = G.caja; return .55 + .45 * Math.max(0, Math.min(1, (y - c.top) / (c.bottom - c.top))); };
   // la huella de la mesa: ahí no se paran (quedarían dentro de la mesa o tapados por ella)
@@ -302,7 +312,8 @@
       this.el.style.setProperty('--guino', entre(0, 6).toFixed(2) + 's');
       this.lienzo = document.createElement('div'); this.lienzo.className = 'dibujo-gato'; this.el.appendChild(this.lienzo);
       this.svgs = {}; this.pose = ''; this.ponerPose('parado', true);
-      if (def.piezas) this.cargarPiezas(def.piezas, def.echado); else if (def.imagen) this.cargarImagen(def.imagen);
+      this.imgs = {};                                      // ilustrado: una imagen por pose (echado, sentado) que sustituye a las piezas
+      if (def.piezas) this.cargarPiezas(def.piezas, { echado: def.echado, sentado: def.sentado }); else if (def.imagen) this.cargarImagen(def.imagen);
       this.el.addEventListener('pointerup', e => { if (e.button === 0) this.mimar(e); });
       centro.appendChild(this.el);
       // nacen repartidos a lo ancho, fuera de la huella de la mesa
@@ -321,9 +332,10 @@
     }
     // el gato ilustrado en piezas (las corta _tools/gato_piezas.py): cola, patas traseras, patas
     // delanteras, cuerpo y cabeza, cada una en su sitio del lienzo y con su pivote; el CSS las anima
-    // `rutaEchado` (opcional): la ilustración del mismo gato echado (_tools/gato_echado.py), que
-    // sustituye a las piezas mientras duerme; sin ella, el ilustrado solo tiene la pose de pie
-    cargarPiezas(ruta, rutaEchado){
+    // `rutas` (opcional): { echado, sentado } = la ilustración del mismo gato en esa pose
+    // (_tools/gato_pose.py), que sustituye a las piezas mientras dura; sin ellas, el ilustrado
+    // solo tiene la pose de pie (se queda mirando en vez de sentarse o echarse)
+    cargarPiezas(ruta, rutas){
       fetch(ruta).then(r => r.ok ? r.json() : Promise.reject()).then(meta => {
         const base = ruta.slice(0, ruta.lastIndexOf('/') + 1), W = meta.lienzo[0], H = meta.lienzo[1];
         const orden = Object.keys(meta.piezas).sort((a, b) => meta.piezas[a].z - meta.piezas[b].z);
@@ -337,29 +349,39 @@
             if (--faltan) return;
             this.lienzo.innerHTML = ''; this.lienzo.appendChild(cont); this.piezasEl = cont;
             this.el.classList.add('con-piezas'); this.conImagen = true; this.conPiezas = true;
-            if (this.imgEchado){ this.lienzo.appendChild(this.imgEchado); this.imgEchado.hidden = this.pose !== 'echado'; cont.hidden = this.pose === 'echado'; }
-            else if (this.estado === 'sentado' || this.estado === 'echado') this.cambiar('quieto', entre(2, 5));   // sin imagen echada: solo de pie
+            for (const p of Object.keys(this.imgs)){ this.lienzo.appendChild(this.imgs[p]); this.imgs[p].hidden = this.pose !== p; }
+            if (this.pose !== 'parado'){ if (this.imgs[this.pose]) cont.hidden = true; else this.cambiar('quieto', entre(2, 5)); }   // sin imagen de esa pose: de pie
           };
           im.onerror = () => {};                             // si falta una pieza, el gato se queda dibujado
           im.src = base + nombre + '.webp';
           cont.appendChild(im);
         }
       }).catch(() => {});
-      if (rutaEchado){
-        const env = document.createElement('div'); env.className = 'echado-env'; env.hidden = true;
-        const im = new Image(); im.alt = ''; im.draggable = false;
-        im.onload = () => { env.appendChild(im); this.imgEchado = env; if (this.piezasEl){ this.lienzo.appendChild(env); env.hidden = this.pose !== 'echado'; this.piezasEl.hidden = !env.hidden; } };
-        im.onerror = () => {};                               // sin imagen echada: el ilustrado no se echa
-        im.src = rutaEchado;
-      }
+      for (const pose of Object.keys(rutas || {})) if (rutas[pose]) this.cargarPoseImagen(pose, rutas[pose]);
     }
-    get tieneEchado(){ return !this.conImagen || !!this.imgEchado; }       // ¿puede echarse? (dibujado siempre; ilustrado solo con su imagen)
+    cargarPoseImagen(pose, ruta){
+      const env = document.createElement('div'); env.className = 'pose-env ' + pose; env.hidden = true;
+      const im = new Image(); im.alt = ''; im.draggable = false;
+      im.onload = () => {
+        env.appendChild(im); this.imgs[pose] = env;
+        if (this.piezasEl){ this.lienzo.appendChild(env); env.hidden = this.pose !== pose; if (!env.hidden) this.piezasEl.hidden = true; }
+      };
+      im.onerror = () => {};                                 // sin imagen: el ilustrado no hace esa pose
+      im.src = ruta;
+    }
+    // ¿puede hacer esa pose? el dibujado siempre; el ilustrado solo de pie o con la imagen de la pose
+    tienePose(pose){ return pose === 'parado' || !this.conImagen || !!this.imgs[pose]; }
+    // en el sillón: echado o sentado, lo que tenga (`tras` = la pose que acaba, para pasar a la otra)
+    poseEnSillon(tras){
+      const p = ['echado', 'sentado'].filter(q => q !== tras && this.tienePose(q));
+      return !p.length ? 'quieto' : p.length === 1 ? p[0] : (R() < .6 ? 'echado' : 'sentado');
+    }
     ponerPose(pose, directo){
       if (pose === this.pose) return;
-      if (this.conPiezas){                                   // ilustrado: piezas de pie o la imagen echada
-        if (!this.imgEchado) return;
+      if (this.conPiezas){                                   // ilustrado: piezas de pie o la imagen de la pose
+        if (pose !== 'parado' && !this.imgs[pose]) return;
         this.pose = pose;
-        const cambio = () => { const e = pose === 'echado'; this.piezasEl.hidden = e; this.imgEchado.hidden = !e; this.lienzo.classList.remove('cambiando'); };
+        const cambio = () => { this.piezasEl.hidden = pose !== 'parado'; for (const p of Object.keys(this.imgs)) this.imgs[p].hidden = p !== pose; this.lienzo.classList.remove('cambiando'); };
         if (directo) cambio();
         else { this.lienzo.classList.add('cambiando'); clearTimeout(this.poseT); this.poseT = setTimeout(cambio, 170); }
         return;
@@ -384,7 +406,7 @@
     decidir(){
       const libres = sillones.filter(s => !s.ocupado);
       const pref = this.car.sillon ? libres.filter(s => s.nombre === this.car.sillon) : [];
-      if (reducido){ this.cambiar(R() < .5 ? 'echado' : 'sentado', entre(6, 14)); return; }
+      if (reducido){ this.cambiar(this.poseEnSillon(null), entre(6, 14)); return; }
       const pesos = [['anda', .5], ['sentado', .16 + .1 * (1 - this.car.pereza)], ['echado', .1 + .26 * this.car.pereza], ['sillon', libres.length ? .12 + (pref.length ? .06 : 0) : 0]];
       let r = R() * pesos.reduce((s, p) => s + p[1], 0), que = 'anda';
       for (const p of pesos){ if ((r -= p[1]) <= 0){ que = p[0]; break; } }
@@ -400,10 +422,10 @@
         this.tu = tu; this.tv = tv; this.rumbo = 'suelo'; this.dir = tu > this.posU ? 1 : -1;
         this.cambiar('anda', 0);
       } else if (que === 'sentado'){
-        // el ilustrado no tiene pose sentada: se queda mirando (o se echa, si tiene su imagen echada)
-        this.cambiar(this.conImagen ? (this.imgEchado && R() < .5 ? 'echado' : 'quieto') : 'sentado', entre(6, 15)); this.gestoT = entre(1.5, 4);
+        // el ilustrado sin imagen sentada se queda mirando (o se echa, si tiene la echada)
+        this.cambiar(this.tienePose('sentado') ? 'sentado' : (this.tienePose('echado') && R() < .5 ? 'echado' : 'quieto'), entre(6, 15)); this.gestoT = entre(1.5, 4);
       } else if (que === 'echado'){
-        this.cambiar(this.tieneEchado ? 'echado' : 'quieto', entre(7, 18));
+        this.cambiar(this.tienePose('echado') ? 'echado' : 'quieto', entre(7, 18));
       } else {
         // al sillón: primero caminar hasta el suelo justo debajo del asiento, después el salto
         const s = pref.length ? elegir(pref) : elegir(libres); s.ocupado = this; this.sillon = s;
@@ -430,7 +452,7 @@
       if (this.estado === 'salta'){
         const s = this.salto; s.t = Math.min(1, s.t + dt / s.dur);
         if (s.t >= 1){
-          if (s.sube){ this.enSillon = true; this.salto = null; this.cambiar(this.conImagen ? (this.imgEchado ? 'echado' : 'quieto') : (R() < .6 ? 'echado' : 'sentado'), entre(10, 26)); this.gestoT = entre(2, 5); }
+          if (s.sube){ this.enSillon = true; this.salto = null; this.fases = 0; this.cambiar(this.poseEnSillon(null), entre(10, 26)); this.gestoT = entre(2, 5); }
           else { this.enSillon = false; this.salto = null; this.poner(s.x1, s.y1); this.sillon.ocupado = null; this.sillon = null; this.cambiar('quieto', entre(1, 3)); }
         }
       } else if (this.estado === 'anda'){
@@ -448,7 +470,12 @@
       } else {
         this.hasta -= dt;
         if (this.hasta <= 0){
-          if (this.enSillon){ const p = this.pieDelSillon(this.sillon); this.saltar(this.asiento(this.sillon), { x: p.x, y: p.y, escala: escalaEn(p.y) }, false); }
+          if (this.enSillon){
+            // en el sillón: a veces cambia de postura una vez (se sienta a mirar y luego se echa, o al revés) antes de bajar
+            const otra = this.poseEnSillon(this.estado);
+            if (this.fases < 1 && otra !== 'quieto' && R() < .6){ this.fases++; this.cambiar(otra, entre(6, 16)); this.gestoT = entre(2, 5); }
+            else { const p = this.pieDelSillon(this.sillon); this.saltar(this.asiento(this.sillon), { x: p.x, y: p.y, escala: escalaEn(p.y) }, false); }
+          }
           else if (this.estado === 'echado') this.cambiar('estira', .9);
           else if (this.estado === 'estira' || this.estado === 'sentado') this.cambiar('quieto', entre(1, 3));
           else this.decidir();

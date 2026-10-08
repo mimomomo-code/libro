@@ -245,10 +245,15 @@ body.centro .verso{padding-left:0;text-indent:0}
 .gato .dibujo-gato{transition:opacity .17s}
 .gato .dibujo-gato.cambiando{opacity:0}
 .gato svg{display:block;width:100%;height:auto;overflow:visible;pointer-events:none}
-.gato.izq svg,.gato.izq .dibujo-gato > img,.gato.izq .piezas,.gato.izq .echado-env{transform:scaleX(-1)}
+.gato.izq svg,.gato.izq .dibujo-gato > img,.gato.izq .piezas,.gato.izq .pose-env{transform:scaleX(-1)}
 /* la imagen del ilustrado echado: respira despacio */
-.gato .echado-env img{display:block;width:100%;height:auto;pointer-events:auto;-webkit-user-drag:none;transform-origin:50% 100%;animation:respira 3.4s ease-in-out infinite;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
-.gato.mimado .echado-env img{animation:respira .9s ease-in-out}
+/* el ilustrado en una pose entera (imagen echada o sentada): respira por CSS; el sentado además cabecea al acicalarse y al mimarlo */
+.gato .pose-env img{display:block;width:100%;height:auto;pointer-events:auto;-webkit-user-drag:none;transform-origin:50% 100%;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+.gato .pose-env.echado img{animation:respira 3.4s ease-in-out infinite}
+.gato.mimado .pose-env.echado img{animation:respira .9s ease-in-out}
+.gato .pose-env.sentado img{animation:respira-sentado 4.6s ease-in-out infinite}
+.gato.acicala .pose-env.sentado img{animation:acicala-img 2.4s ease-in-out}
+.gato.mimado .pose-env.sentado img{animation:cabecita-img .9s ease}
 @keyframes respira{50%{transform:scale(1.012, 1.035)}}
 .gato svg path,.gato svg ellipse,.gato svg circle,.gato svg rect{pointer-events:visiblePainted}
 .gato svg .sombra{pointer-events:none}
@@ -314,6 +319,9 @@ body.centro .verso{padding-left:0;text-indent:0}
 @keyframes corazon{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-130%) scale(1.05)}}
 @keyframes recorte{50%{transform:translateY(-3%) rotate(2.5deg)}}
 @keyframes recorte-izq{0%,100%{transform:scaleX(-1)}50%{transform:scaleX(-1) translateY(-3%) rotate(-2.5deg)}}
+@keyframes respira-sentado{50%{transform:scaleY(1.012) scaleX(1.004)}}
+@keyframes acicala-img{0%,100%{transform:none}22%,58%{transform:rotate(3deg) translateY(1.5%)}40%,76%{transform:rotate(2deg) translateY(.8%)}}
+@keyframes cabecita-img{25%{transform:rotate(-2.5deg)}70%{transform:rotate(2deg)}}
 @media (prefers-reduced-motion: reduce){.gato .pata,.gato .torso,.gato .cola,.gato .ojos,.gato .cabeza,.gato .oreja,.gato img{animation:none !important}}
 /* las plantillas (?plantilla=id&pose=&estilo=&pieza=): solo el dibujo, a pantalla completa y sobre fondo transparente, para ilustrarlo con IA */
 html.plantilla,body.plantilla{background:transparent !important}
@@ -537,6 +545,14 @@ body.arrastrando .ranura{box-shadow:inset 0 0 0 1px rgba(240,213,154,.10)}
 .mesa.con-imagen.destino .foto{filter:drop-shadow(0 10px 14px rgba(0,0,0,.5)) drop-shadow(0 0 12px rgba(240,213,154,.9))}
 .alfombra.con-imagen{background:none;box-shadow:none;border-radius:0;left:11%;right:11%;top:62%;bottom:1%}
 .alfombra .foto{display:block;width:100%;height:100%;object-fit:fill;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+/* la pared y el piso con imagen propia (DECORACION pared / pared_vertical / suelo). La pared pintada
+   trae su ventana y sus cortinas, así que tapa el ventanal CSS; va solo en el centro (las librerías
+   cubren los lados) y anclada ARRIBA: lo que se recorte al cambiar de pantalla es el muro liso de
+   abajo, nunca la cenefa ni la barra. El piso es textura: cubre todo el ancho centrado. */
+.fondo-pared{position:absolute;left:0;right:0;top:0;height:60%;pointer-events:none;display:none;background:var(--foto) 50% 0 / cover no-repeat}
+.fondo-pared.con-imagen{display:block}
+#sala.con-pared .ventanal{display:none}
+.suelo.con-imagen{background:var(--foto) 50% 50% / cover no-repeat}
 .lugar{width:var(--lm);display:flex;align-items:flex-end;justify-content:center}
 .piel{background:
     var(--tex-cuero, none) 0 0 / 110px 110px,
@@ -618,6 +634,7 @@ body.arrastrando{cursor:grabbing}
   .alfombra .foto{object-fit:cover;object-position:50% 100%}
   .luz-luna{top:44%;height:52%}
   .mesa{bottom:8%}
+  .fondo-pared{height:46%;background-image:var(--foto-vertical, var(--foto))}
 }
 @media (prefers-reduced-motion: reduce){
   :root{--dur:.3s}
@@ -630,8 +647,9 @@ body.arrastrando{cursor:grabbing}
 <!-- ================= LA SALA ================= -->
 <div id="sala">
   <div class="pared"></div>
-  <div class="suelo"></div>
+  <div class="suelo" data-pieza="suelo"></div>
   <div class="centro">
+    <div class="fondo-pared" data-pieza="pared"></div>
     <div class="ventanal">
       <div class="ventana">
         <svg class="luna" viewBox="0 0 100 100" aria-hidden="true">
