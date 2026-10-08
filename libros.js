@@ -93,13 +93,13 @@ const ARTE_GIRASOLES = {
 //  - imagen: (opcional) un PNG/WebP del gato entero, de perfil mirando a la
 //    derecha, con fondo transparente (prompts en PROMPTS.md); si existe, el
 //    gato se mueve como recorte de papel en lugar del dibujo.
-// Poses enteras del ilustrado: `echado` (hecha) y `sentado` (pendiente: cuando lleguen las cuatro
-// imágenes, python _tools/gato_pose.py <png> <id> sentado  y apuntar  sentado: "assets/gatos/<id>/sentado.webp").
+// Poses enteras del ilustrado: `echado` (de perfil) y `sentado` (de frente, mirando a quien mira);
+// las prepara  python _tools/gato_pose.py <png> <id> echado|sentado  (originales en privado/gatos/ilustrados/).
 const GATOS = [
-  { id: "atigrado", nombre: "Karencito", pelaje: "atigrado", piezas: "assets/gatos/atigrado/piezas.json", echado: "assets/gatos/atigrado/echado.webp", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
-  { id: "carey", nombre: "Elma", pelaje: "carey", piezas: "assets/gatos/carey/piezas.json", echado: "assets/gatos/carey/echado.webp", caracter: { pereza: .35, velocidad: 1.15 } },
-  { id: "tricolor", nombre: "Mia", pelaje: "tricolor", piezas: "assets/gatos/tricolor/piezas.json", echado: "assets/gatos/tricolor/echado.webp", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
-  { id: "vancafe", nombre: "Chunchun", pelaje: "van_cafe", piezas: "assets/gatos/vancafe/piezas.json", echado: "assets/gatos/vancafe/echado.webp", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },
+  { id: "atigrado", nombre: "Karencito", pelaje: "atigrado", piezas: "assets/gatos/atigrado/piezas.json", echado: "assets/gatos/atigrado/echado.webp", sentado: "assets/gatos/atigrado/sentado.webp", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
+  { id: "carey", nombre: "Elma", pelaje: "carey", piezas: "assets/gatos/carey/piezas.json", echado: "assets/gatos/carey/echado.webp", sentado: "assets/gatos/carey/sentado.webp", caracter: { pereza: .35, velocidad: 1.15 } },
+  { id: "tricolor", nombre: "Mia", pelaje: "tricolor", piezas: "assets/gatos/tricolor/piezas.json", echado: "assets/gatos/tricolor/echado.webp", sentado: "assets/gatos/tricolor/sentado.webp", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
+  { id: "vancafe", nombre: "Chunchun", pelaje: "van_cafe", piezas: "assets/gatos/vancafe/piezas.json", echado: "assets/gatos/vancafe/echado.webp", sentado: "assets/gatos/vancafe/sentado.webp", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },
 ];
 
 const LIBROS = [

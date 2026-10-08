@@ -251,6 +251,9 @@ body.centro .verso{padding-left:0;text-indent:0}
 .gato .pose-env img{display:block;width:100%;height:auto;pointer-events:auto;-webkit-user-drag:none;transform-origin:50% 100%;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
 .gato .pose-env.echado img{animation:respira 3.4s ease-in-out infinite}
 .gato.mimado .pose-env.echado img{animation:respira .9s ease-in-out}
+/* el sentado frontal es alto y estrecho: a ancho completo saldría dos veces y media más alto que de pie;
+   al 46 % del ancho mide ~0.8 del ancho de alto, un poco más que el gato de pie, como un gato real sentado */
+.gato .pose-env.sentado{width:46%;margin:0 auto}
 .gato .pose-env.sentado img{animation:respira-sentado 4.6s ease-in-out infinite}
 .gato.acicala .pose-env.sentado img{animation:acicala-img 2.4s ease-in-out}
 .gato.mimado .pose-env.sentado img{animation:cabecita-img .9s ease}
