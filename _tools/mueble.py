@@ -67,7 +67,7 @@ def hueco_central(im):
         if (not libre) and actual is not None:
             ini, fin = actual, x
             c = (ini + fin) / 2
-            if fin - ini >= w * .015 and w * .25 <= c <= w * .75 and (mejor is None or fin - ini > mejor[1] - mejor[0]):
+            if fin - ini >= w * .004 and w * .25 <= c <= w * .75 and (mejor is None or fin - ini > mejor[1] - mejor[0]):   # basta un hueco de medio por ciento (en dos parejas reales fue de ~8 px)
                 mejor = (ini, fin)
             actual = None
     return None if mejor is None else (mejor[0] + mejor[1]) // 2
@@ -108,7 +108,7 @@ def main():
         mini(recortar(im), os.path.join(RAIZ, 'assets', 'muebles', 'mini', 'sillones_%s.webp' % clave))
         print('En libros.js, en MUEBLES.sillones:  %s: "<nombre>"' % clave)
     elif tipo in ('mesa', 'alfombra'):
-        pieza = encoger(recortar(im), 1400 if tipo == 'alfombra' else 1100)
+        pieza = encoger(recortar(im), 1100)                      # la alfombra se ve a lo sumo a ~700 px de ancho: 1100 sobra
         guardar(pieza, os.path.join(RAIZ, 'assets', 'muebles', '%s_%s.webp' % (tipo, clave)))
         mini(pieza, os.path.join(RAIZ, 'assets', 'muebles', 'mini', '%s_%s.webp' % (tipo, clave)))
         print('En libros.js, en MUEBLES.%s:  %s: "<nombre>"' % ('mesas' if tipo == 'mesa' else 'alfombras', clave))
