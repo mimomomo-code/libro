@@ -220,9 +220,24 @@ con ella sí es código.
   `python _tools/bandeja.py` hace una hoja de contacto numerada y dice qué
   falta; `python _tools/bandeja.py 1=pared_rosa 2=atigrado_echado` convierte
   cada imagen según su familia (`_tools/pieza.py`), la deja en `assets/`,
-  mueve el PNG a `Hechos/` (o a la carpeta de la raza), reescribe `catalogo.js`
+  guarda el original como WebP sin pérdida en `Hechos/` (o en la carpeta de la
+  raza; píxel a píxel igual al PNG y la mitad de peso), reescribe `catalogo.js`
   y deja una tira de control en `_capturas/bandeja.png`.
-- `--excel-desde-json` reconstruye el Excel desde el JSON si se pierde.
+- El Excel también se edita desde la terminal, con el archivo cerrado:
+  `--fila <familia> clave=.. nombre=.. ...` añade una variante, `--editar
+  <Hoja> <clave> <columna> "<valor>"` cambia una celda y `--familia ...` crea
+  una familia nueva con su hoja. `--excel-desde-json` reconstruye el Excel
+  desde el JSON si se pierde.
+- **La vitrina.** Este repo es la fábrica y es privado. Lo que se publica es
+  otro repo, público, con solo lo que el navegador necesita:
+  `python _tools/publicar.py` copia en espejo la página, los JS, `assets/` y
+  `musica/` a `Documents/libro-publico`, escribe allí un `catalogo.js` sin
+  precios ni tienda y hace el commit; con `--push` lo sube y GitHub Pages lo
+  sirve. Nunca viajan el Excel, las herramientas, los prompts ni `privado/`.
+- **Las skills** de Claude Code para estos flujos viven en `.claude/skills/`
+  (`/libro-pedido`, `/libro-bandeja`, `/libro-publicar`, `/libro-mascota`,
+  `/libro-familia`) y están enlazadas en `~/.claude/skills/` para usarlas
+  desde cualquier carpeta.
 
 ## Texturas y sillones ilustrados
 

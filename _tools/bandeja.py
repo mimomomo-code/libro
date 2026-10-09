@@ -9,17 +9,19 @@ los convierte y los activa en la página.
       de contacto numerada en Bandeja/_hoja.png (MIRARLA) y dice qué variantes faltan por familia.
 
   python _tools/bandeja.py 1=pared_rosa 2=ventana_rosa 3=atigrado_echado
-      Monta cada imagen: la procesa según su familia (pieza.py) hacia assets/, mueve el PNG a Hechos/
-      (o a Mascotas/<raza>/) con su nombre bueno, reescribe catalogo.js y el Taller (catalogo.py) y
-      deja una tira de control en _capturas/bandeja.png (MIRARLA). El nombre es el que dice el pedido
-      en "GUARDAR EL RESULTADO COMO" sin el .png: <prefijo>_<clave> o, en mascotas, <raza>_<pose>.
+      Monta cada imagen: la procesa según su familia (pieza.py) hacia assets/, guarda el original como
+      WebP SIN pérdida en Hechos/ (o en Mascotas/<raza>/) con su nombre bueno y borra el PNG, reescribe
+      catalogo.js y el Taller (catalogo.py) y deja una tira de control en _capturas/bandeja.png
+      (MIRARLA). El nombre es el que dice el pedido en "GUARDAR EL RESULTADO COMO" sin el .png:
+      <prefijo>_<clave> o, en mascotas, <raza>_<pose>.
       También vale  pared_rosa=<ruta a un png>  (una imagen que no está en la Bandeja).
 
   Opciones:  --taller <carpeta>   --corte 0.5 (sillones: por dónde partir)   --sin-mover (deja el PNG)
              --pendientes (solo la lista de lo que falta)
+             --pasada-webp (una vez: los PNG originales que ya están en el Taller y en privado/ a WebP sin pérdida)
 Necesita Pillow y openpyxl.
 """
-import os, shutil, sys, time
+import glob, os, re, shutil, sys, time
 from PIL import Image, ImageDraw, ImageFont
 
 AQUI = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, AQUI)
@@ -34,6 +36,38 @@ def fuente(tam):
     for f in ('C:/Windows/Fonts/segoeui.ttf', 'C:/Windows/Fonts/arial.ttf'):
         if os.path.exists(f): return ImageFont.truetype(f, tam)
     return ImageFont.load_default()
+
+def a_webp_sin_perdida(src, dst, borrar=True):
+    """Guarda src como WebP SIN pérdida (alfa intacto), comprueba píxel a píxel y, si coincide, borra el PNG. None si no coincide."""
+    im = Image.open(src); modo = 'RGBA' if im.mode in ('RGBA', 'LA', 'P', 'PA') else 'RGB'
+    im = im.convert(modo)
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    im.save(dst, 'WEBP', lossless=True, method=6, exact=True)       # exact: conserva también el color bajo el alfa 0
+    if Image.open(dst).convert(modo).tobytes() != im.tobytes():
+        os.remove(dst); return None
+    if borrar and os.path.abspath(src) != os.path.abspath(dst): os.remove(src)
+    return dst
+
+def pasada_webp(taller):
+    """Una vez: los originales PNG del Taller (Hechos/, Referencias/, Mascotas/<raza>_<pose>.png) y de
+    privado/gatos/ilustrados/ pasan a WebP sin pérdida. Las plantillas de los gatos (_color, _lineas, _silueta,
+    _pieza_*) se quedan en PNG: las genera el código y pesan poco."""
+    rutas = []
+    for dp, dn, fn in os.walk(os.path.join(taller, 'Hechos')): rutas += [os.path.join(dp, f) for f in fn if f.lower().endswith('.png')]
+    rutas += glob.glob(os.path.join(taller, 'Referencias', '*.png'))
+    for d in glob.glob(os.path.join(taller, 'Mascotas', '*')):
+        for f in os.listdir(d):
+            base, ext = os.path.splitext(f)
+            if ext.lower() == '.png' and re.match(r'^[a-z0-9]+_(parado|echado|sentado)(_anterior)?$', base): rutas.append(os.path.join(d, f))
+    rutas += glob.glob(os.path.join(RAIZ, 'privado', 'gatos', 'ilustrados', '*.png'))
+    antes = despues = 0; fallos = []
+    for r in rutas:
+        antes += os.path.getsize(r); dst = os.path.splitext(r)[0] + '.webp'
+        if a_webp_sin_perdida(r, dst): despues += os.path.getsize(dst)
+        else: fallos.append(r); despues += os.path.getsize(r)
+        print('  ', os.path.relpath(r, taller) if r.startswith(taller) else os.path.relpath(r, RAIZ), '->', os.path.basename(dst) if r not in fallos else 'SE QUEDA PNG')
+    print('%d PNG a WebP sin pérdida: %.0f MB -> %.0f MB' % (len(rutas) - len(fallos), antes / 2**20, despues / 2**20))
+    for f in fallos: print('  no coincidió píxel a píxel, se deja el PNG:', f)
 
 def mirar(ruta):
     """Qué es la imagen: tamaño, si tiene alfa de verdad, si hay un hueco central (sillones) y una pista."""
@@ -121,14 +155,22 @@ def montar(asignaciones, data, taller, corte=None, mover=True):
             print('AVISO: %s todavía no tiene la pose de pie; la %s entra igual, pero el pedido de la pose adjunta la de pie.' % (p['nombre'], pose))
         print('%s  ->  %s / %s%s' % (os.path.basename(ruta), fam['nombre'], p['nombre'], (' / ' + pose) if pose else ''))
         escritos += P.procesar(fam, p, ruta, pose, corte)
-        nombre = C.nombre_archivo(fam, p, pose)
+        if not mover: continue
+        # el original se guarda en WebP SIN pérdida (píxel a píxel igual, mitad de peso) en Hechos/ o en la carpeta de la raza
         destino = os.path.join(taller, C.carpeta_raza(fam, p)) if fam['postproceso'] == 'mascota' else os.path.join(taller, 'Hechos')
         os.makedirs(destino, exist_ok=True)
-        final = os.path.join(destino, nombre)
-        if os.path.exists(final) and os.path.abspath(final) != os.path.abspath(ruta):
-            anterior = os.path.join(destino, nombre[:-4] + '_anterior.png'); shutil.move(final, anterior); print('   (la versión anterior queda como %s)' % os.path.basename(anterior))
-        if mover and os.path.abspath(final) != os.path.abspath(ruta):
-            shutil.move(ruta, final); print('   PNG ->', os.path.relpath(final, taller))
+        base = os.path.join(destino, C.nombre_archivo(fam, p, pose, 'webp')[:-5])
+        for ext in ('.webp', '.png'):                         # la versión anterior (en cualquiera de los dos formatos) no se pisa
+            viejo = base + ext
+            if os.path.exists(viejo) and os.path.abspath(viejo) != os.path.abspath(ruta):
+                shutil.move(viejo, base + '_anterior' + ext); print('   (la versión anterior queda como %s)' % os.path.basename(base + '_anterior' + ext))
+        if ruta.lower().endswith('.webp'):
+            shutil.move(ruta, base + '.webp'); final = base + '.webp'
+        elif a_webp_sin_perdida(ruta, base + '.webp'):
+            final = base + '.webp'
+        else:
+            shutil.move(ruta, base + '.png'); final = base + '.png'; print('   (no coincidió píxel a píxel en WebP sin pérdida: se guarda el PNG)')
+        print('   original ->', os.path.relpath(final, taller), '(%d KB)' % (os.path.getsize(final) // 1024))
     return escritos
 
 def main():
@@ -137,6 +179,7 @@ def main():
     corte = a[a.index('--corte') + 1] if '--corte' in a else None
     omitir = {taller, corte}
     tokens = [x for x in a if '=' in x and x not in omitir and not x.startswith('--')]
+    if '--pasada-webp' in a: pasada_webp(taller); return
     data = C.estado(C.excel_a_json(C.XLSX))
     if '--pendientes' in a or not tokens:
         items = listar(taller)

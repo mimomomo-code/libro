@@ -94,8 +94,8 @@ def procesar(fam, p, ruta, pose=None, corte=None):
         else:
             im = encoger(recortar(Image.open(ruta).convert('RGBA')), min(lado, 640))
             escritos.append(guardar(im, os.path.join(destino, pose + '.webp'), 90))
-        priv = os.path.join(RAIZ, 'privado', 'gatos', 'ilustrados'); os.makedirs(priv, exist_ok=True)      # el original, fuera de git
-        shutil.copyfile(ruta, os.path.join(priv, '%s_%s.png' % (clave, pose)))
+        priv = os.path.join(RAIZ, 'privado', 'gatos', 'ilustrados'); os.makedirs(priv, exist_ok=True)      # el original, fuera de git, sin pérdida
+        Image.open(ruta).convert('RGBA').save(os.path.join(priv, '%s_%s.webp' % (clave, pose)), 'WEBP', lossless=True, method=6, exact=True)
     else:
         raise SystemExit('postproceso desconocido en la hoja Familias: %r' % post)
     return escritos

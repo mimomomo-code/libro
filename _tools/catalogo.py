@@ -20,6 +20,13 @@ Uso:
   python _tools/catalogo.py --excel-desde-json  reconstruye el Excel desde catalogo.json (si se pierde
                                                 o para la primera vez)
   python _tools/catalogo.py --referencias       recompone las referencias de muebles desde assets/
+Editar el Excel sin abrirlo (tiene que estar CERRADO en Excel):
+  python _tools/catalogo.py --fila pared clave=marina nombre="Azul marina" para="..." papel="..." zocalo="..." luz="..."
+  python _tools/catalogo.py --editar Plantillas mascota_echado texto "..."      (hoja, clave de la fila, columna, valor)
+  python _tools/catalogo.py --familia familia=lampara hoja=Lamparas nombre=Lámparas singular=lámpara carpeta=Lamparas
+         prefijo=lampara tamano="1024 x 1536 (vertical)" alfa=x referencia=referencia_estante.png referencia_nota="..."
+         destino=assets/adornos asset={clave}.webp mini_asset={clave}.webp lado_max=600 mini=120 postproceso=recortar
+         plantilla=lampara tipo_js=lamparas columnas=objeto,luz
 Necesita openpyxl (y Pillow para --referencias).
 """
 import io, json, os, re, shutil, sys
@@ -30,6 +37,7 @@ JSON_ = os.path.join(RAIZ, 'catalogo', 'catalogo.json')
 JS = os.path.join(RAIZ, 'catalogo.js')
 TALLER = r'C:/Users/basti/OneDrive/Escritorio/Taller del libro'
 POSES = ('parado', 'echado', 'sentado')
+REF_ESTILO = 'referencia_estilo.webp'          # el acabado que queremos: se adjunta con todos los pedidos (Taller/Referencias)
 HOJAS_FIJAS = ('LEEME', 'Familias', 'Plantillas', 'Temporadas')
 COMUNES = ('n', 'clave', 'nombre', 'para', 'precio', 'defecto')
 NUMERICAS = {'n', 'precio', 'ancho', 'fila', 'col', 'pereza', 'velocidad', 'voz', 'lado_max', 'mini'}
@@ -176,7 +184,8 @@ def familia(data, nombre):
 # ---------------------------------------------------------------- catalogo.js
 def js(v): return json.dumps(v, ensure_ascii=False)
 
-def escribir_js(data, ruta=JS):
+def escribir_js(data, ruta=JS, publico=False):
+    """catalogo.js. Con publico=True (la vitrina): sin precios ni la tabla CATALOGO, solo lo que la página usa hoy."""
     fams = {f['familia']: f for f in data['familias']}
     def lista(familia_):
         fam = fams[familia_]; d = {}
@@ -221,16 +230,20 @@ def escribir_js(data, ruta=JS):
             if p.get(k) not in ('', None): car[k] = p[k]
         if p.get('sillon'): car['sillon'] = p['sillon']
         if car: r['caracter'] = car
-        r['precio'] = p.get('precio') or 0
+        if not publico: r['precio'] = p.get('precio') or 0
         R[p['clave']] = r
     C = {'familias': [{'familia': f['familia'], 'grupo': f['grupo'], 'nombre': f['nombre'], 'tipo': f.get('tipo_sel') or f['tipo_js']} for f in data['familias']],
          'piezas': {f['familia']: [{'clave': p['clave'], 'nombre': p['nombre'], 'para': p.get('para') or '', 'precio': p.get('precio') or 0,
                                     'hecha': bool(p.get('_hecha'))} for p in data['piezas'].get(f['familia'], [])] for f in data['familias']}}
-    lineas = ['// GENERADO por _tools/catalogo.py desde catalogo/catalogo.xlsx. NO EDITAR A MANO: se pisa en cada corrida.',
-              '// Solo salen las variantes cuya imagen existe en assets/. Las pendientes están en CATALOGO.md del Taller.',
-              '// FONDOS (pared, ventana, piso), MUEBLES (sillones, mesa, alfombra) y ADORNOS los lee fondos.js / sala.js;',
-              '// RAZAS las mascotas vendibles (libros.js arma GATOS con MASCOTAS + RAZAS); CATALOGO, la tienda de mañana.',
-              'const FONDOS = {']
+    if publico:
+        lineas = ['// GENERADO. Lo que la sala sabe de sus fondos (pared, ventana, piso), muebles (sillones, mesa, alfombra),',
+                  '// adornos de las librerías y razas de gato: fondos.js, sala.js y libros.js lo leen. No editar a mano.']
+    else:
+        lineas = ['// GENERADO por _tools/catalogo.py desde catalogo/catalogo.xlsx. NO EDITAR A MANO: se pisa en cada corrida.',
+                  '// Solo salen las variantes cuya imagen existe en assets/. Las pendientes están en CATALOGO.md del Taller.',
+                  '// FONDOS (pared, ventana, piso), MUEBLES (sillones, mesa, alfombra) y ADORNOS los lee fondos.js / sala.js;',
+                  '// RAZAS las mascotas vendibles (libros.js arma GATOS con MASCOTAS + RAZAS); CATALOGO, la tienda de mañana.']
+    lineas.append('const FONDOS = {')
     for k in ('paredes', 'ventanas', 'pisos', 'defecto'): lineas.append('  %s: %s,' % (k, js(F[k])))
     lineas.append('  temporadas: [')
     for t in F['temporadas']: lineas.append('    %s,' % js(t))
@@ -240,17 +253,79 @@ def escribir_js(data, ruta=JS):
     for a in A: lineas.append('  %s,' % js(a))
     lineas += ['];', 'const RAZAS = {']
     for k, r in R.items(): lineas.append('  %s: %s,' % (js(k), js(r)))
-    lineas += ['};', 'const CATALOGO = {', '  familias: %s,' % js(C['familias']), '  piezas: {']
-    for k, v in C['piezas'].items(): lineas.append('    %s: %s,' % (k, js(v)))
-    lineas += ['  },', '};', '']
+    lineas.append('};')
+    if not publico:
+        lineas += ['const CATALOGO = {', '  familias: %s,' % js(C['familias']), '  piezas: {']
+        for k, v in C['piezas'].items(): lineas.append('    %s: %s,' % (k, js(v)))
+        lineas += ['  },', '};']
+    lineas.append('')
     io.open(ruta, 'w', encoding='utf-8').write('\n'.join(lineas))
     return avisos
 
+# ---------------------------------------------------------------- editar el Excel desde la terminal
+def abrir_excel(ruta=XLSX):
+    from openpyxl import load_workbook
+    return load_workbook(ruta)
+
+def guardar_excel(wb, ruta=XLSX):
+    try: wb.save(ruta)
+    except PermissionError: raise SystemExit('No puedo escribir %s: está abierto en Excel. Ciérralo y repite.' % ruta)
+
+def cabecera(ws):
+    return [str(c.value).strip() if c.value is not None else '' for c in ws[1]]
+
+def anadir_fila(familia_, campos, ruta=XLSX):
+    """Una variante nueva: clave=... nombre=... y los campos de su plantilla. n se calcula solo. Devuelve la fila escrita."""
+    data = excel_a_json(ruta); fam = familia(data, familia_)
+    if not fam: raise SystemExit('Familia desconocida: %s (hay: %s)' % (familia_, ', '.join(f['familia'] for f in data['familias'])))
+    if not campos.get('clave') or not campos.get('nombre'): raise SystemExit('Hacen falta al menos clave=... y nombre=...')
+    if not re.match(r'^[a-z0-9_]+$', campos['clave']): raise SystemExit('La clave va en minúsculas, sin tildes ni espacios: %r' % campos['clave'])
+    if any(p['clave'] == campos['clave'] for p in data['piezas'].get(familia_, [])): raise SystemExit('La clave %s ya existe en %s' % (campos['clave'], fam['hoja']))
+    wb = abrir_excel(ruta); ws = wb[fam['hoja']]; cab = cabecera(ws)
+    desconocidos = [k for k in campos if k not in cab]
+    if desconocidos: raise SystemExit('La hoja %s no tiene estas columnas: %s (tiene: %s)' % (fam['hoja'], ', '.join(desconocidos), ', '.join(c for c in cab if c)))
+    n = max([int(p['n']) for p in data['piezas'].get(familia_, []) if p.get('n') not in ('', None)] or [0]) + 1
+    fila = {c: campos.get(c, '') for c in cab}; fila['n'] = n
+    if 'precio' in fila and fila['precio'] == '': fila['precio'] = 0
+    ws.append([valor_excel(c, fila[c]) if c in BOOLEANAS else fila[c] for c in cab])
+    guardar_excel(wb, ruta)
+    faltan = [c for c in cab if c and c not in COMUNES and not campos.get(c)]
+    if faltan: print('AVISO: la fila quedó con estos campos vacíos (los pide la plantilla): %s' % ', '.join(faltan))
+    return fila
+
+def editar_celda(hoja, clave, columna, valor, ruta=XLSX):
+    """Cambia una celda: la fila cuya primera columna clave vale `clave` (en Plantillas, la clave del texto)."""
+    wb = abrir_excel(ruta)
+    if hoja not in wb.sheetnames: raise SystemExit('No hay hoja %s (hay: %s)' % (hoja, ', '.join(wb.sheetnames)))
+    ws = wb[hoja]; cab = cabecera(ws)
+    if columna not in cab: raise SystemExit('La hoja %s no tiene columna %s (tiene: %s)' % (hoja, columna, ', '.join(c for c in cab if c)))
+    col_clave = cab.index('clave' if 'clave' in cab else ('familia' if 'familia' in cab else cab[0]))
+    for fila in ws.iter_rows(min_row=2):
+        if str(fila[col_clave].value).strip() == clave:
+            fila[cab.index(columna)].value = valor; guardar_excel(wb, ruta); return True
+    raise SystemExit('No hay fila %s en la hoja %s' % (clave, hoja))
+
+def nueva_familia(campos, ruta=XLSX):
+    """Una familia nueva: fila en Familias + hoja con las columnas comunes y las de `campos` (lista separada por comas) + plantilla vacía."""
+    from openpyxl.styles import Font, PatternFill
+    wb = abrir_excel(ruta); ws = wb['Familias']; cab = cabecera(ws)
+    for k in ('familia', 'hoja', 'nombre', 'singular', 'carpeta', 'prefijo', 'destino', 'asset', 'postproceso', 'plantilla'):
+        if not campos.get(k): raise SystemExit('Falta %s=... (columnas de Familias: %s)' % (k, ', '.join(c for c in cab if c)))
+    if campos['hoja'] in wb.sheetnames: raise SystemExit('Ya hay una hoja %s' % campos['hoja'])
+    columnas = [c.strip() for c in campos.pop('columnas', '').split(',') if c.strip()]
+    ws.append([valor_excel(c, campos.get(c, '')) if c in BOOLEANAS else campos.get(c, '') for c in cab])
+    h = wb.create_sheet(campos['hoja']); h.append(list(COMUNES) + columnas)
+    for c in h[1]: c.font = Font(bold=True); c.fill = PatternFill('solid', fgColor='FFF2E6D9')
+    h.freeze_panes = 'A2'
+    pl = wb['Plantillas']; pl.append([campos['plantilla'].format(pose='parado'), 'Genera ahora una imagen. No describas, no esperes más material.\n\n(ESCRIBIR AQUÍ EL PEDIDO con {campos} de la hoja %s y {estilo})' % campos['hoja']])
+    guardar_excel(wb, ruta)
+    return columnas
+
 # ---------------------------------------------------------------- el Taller del Escritorio
-def nombre_archivo(fam, p, pose=None):
-    """El PNG que tiene que devolver la IA (sin carpeta)."""
-    if fam['postproceso'] == 'mascota': return '%s_%s.png' % (p['clave'], pose or 'parado')
-    return '%s_%s.png' % (fam['prefijo'], p['clave'])
+def nombre_archivo(fam, p, pose=None, ext='png'):
+    """El archivo que tiene que devolver la IA (sin carpeta); con ext='webp', cómo queda guardado en Hechos/."""
+    if fam['postproceso'] == 'mascota': return '%s_%s.%s' % (p['clave'], pose or 'parado', ext)
+    return '%s_%s.%s' % (fam['prefijo'], p['clave'], ext)
 
 def carpeta_raza(fam, p): return os.path.join(fam['carpeta'], '%02d %s' % (int(p['n']), p['nombre']))
 
@@ -264,8 +339,8 @@ def texto_pedido(data, fam, p, pose=None):
     if cuerpo.lstrip().startswith('ADJUNTAR'):
         texto = cuerpo
     else:
-        texto = ('ADJUNTAR (las dos, de la carpeta Referencias):\n  1. %s   (%s)\n  2. referencia_estilo.png   (%s)\n\nPEGAR ESTE TEXTO:\n\n%s'
-                 % (fam['referencia'], fam['referencia_nota'], pl.get('adjuntar_estilo', ''), cuerpo))
+        texto = ('ADJUNTAR (las dos, de la carpeta Referencias):\n  1. %s   (%s)\n  2. %s   (%s)\n\nPEGAR ESTE TEXTO:\n\n%s'
+                 % (fam['referencia'], fam['referencia_nota'], REF_ESTILO, pl.get('adjuntar_estilo', ''), cuerpo))
     texto += '\n\n' + pl.get('pie_texto', '')
     if fam.get('alfa') and pl.get('pie_alfa'): texto += '\n' + pl['pie_alfa']
     texto += '\n\nGUARDAR EL RESULTADO COMO:  %s   %s\n' % (nombre_archivo(fam, p, pose), pl.get('pie_guardar', ''))
@@ -303,7 +378,7 @@ def escribir_taller(data, taller=TALLER):
     escribir_catalogo_md(data, taller)
     escribir_leeme(data, taller)
     faltan = [f['referencia'] for f in data['familias'] if f.get('referencia') and not os.path.exists(os.path.join(taller, 'Referencias', f['referencia']))]
-    if not os.path.exists(os.path.join(taller, 'Referencias', 'referencia_estilo.png')): faltan.append('referencia_estilo.png')
+    if not os.path.exists(os.path.join(taller, 'Referencias', REF_ESTILO)): faltan.append(REF_ESTILO)
     return escritos, faltan
 
 def escribir_catalogo_md(data, taller):
@@ -354,7 +429,8 @@ La lista de lo que existe y lo que falta es `CATALOGO.md` (la fuente de verdad e
                         `referencia_estilo.png`, el acabado que queremos).
 - `Bandeja/`            AQUÍ se dejan los PNG tal como salen de ChatGPT (con el nombre que diga el
                         pedido o con el nombre raro que les pone: da igual).
-- `Hechos/`             los PNG ya identificados y montados, con su nombre (`pared_rosa.png`...).
+- `Hechos/`             los originales ya identificados y montados, con su nombre, guardados en WebP
+                        SIN pérdida (`pared_rosa.webp`...: píxel a píxel iguales al PNG y la mitad de peso).
 
 ## El flujo, paso a paso
 
@@ -438,9 +514,26 @@ def regenerar(taller=TALLER, solo_js=False, data=None):
     for a in avisos: print('AVISO:', a)
     return data, avisos
 
+def pares(lista):
+    """['clave=x', 'nombre=Y z'] -> dict (los valores pueden llevar espacios si vienen entre comillas)."""
+    d = {}
+    for t in lista:
+        if '=' not in t: raise SystemExit('Esperaba campo=valor y llegó: %r' % t)
+        k, v = t.split('=', 1); d[k.strip()] = v
+    return d
+
 def main():
     a = sys.argv[1:]
     taller = a[a.index('--taller') + 1] if '--taller' in a else TALLER
+    if '--fila' in a:                                   # python _tools/catalogo.py --fila pared clave=marina nombre="Azul marina" papel="..." ...
+        i = a.index('--fila'); fila = anadir_fila(a[i + 1], pares([t for t in a[i + 2:] if '=' in t]))
+        print('Fila %d añadida a %s: %s' % (fila['n'], a[i + 1], fila['clave']))
+        regenerar(taller); return
+    if '--editar' in a:                                 # python _tools/catalogo.py --editar Plantillas mascota_echado texto "..."
+        i = a.index('--editar'); editar_celda(a[i + 1], a[i + 2], a[i + 3], a[i + 4]); print('Celda escrita.'); regenerar(taller); return
+    if '--familia' in a:                                # python _tools/catalogo.py --familia familia=lampara hoja=Lamparas ... columnas=objeto,luz
+        i = a.index('--familia'); cols = nueva_familia(pares([t for t in a[i + 1:] if '=' in t]))
+        print('Familia creada con columnas:', ', '.join(list(COMUNES) + cols), '| falta escribir su plantilla en la hoja Plantillas'); regenerar(taller); return
     if '--excel-desde-json' in a:
         data = leer_json(); json_a_excel(data); print('Excel escrito:', XLSX)
         vuelta = excel_a_json(XLSX)
