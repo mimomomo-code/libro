@@ -356,7 +356,7 @@
     estado = { mesa: [], estantes: {} };
     for (const l of CAT) colocar(l.id, l.estante);
     ok(pos('poema') === 'izq:0:1' && pos('girasoles') === 'der:0:5', 'nacen en su estante');
-    ok(pos('suenos') === 'izq:1:3' && pos('album') === 'der:1:2' && porId('album').datos.paginas.length === 12, 'los álbumes nacen en su estante con sus páginas');
+    ok(pos('suenos') === 'izq:1:3' && pos('album') === 'der:1:2' && porId('album').datos.paginas.length >= 1, 'los álbumes nacen en su estante con sus páginas');
     // el calendario: nace con candado y, con unos días de prueba, escribe sus páginas y sus marcas
     const cal = porId('calendario');
     ok(!!cal && pos('calendario') === 'izq:0:5' && !!cal.candado && !!cal.cifrado && !!window.CALENDARIO, 'el calendario nace en su estante con candado');

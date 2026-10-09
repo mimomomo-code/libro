@@ -234,10 +234,25 @@ con ella sí es código.
   `musica/` a `Documents/libro-publico`, escribe allí un `catalogo.js` sin
   precios ni tienda y hace el commit; con `--push` lo sube y GitHub Pages lo
   sirve. Nunca viajan el Excel, las herramientas, los prompts ni `privado/`.
+- **El producto (bookscat).** La sala también será un producto para otras
+  parejas, y vive en un tercer repo, privado, de la empresa
+  (`DYBITSOLUTIONS/bookscat`, carpeta `Documents/bookscat`): todo lo de aquí
+  (código, Excel, herramientas, skills, gatos por raza) menos lo personal.
+  `python _tools/producto.py` lo genera en espejo: deja fuera `poema.js`, los
+  dibujos de Sueños, las fotos y los días cifrados y el candado real; pone en
+  su lugar un poema de muestra y unos días de muestra (`_tools/producto/`),
+  tres fotos dibujadas y un candado nuevo cuyo número es 123456; sustituye
+  los tramos personales de `libros.js`, `README.md`, `PROMPTS.md`, los
+  comentarios y el test (nombres de las mascotas, título y notas de los
+  girasoles, páginas de los álbumes, fechas); y antes del commit pasa una
+  **guardia** que lee todo lo que viajaría (el Excel por dentro también)
+  buscando nombres, fechas y frases prohibidas: si encuentra algo, no hay
+  commit. Con `--push` lo sube; `--ver` solo lista. Si la fábrica cambia un
+  tramo sustituido, la herramienta para y pide actualizar su tabla.
 - **Las skills** de Claude Code para estos flujos viven en `.claude/skills/`
   (`/libro-pedido`, `/libro-bandeja`, `/libro-publicar`, `/libro-mascota`,
-  `/libro-familia`) y están enlazadas en `~/.claude/skills/` para usarlas
-  desde cualquier carpeta.
+  `/libro-familia`, `/libro-producto`) y están enlazadas en `~/.claude/skills/`
+  para usarlas desde cualquier carpeta.
 
 ## Texturas y sillones ilustrados
 

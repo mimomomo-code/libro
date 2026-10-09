@@ -1,0 +1,9 @@
+{
+  "dias": [
+    { "fecha": "2026-01-01", "nombre": "Primer día (de muestra)", "inicio": true, "icono": "corazon" },
+    { "dia": 14, "mes": 2, "nombre": "San Valentín", "icono": "corazon" },
+    { "dia": 1, "mes": 5, "nombre": "Un día de flores", "icono": "flor" },
+    { "dia": 25, "mes": 12, "nombre": "Navidad", "icono": "regalo" },
+    { "dia": 31, "mes": 12, "nombre": "Fin de año", "icono": "estrella" }
+  ]
+}
