@@ -106,7 +106,10 @@
   // `pared` es solo papel tapiz con zócalo (sin ventana; la ventana es la pieza `ventanal`, con alfa);
   // `pared_vertical` es una variante opcional para el celular vertical (sin ella se usa `pared`)
   const FONDOS = { pared: ['pared', '--foto'], pared_vertical: ['pared', '--foto-vertical'], suelo: ['suelo', '--foto'] };
+  // con MUEBLES (libros.js), los sillones, la mesa y la alfombra los pone fondos.js (a elección; "hoy" = estas rutas)
+  const DE_FONDOS = (typeof MUEBLES === 'object' && MUEBLES) ? ['sillon_rojo', 'sillon_amarillo', 'mesa', 'alfombra'] : [];
   for (const clave of Object.keys(DEC)){
+    if (DE_FONDOS.includes(clave)) continue;
     const el = document.querySelector('[data-pieza="' + (FONDOS[clave] ? FONDOS[clave][0] : clave) + '"]'), ruta = DEC[clave];
     if (!el || !ruta) continue;
     const im = new Image();

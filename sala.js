@@ -47,7 +47,9 @@
   let estado = { mesa: [], estantes: {} };
   const clave = p => p.lado + ':' + p.fila + ':' + p.col;
   const posValida = p => !!p && LADOS.includes(p.lado) && p.fila >= 0 && p.fila < FILAS && p.col >= 0 && p.col < COLS;
+  const cubiertas = {};                        // ranuras tapadas por un adorno (clave -> 'adorno:<id>'): ahí no cabe un libro
   function ocupada(p, salvo){
+    if (cubiertas[clave(p)]) return cubiertas[clave(p)];
     for (const id in estado.estantes){ if (id !== salvo && clave(estado.estantes[id]) === clave(p)) return id; }
     return null;
   }
@@ -371,6 +373,15 @@
       FONDOS_SALA.elegir('pared', 'css'); ok(FONDOS_SALA.vivo().pared === 'css' && FONDOS_SALA.eleccion().pared === 'css', 'fondos: el dibujo de siempre vuelve');
       FONDOS_SALA.elegir('pared', antes);
     } else ok(false, 'fondos: el selector no cargó');
+    // los adornos tapan ranuras: un libro mandado ahí se corre al hueco vecino, y al quitar el adorno la ranura vuelve a servir
+    if (window.SALA_ADORNOS){
+      const soltar = SALA_ADORNOS.probar({ lado: 'der', fila: 4, col: 0 }, 2);
+      aMesa('poema'); aEstante('poema', { lado: 'der', fila: 4, col: 0 });
+      ok(pos('poema') === 'der:4:2', 'adornos: la ranura tapada manda el libro al hueco vecino');
+      soltar(); aMesa('poema'); aEstante('poema', { lado: 'der', fila: 4, col: 0 });
+      ok(pos('poema') === 'der:4:0', 'adornos: al quitar el adorno la ranura vuelve a servir');
+      aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
+    } else ok(false, 'adornos: no cargaron');
     if (cal && window.CALENDARIO){
       const D = { dias: [{ fecha: '2026-10-11', nombre: 'Inicio', inicio: true }, { dia: 30, mes: 9, nombre: 'Autitos', icono: 'auto' }] };
       const ev = (y, m) => CALENDARIO.eventos(D, y, m).map(e => e.d + ':' + e.nombre).join('|');
@@ -431,10 +442,61 @@
     }
   }
 
+  // ---- los adornos de las librerías (ADORNOS en libros.js): tapan ranuras y los libros se corren ----
+  const ADS = (typeof ADORNOS !== 'undefined' && Array.isArray(ADORNOS)) ? ADORNOS : [];
+  let adornosOcultos = new Set((window.FONDOS_SALA && FONDOS_SALA.adornosOcultos) ? FONDOS_SALA.adornosOcultos() : []);
+  const ranurasDe = a => {
+    const n = Math.max(1, Math.min((a.ancho | 0) || 1, COLS - a.estante.col)), out = [];
+    for (let k = 0; k < n; k++) out.push({ lado: a.estante.lado, fila: a.estante.fila, col: a.estante.col + k });
+    return out;
+  };
+  function cubrir(a){ for (const r of ranurasDe(a)) cubiertas[clave(r)] = 'adorno:' + a.id; }
+  function descubrir(a){ for (const r of ranurasDe(a)) if (cubiertas[clave(r)] === 'adorno:' + a.id) delete cubiertas[clave(r)]; }
+  // los libros que quedaron debajo de un adorno se corren al hueco vecino
+  function desalojar(){
+    let movio = false;
+    for (const id in estado.estantes){
+      const p = estado.estantes[id];
+      if (cubiertas[clave(p)]){ const h = huecoCerca(p, id); if (h){ estado.estantes[id] = h; movio = true; } }
+    }
+    if (movio){ guardar(); render(); }
+  }
+  function pintarAdorno(a){
+    // (.adorno-estante: ".adorno" ya es el filete del lector, no se puede reutilizar)
+    sala.querySelectorAll('.adorno-estante[data-adorno="' + a.id + '"]').forEach(e => e.remove());
+    if (adornosOcultos.has(a.id) || !a._img) return;
+    const r = a.estante, el = document.createElement('img');
+    el.className = 'adorno-estante'; el.dataset.adorno = a.id; el.alt = ''; el.draggable = false; el.title = a.nombre || '';
+    el.src = a._img; el.style.setProperty('--ancho', ranurasDe(a).length);
+    librerias[r.lado].filas[r.fila][r.col].appendChild(el);
+  }
+  function aplicarAdornos(){
+    for (const a of ADS){ descubrir(a); if (a._img && !adornosOcultos.has(a.id) && posValida(a.estante)) cubrir(a); }
+    desalojar();
+    for (const a of ADS) pintarAdorno(a);
+  }
+  function cargarAdornos(){
+    for (const a of ADS){
+      if (!posValida(a.estante)) continue;
+      const ruta = a.imagen || ('assets/adornos/' + a.id + '.webp'), im = new Image();
+      im.onload = () => { a._img = ruta; aplicarAdornos(); };
+      im.onerror = () => {};                                   // sin imagen: no ocupa nada
+      im.src = ruta;
+    }
+  }
+  window.SALA_ADORNOS = {
+    lista: () => ADS,
+    ocultar: ids => { adornosOcultos = new Set(ids || []); aplicarAdornos(); },
+    cubiertas: () => Object.assign({}, cubiertas),
+    // para la prueba: tapar ranuras a mano, sin imagen; devuelve la función que las destapa
+    probar: (p, ancho) => { const a = { id: 'prueba', estante: p, ancho }; cubrir(a); desalojar(); return () => { descubrir(a); }; },
+  };
+
   // ---- arranque ----
   construir();
   cargarEstado();
   render();
+  cargarAdornos();
   sala.addEventListener('pointerup', () => { if (window.LECTOR) LECTOR.musica(); });
   const abrirQ = q.get('abrir') || (q.has('p') ? 'poema' : null);
   if (abrirQ && porId(abrirQ)){

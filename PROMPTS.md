@@ -221,6 +221,17 @@ photo, photorealistic, glossy, text, watermark, frame, border, furniture,
 people, cats, rug, lamp, cropped, blurry
 ```
 
+## Muebles y adornos a elección (catálogo)
+
+`_tools/catalogo_muebles.py` escribe en `OneDrive\Escritorio\Muebles del libro`
+un pedido por variante (8 parejas de sillones, 6 mesas, 8 alfombras y 10 adornos
+para las ranuras de las librerías), con sus referencias de composición (los
+sillones de hoy con un hueco en medio, la mesa, la alfombra, un trozo de
+librería con libros) y `referencia_estilo.png`. Los resultados entran con
+`python _tools/mueble.py <imagen> sillones|mesa|alfombra|adorno <clave>` y los
+ofrece el selector ✎ (`MUEBLES` y `ADORNOS` en `libros.js`). Las reglas por tipo
+están en el LEEME de esa carpeta.
+
 ## Mesa y alfombra (ya cableadas)
 
 `assets/mesa.webp` (vista de frente; los libros se apoyan a un 19 % de su

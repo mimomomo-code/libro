@@ -98,6 +98,42 @@ const FONDOS = {
   ],
 };
 
+// Los muebles a elección (mismo selector ✎): parejas de sillones (una imagen con los dos y un hueco
+// en medio, que _tools/mueble.py parte en sillon_<clave>_izq.webp y _der.webp), mesas
+// (mesa_<clave>.webp) y alfombras (alfombra_<clave>.webp), en assets/muebles/ con miniaturas en
+// assets/muebles/mini/. "hoy" son los de DECORACION. Pedidos y catálogo en
+// OneDrive\Escritorio\Muebles del libro (_tools/catalogo_muebles.py). Una variante cuyo archivo aún no
+// existe no sale en el selector (su miniatura falta).
+const MUEBLES = {
+  sillones: {
+    hoy: "Rojo y mostaza (los de hoy)", esmeralda: "Esmeralda y damasco dorado", azul: "Azul marino y crema", rosa: "Rosa empolvado y marfil",
+    lavanda: "Lila y gris perla", cuero: "Cuero marrón y tweed", primavera: "Lino con cerezos y menta", navidad: "Tartán y verde abeto", chocolate: "Chocolate y caramelo",
+  },
+  mesas: { hoy: "Nogal (la de hoy)", roble: "Roble claro", blanca: "Blanca envejecida", marmol: "Mármol y dorado", baul: "Baúl antiguo", hierro: "Hierro forjado y vidrio", cerezo: "Cerezo con cajoncito" },
+  alfombras: {
+    hoy: "Azul polvo (la de hoy)", persa: "Persa roja y azul", rosa: "Rosa con flores", lavanda: "Lila con rombos", verde: "Verde con hojas doradas",
+    yute: "Yute trenzado", gris: "Gris geométrica", navidad: "Roja y verde con acebo", oveja: "Piel de oveja",
+  },
+  defecto: { sillones: "hoy", mesa: "hoy", alfombra: "hoy" },
+};
+
+// Los adornos de las librerías: cada uno nace en una ranura fija y tapa tantas ranuras como diga su
+// `ancho`; ahí no cabe un libro (si uno estaba, se corre al hueco vecino). Su imagen es
+// assets/adornos/<id>.webp (vertical, fondo transparente; la deja _tools/mueble.py) y mientras no
+// exista no ocupa nada. En el selector ✎ se apagan y encienden uno por uno.
+const ADORNOS = [
+  { id: "planta", nombre: "Planta en maceta", estante: { lado: "izq", fila: 2, col: 0 }, ancho: 2 },
+  { id: "vela", nombre: "Candelabro", estante: { lado: "der", fila: 2, col: 7 }, ancho: 1 },
+  { id: "reloj", nombre: "Reloj de mesa", estante: { lado: "der", fila: 0, col: 0 }, ancho: 2 },
+  { id: "retrato", nombre: "Portarretrato", estante: { lado: "izq", fila: 3, col: 6 }, ancho: 2 },
+  { id: "gato", nombre: "Gatito de porcelana", estante: { lado: "izq", fila: 0, col: 7 }, ancho: 1 },
+  { id: "bola", nombre: "Bola de nieve", estante: { lado: "der", fila: 3, col: 0 }, ancho: 2 },
+  { id: "tetera", nombre: "Tetera y taza", estante: { lado: "der", fila: 4, col: 3 }, ancho: 2 },
+  { id: "farol", nombre: "Farol", estante: { lado: "izq", fila: 4, col: 0 }, ancho: 1 },
+  { id: "globo", nombre: "Globo terráqueo", estante: { lado: "der", fila: 1, col: 6 }, ancho: 2 },
+  { id: "jarron", nombre: "Jarrón con girasoles", estante: { lado: "izq", fila: 1, col: 0 }, ancho: 2 },
+];
+
 // Girasoles y limones ilustrados para la lluvia del libro "21 Sep 2026".
 // Si estas imágenes existen (fondo transparente, cada flor o fruto solo y
 // centrado), la lluvia las usa en lugar de las flores dibujadas por código;

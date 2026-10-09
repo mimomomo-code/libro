@@ -181,6 +181,19 @@ su archivo y su nombre en `FONDOS`. `?fondo=pared:rosa,ventana:rosa,piso:blanco`
 fuerza una combinación para capturas (no se guarda) y `?hoy=AAAA-MM-DD` finge
 la fecha para probar las temporadas.
 
+Lo mismo vale para los **muebles** (`MUEBLES` en `libros.js`: parejas de
+sillones, mesas y alfombras, en `assets/muebles/`; "hoy" son los de
+`DECORACION`) y para los **adornos de las librerías** (`ADORNOS`: cada uno
+nace en una ranura fija y tapa tantas como diga su `ancho`, así que ahí no cabe
+un libro y el que estuviera se corre al hueco vecino; su imagen es
+`assets/adornos/<id>.webp` y, mientras no exista, no ocupa nada). El panel ✎
+tiene una tira por pieza y los adornos se apagan y encienden uno por uno. Las
+imágenes las deja `python _tools/mueble.py <imagen> sillones|mesa|alfombra|adorno
+<clave>` (la pareja de sillones se parte sola por el hueco del medio) a partir de
+los pedidos de `_tools/catalogo_muebles.py`. Una variante sin archivo no sale en
+el selector (le falta la miniatura). Ojo: la clase `.adorno` es el filete del
+lector; los de las librerías son `.adorno-estante`.
+
 ## Texturas y sillones ilustrados
 
 Las tramas (veta de madera, tejido, terciopelo, papel, cuero) no son

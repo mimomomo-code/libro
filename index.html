@@ -399,8 +399,14 @@ body.en-lector #fondos-btn,body.en-lector #fondos,body.plantilla #fondos-btn,bod
 #fondos .auto{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;cursor:pointer}
 #fondos .auto input{accent-color:#d4b06a;margin:0}
 /* el cambio de pieza se funde (fondos.js pone .cambiando un instante) */
-.fondo-pared,.suelo,.ventanal{transition:opacity .22s}
-.fondo-pared.cambiando,.suelo.cambiando,.ventanal.cambiando{opacity:0}
+.fondo-pared,.suelo,.ventanal,.sillon,.mesa,.alfombra{transition:opacity .22s}
+.fondo-pared.cambiando,.suelo.cambiando,.ventanal.cambiando,.sillon.cambiando,.mesa.cambiando,.alfombra.cambiando{opacity:0}
+#fondos{max-height:calc(100vh - 80px);overflow-y:auto}
+#fondos .tira button.apagado{opacity:.3;filter:grayscale(.6)}
+#fondos .fila.adornos .tira button{background-color:#2a1d17;background-size:contain;background-repeat:no-repeat;background-position:50% 100%}
+/* los adornos de las librerías (sala.js): de pie en su ranura, tapando tantas como diga --ancho (".adorno" a secas es el filete del lector) */
+.adorno-estante{position:absolute;left:0;bottom:0;width:calc(100% * var(--ancho, 1));height:92%;max-height:134px;object-fit:contain;object-position:50% 100%;z-index:1;
+  pointer-events:none;-webkit-user-drag:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
 
 /* ---------- el candado: la cerradura que pide el número, y los candaditos del lomo y de la mesa ---------- */
 #candado{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:20px;   /* por encima de la pista de la sala (35) */
