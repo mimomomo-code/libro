@@ -442,7 +442,7 @@
     }
   }
 
-  // ---- los adornos de las librerías (ADORNOS en libros.js): tapan ranuras y los libros se corren ----
+  // ---- los adornos de las librerías (ADORNOS en catalogo.js): tapan ranuras y los libros se corren ----
   const ADS = (typeof ADORNOS !== 'undefined' && Array.isArray(ADORNOS)) ? ADORNOS : [];
   let adornosOcultos = new Set((window.FONDOS_SALA && FONDOS_SALA.adornosOcultos) ? FONDOS_SALA.adornosOcultos() : []);
   const ranurasDe = a => {

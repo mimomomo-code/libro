@@ -1,15 +1,15 @@
 // fondos.js: la sala a elección (8 oct 2026): la pared, la ventana y el piso pintados, los
 // sillones, la mesa y la alfombra, y los adornos de las librerías.
 //
-//  FONDOS (libros.js): la pared (solo papel tapiz con su zócalo, background de .fondo-pared anclada
+//  FONDOS (catalogo.js, generado desde catalogo/catalogo.xlsx): la pared (solo papel tapiz con su zócalo, background de .fondo-pared anclada
 //  abajo), la ventana con sus cortinas (imagen con alfa dentro de .ventanal, que esconde la dibujada
 //  por CSS) y el piso (background de .suelo); archivos assets/fondos/pared_<clave>.webp,
-//  ventana_<clave>.webp, suelo_<clave>.webp con miniatura en assets/fondos/mini/ (_tools/fondo.py).
+//  ventana_<clave>.webp, suelo_<clave>.webp con miniatura en assets/fondos/mini/ (_tools/bandeja.py).
 //  "css" es el dibujo de siempre.
-//  MUEBLES (libros.js): la pareja de sillones (sillon_<clave>_izq/_der.webp), la mesa
+//  MUEBLES (catalogo.js): la pareja de sillones (sillon_<clave>_izq/_der.webp), la mesa
 //  (mesa_<clave>.webp) y la alfombra (alfombra_<clave>.webp) en assets/muebles/ con miniatura en
-//  assets/muebles/mini/ (_tools/mueble.py); "hoy" son los archivos de DECORACION.
-//  ADORNOS (libros.js): se encienden y apagan uno por uno; quién los pinta y tapa ranuras es sala.js
+//  assets/muebles/mini/ (_tools/bandeja.py); "hoy" son los archivos de DECORACION.
+//  ADORNOS (catalogo.js): se encienden y apagan uno por uno; quién los pinta y tapa ranuras es sala.js
 //  (SALA_ADORNOS.ocultar); aquí solo viven los botones y la lista de apagados.
 //
 //  El botón ✎ (abajo a la izquierda) abre el panel: una tira de muestras por pieza (las variantes
@@ -53,7 +53,7 @@
   const MINI = { pared: 'assets/fondos/mini/pared_', ventana: 'assets/fondos/mini/ventana_', piso: 'assets/fondos/mini/suelo_', sillones: 'assets/muebles/mini/sillones_', mesa: 'assets/muebles/mini/mesa_', alfombra: 'assets/muebles/mini/alfombra_' };
   const mini = (tipo, v) => MINI[tipo] + v + '.webp';
   const miniAdorno = id => 'assets/adornos/mini/' + id + '.webp';
-  // la muestra del dibujo de siempre, por pieza (las de "hoy" tienen miniatura propia: _tools/mueble.py --minis-hoy)
+  // la muestra del dibujo de siempre, por pieza (las de "hoy" tienen miniatura propia: _tools/pieza.py --minis-hoy)
   const MUESTRA_CSS = { pared: 'linear-gradient(135deg,#5c141b,#3f0d12)', ventana: 'linear-gradient(90deg,#a5242e 0 22%,#1a2050 22% 78%,#a5242e 78%)', piso: 'linear-gradient(180deg,#3a2314,#24150c)' };
   const CLAVE = 'libro.fondos.v1';
 

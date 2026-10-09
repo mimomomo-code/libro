@@ -1,5 +1,12 @@
 # Prompts para las piezas ilustradas de la sala
 
+> **Desde el 9 de octubre la fuente viva de los pedidos es el Excel del
+> catálogo** (`catalogo/catalogo.xlsx`, hojas Plantillas y una por familia) y
+> los pedidos listos para ChatGPT los escribe `python _tools/catalogo.py` en
+> `OneDrive\Escritorio\Taller del libro` (ver README, "El catálogo y el
+> Taller"). Este archivo queda como archivo de los prompts en inglés y de las
+> lecciones aprendidas.
+
 La sala dibuja los dos sillones con SVG. Si en `assets/` existen estas
 imágenes, la página las usa en su lugar (lo decide `DECORACION` en
 `libros.js`; si el archivo no está, se queda el dibujo):
@@ -174,14 +181,11 @@ caiga en la línea del piso y se recorta por arriba o los lados según la
 pantalla), `ventanal` (la ventana con sus cortinas, cenefa y barra, UNA pieza
 con fondo transparente, vertical; sustituye al ventanal CSS y la caja toma su
 proporción) y `suelo` (textura apaisada, centrada). `pared_vertical` queda
-como opción para una pared distinta en el celular vertical. Se preparan con
-`python _tools/fondo.py <imagen> pared|ventanal|suelo [variante]` (WebP en
-`assets/`, o en `assets/fondos/` con variante; la ventana conserva el alfa y se
-recorta sola al contorno) y se activan descomentando sus líneas en `libros.js`.
-Los pedidos en español para ChatGPT están en `OneDrive\Escritorio\Sala del libro`,
-con el CATÁLOGO de 13 paredes, 12 ventanas y 8 pisos (un pedido por variante,
-generado por `_tools/catalogo_fondos.py`: una variante nueva = una entrada más
-y volver a correrlo). LECCIÓN (8 oct): cada pedido adjunta DOS referencias, el
+como opción para una pared distinta en el celular vertical. Entran por la Bandeja del Taller
+(`python _tools/bandeja.py`; la ventana conserva el alfa y se recorta sola al
+contorno). Los pedidos en español para ChatGPT los escribe
+`python _tools/catalogo.py` en `OneDrive\Escritorio\Taller del libro\Pedidos`
+desde el Excel del catálogo (una variante nueva = una fila más). LECCIÓN (8 oct): cada pedido adjunta DOS referencias, el
 boceto de la pieza (la captura del CSS, que NO hay que copiar) y
 `referencia_estilo.png` (sillones, mesa y gato ya pintados: el acabado que sí),
 porque con una sola la IA copió el dibujo plano tal cual. En inglés, el prompt
@@ -223,14 +227,14 @@ people, cats, rug, lamp, cropped, blurry
 
 ## Muebles y adornos a elección (catálogo)
 
-`_tools/catalogo_muebles.py` escribe en `OneDrive\Escritorio\Muebles del libro`
+`python _tools/catalogo.py` escribe en `OneDrive\Escritorio\Taller del libro\Pedidos`
 un pedido por variante (8 parejas de sillones, 6 mesas, 8 alfombras y 10 adornos
-para las ranuras de las librerías), con sus referencias de composición (los
-sillones de hoy con un hueco en medio, la mesa, la alfombra, un trozo de
-librería con libros) y `referencia_estilo.png`. Los resultados entran con
-`python _tools/mueble.py <imagen> sillones|mesa|alfombra|adorno <clave>` y los
-ofrece el selector ✎ (`MUEBLES` y `ADORNOS` en `libros.js`). Las reglas por tipo
-están en el LEEME de esa carpeta.
+para las ranuras de las librerías), que adjunta la referencia de composición de
+la pieza (los sillones de hoy con un hueco en medio, la mesa, la alfombra, un
+trozo de librería con libros; en `Referencias/`) y `referencia_estilo.png`. Los
+resultados entran por la Bandeja (`python _tools/bandeja.py`) y los ofrece el
+selector ✎ (`MUEBLES` y `ADORNOS` en `catalogo.js`). Las reglas por tipo están
+en el LEEME del Taller.
 
 ## Mesa y alfombra (ya cableadas)
 

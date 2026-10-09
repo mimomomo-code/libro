@@ -57,82 +57,15 @@ const DECORACION = {
   sillon_amarillo: "assets/sillon_amarillo.webp",
   mesa: "assets/mesa.webp",            // vista de frente; los libros se apoyan en su tapa
   alfombra: "assets/alfombra.webp",    // vista en perspectiva, con el borde de abajo más ancho
-  // La pared, la ventana y el piso pintados van en FONDOS (abajo), a elección; estas claves sueltas
+  // La pared, la ventana y el piso pintados van en FONDOS (catalogo.js), a elección; estas claves sueltas
   // (pared, ventanal, suelo, pared_vertical) siguen valiendo para un archivo único sin selector.
 };
 
-// Los fondos pintados, tres piezas independientes que se mezclan a gusto: la PARED (solo papel tapiz
-// con su zócalo, sin ventana), la VENTANA con sus cortinas (pieza con fondo transparente, como los
-// sillones) y el PISO. Los archivos siguen la convención assets/fondos/pared_<clave>.webp,
-// ventana_<clave>.webp y suelo_<clave>.webp (más su miniatura en assets/fondos/mini/), que deja
-//   python _tools/fondo.py <imagen> pared|ventanal|suelo <clave>
-// a partir de las imágenes generadas con los pedidos de OneDrive\Escritorio\Sala del libro (CATALOGO.md).
-// "css" es el dibujo de siempre. `defecto` es lo que ve quien entra por primera vez; el botón ✎ abre
-// el selector (fondos.js) y la elección se guarda en el navegador. `temporadas`: lo que se pone solo
-// cuando se marca "que cambie con la estación" (fiestas primero, luego estaciones del hemisferio sur).
-// Para añadir una variante: su archivo en assets/fondos/ y su nombre aquí.
-const FONDOS = {
-  paredes: {
-    css: "Vino de siempre (dibujo)", vino: "Vino clásico", azul: "Azul noche y dorado", esmeralda: "Verde esmeralda y oro",
-    rosa: "Rosa empolvado", lavanda: "Lavanda y violetas", perla: "Gris perla y dorado", chocolate: "Chocolate y crema",
-    primavera: "Primavera (cerezos en flor)", verano: "Verano (girasoles)", otono: "Otoño (hojas)", invierno: "Invierno (copos)",
-    navidad: "Navidad", sanvalentin: "San Valentín",
-  },
-  ventanas: {
-    css: "Terciopelo rojo (dibujo)", crema: "Terciopelo crema y dorado", esmeralda: "Mostaza y verde", rosa: "Gasa marfil y lazos rosa",
-    lavanda: "Violeta y plata, luna llena", chocolate: "Caramelo y cuero", primavera: "Lino blanco y cerezo en flor",
-    verano: "Lino amarillo y atardecer en el mar", otono: "Óxido y luna de cosecha",
-  },
-  pisos: {
-    css: "Nogal de siempre (dibujo)", nogal: "Nogal oscuro", roble: "Roble claro miel", cerezo: "Cerezo rojizo",
-    blanco: "Tablones blancos envejecidos", gris: "Gris ceniza", damero: "Damero de mármol crema y café", terracota: "Baldosa de terracota",
-  },
-  defecto: { pared: "vino", ventana: "crema", piso: "nogal" },
-  temporadas: [
-    { desde: "12-15", hasta: "12-26", pared: "navidad", ventana: "crema", piso: "cerezo" },
-    { desde: "02-01", hasta: "02-14", pared: "sanvalentin", ventana: "rosa", piso: "cerezo" },
-    { meses: [9, 10, 11], pared: "primavera", ventana: "primavera", piso: "roble" },
-    { meses: [12, 1, 2], pared: "verano", ventana: "verano", piso: "terracota" },
-    { meses: [3, 4, 5], pared: "otono", ventana: "otono", piso: "nogal" },
-    { meses: [6, 7, 8], pared: "invierno", ventana: "crema", piso: "gris" },
-  ],
-};
-
-// Los muebles a elección (mismo selector ✎): parejas de sillones (una imagen con los dos y un hueco
-// en medio, que _tools/mueble.py parte en sillon_<clave>_izq.webp y _der.webp), mesas
-// (mesa_<clave>.webp) y alfombras (alfombra_<clave>.webp), en assets/muebles/ con miniaturas en
-// assets/muebles/mini/. "hoy" son los de DECORACION. Pedidos y catálogo en
-// OneDrive\Escritorio\Muebles del libro (_tools/catalogo_muebles.py). Una variante cuyo archivo aún no
-// existe no sale en el selector (su miniatura falta).
-const MUEBLES = {
-  sillones: {
-    hoy: "Rojo y mostaza (los de hoy)", esmeralda: "Esmeralda y damasco dorado", azul: "Azul marino y crema", rosa: "Rosa empolvado y marfil",
-    lavanda: "Lila y gris perla", cuero: "Cuero marrón y tweed", primavera: "Lino con cerezos y menta", navidad: "Tartán y verde abeto", chocolate: "Chocolate y caramelo",
-  },
-  mesas: { hoy: "Nogal (la de hoy)", roble: "Roble claro", blanca: "Blanca envejecida", marmol: "Mármol y dorado", baul: "Baúl antiguo", hierro: "Hierro forjado y vidrio", cerezo: "Cerezo con cajoncito" },
-  alfombras: {
-    hoy: "Azul polvo (la de hoy)", persa: "Persa roja y azul", rosa: "Rosa con flores", lavanda: "Lila con rombos", verde: "Verde con hojas doradas",
-    yute: "Yute trenzado", gris: "Gris geométrica", navidad: "Roja y verde con acebo", oveja: "Piel de oveja",
-  },
-  defecto: { sillones: "hoy", mesa: "hoy", alfombra: "hoy" },
-};
-
-// Los adornos de las librerías: cada uno nace en una ranura fija y tapa tantas ranuras como diga su
-// `ancho`; ahí no cabe un libro (si uno estaba, se corre al hueco vecino). Su imagen es
-// assets/adornos/<id>.webp (vertical, fondo transparente; la deja _tools/mueble.py) y mientras no
-// exista no ocupa nada. En el selector ✎ se apagan y encienden uno por uno.
-const ADORNOS = [
-  { id: "planta", nombre: "Planta en maceta", estante: { lado: "izq", fila: 2, col: 0 }, ancho: 2 },
-  { id: "vela", nombre: "Candelabro", estante: { lado: "der", fila: 2, col: 7 }, ancho: 1 },
-  { id: "reloj", nombre: "Reloj de mesa", estante: { lado: "der", fila: 0, col: 0 }, ancho: 2 },
-  { id: "retrato", nombre: "Portarretrato", estante: { lado: "izq", fila: 3, col: 6 }, ancho: 2 },
-  { id: "gato", nombre: "Gatito de porcelana", estante: { lado: "izq", fila: 0, col: 7 }, ancho: 1 },
-  { id: "bola", nombre: "Bola de nieve", estante: { lado: "der", fila: 3, col: 0 }, ancho: 2 },
-  { id: "tetera", nombre: "Tetera y taza", estante: { lado: "der", fila: 4, col: 3 }, ancho: 2 },
-  { id: "farol", nombre: "Farol", estante: { lado: "izq", fila: 4, col: 0 }, ancho: 1 },
-  { id: "globo", nombre: "Globo terráqueo", estante: { lado: "der", fila: 1, col: 6 }, ancho: 2 },
-  { id: "jarron", nombre: "Jarrón con girasoles", estante: { lado: "izq", fila: 1, col: 0 }, ancho: 2 },
-];
+// Los fondos pintados (pared, ventana, piso), los muebles a elección (sillones, mesa, alfombra), los
+// adornos de las librerías y las RAZAS de mascota ya NO se escriben aquí: salen de catalogo.js, que
+// genera _tools/catalogo.py desde catalogo/catalogo.xlsx (una fila por variante; solo entran las que ya
+// tienen su imagen en assets/). Los PNG nuevos entran con _tools/bandeja.py. Pedidos para la IA y
+// estado de cada pieza: OneDrive\Escritorio\Taller del libro (CATALOGO.md).
 
 // Girasoles y limones ilustrados para la lluvia del libro "21 Sep 2026".
 // Si estas imágenes existen (fondo transparente, cada flor o fruto solo y
@@ -143,33 +76,24 @@ const ARTE_GIRASOLES = {
   limones: ["assets/limon_1.webp", "assets/limon_2.webp", "assets/limon_3.webp"],
 };
 
-// Los gatos de la sala (gatos.js los dibuja por código y los hace vivir).
-//  - id: nombre interno. - nombre: (opcional) aparece sobre el gato al tocarlo (y al pasar el ratón).
-//  - pelaje: "atigrado" (mackerel tabby gris-marrón), "carey" (brindada, con la
-//    mancha naranja en la cara), "tricolor" (calicó: blanca con manchas negras
-//    y naranjas) o "van_cafe" (blanca con café en la cabeza, el lomo y la cola).
-//  - caracter: (opcional) pereza 0-1 (cuánto se echa a dormir), velocidad (1 =
-//    normal), sillon ("rojo" o "amarillo": su favorito para la siesta) y voz
-//    (tono del maullido: 1 = normal, menos = más grave).
-//  - piezas: (opcional) el piezas.json de un gato ILUSTRADO cortado en piezas
-//    con _tools/gato_piezas.py (assets/gatos/<id>/): cola, patas, cuerpo y
-//    cabeza pintados que el esqueleto anima; mientras cargan (o si faltan) se
-//    ve el dibujo. El ilustrado solo tiene la pose de pie...
-//  - echado: (opcional, con piezas) la imagen del mismo gato echado
-//    (_tools/gato_echado.py, assets/gatos/<id>/echado.webp): la muestra al
-//    dormir en el suelo o en el sillón. Sin ella, en vez de echarse se queda
-//    de pie mirando.
-//  - imagen: (opcional) un PNG/WebP del gato entero, de perfil mirando a la
-//    derecha, con fondo transparente (prompts en PROMPTS.md); si existe, el
-//    gato se mueve como recorte de papel en lugar del dibujo.
-// Poses enteras del ilustrado: `echado` (de perfil) y `sentado` (de frente, mirando a quien mira);
-// las prepara  python _tools/gato_pose.py <png> <id> echado|sentado  (originales en privado/gatos/ilustrados/).
-const GATOS = [
-  { id: "atigrado", nombre: "Karencito", pelaje: "atigrado", piezas: "assets/gatos/atigrado/piezas.json", echado: "assets/gatos/atigrado/echado.webp", sentado: "assets/gatos/atigrado/sentado.webp", caracter: { pereza: .7, velocidad: .85, sillon: "rojo" } },
-  { id: "carey", nombre: "Elma", pelaje: "carey", piezas: "assets/gatos/carey/piezas.json", echado: "assets/gatos/carey/echado.webp", sentado: "assets/gatos/carey/sentado.webp", caracter: { pereza: .35, velocidad: 1.15 } },
-  { id: "tricolor", nombre: "Mia", pelaje: "tricolor", piezas: "assets/gatos/tricolor/piezas.json", echado: "assets/gatos/tricolor/echado.webp", sentado: "assets/gatos/tricolor/sentado.webp", caracter: { pereza: .5, velocidad: 1, sillon: "amarillo" } },
-  { id: "vancafe", nombre: "Chunchun", pelaje: "van_cafe", piezas: "assets/gatos/vancafe/piezas.json", echado: "assets/gatos/vancafe/echado.webp", sentado: "assets/gatos/vancafe/sentado.webp", caracter: { pereza: .65, velocidad: .9, sillon: "amarillo" } },
+// Las mascotas de ESTA sala. Cada una es una RAZA del catálogo (RAZAS en catalogo.js: el dibujo de
+// respaldo, las piezas pintadas, las poses y el carácter por defecto) con el nombre que le puso la
+// pareja. Cuando haya cuentas, esta lista será lo que cada pareja tenga elegido o comprado (la idea: una
+// ranura gratis con cualquiera de las razas, y más de pago). `caracter` aquí pisa el de la raza
+// (pereza 0-1, velocidad, sillon "rojo"/"amarillo", voz); `id` solo hace falta si hay dos de la misma raza.
+const MASCOTAS = [
+  { raza: "atigrado", nombre: "Karencito" },
+  { raza: "carey", nombre: "Elma" },
+  { raza: "tricolor", nombre: "Mia" },
+  { raza: "vancafe", nombre: "Chunchun" },
 ];
+// GATOS es lo que anima gatos.js (no cambia): la raza más lo propio de cada mascota.
+const GATOS = MASCOTAS.map((m, i) => {
+  const r = (typeof RAZAS === 'object' && RAZAS && RAZAS[m.raza]) || { pelaje: m.raza };
+  const repetidas = MASCOTAS.slice(0, i).filter(o => o.raza === m.raza).length;
+  return Object.assign({}, r, m, { id: m.id || (m.raza + (repetidas ? '_' + (repetidas + 1) : '')),
+    caracter: Object.assign({}, r.caracter || {}, m.caracter || {}) });
+});
 
 const LIBROS = [
   {

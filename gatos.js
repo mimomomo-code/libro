@@ -14,7 +14,7 @@
 //  receta del pelaje: cada pelaje es una función del MARCO del cuerpo (caja,
 //  línea del lomo, cola), así las rayas y manchas caen bien en cualquier pose.
 //
-//  La lista vive en libros.js (GATOS): id, pelaje, nombre (opcional), caracter
+//  La lista GATOS la arma libros.js (MASCOTAS de la sala + RAZAS de catalogo.js): id, pelaje, nombre (opcional), caracter
 //  (opcional: pereza 0-1, velocidad, sillon "rojo"/"amarillo", voz) y,
 //  opcionalmente, `imagen` (PNG/WebP del gato entero, de perfil mirando a la
 //  derecha, fondo transparente; prompts en PROMPTS.md): con imagen el gato se
@@ -361,7 +361,7 @@
     // el gato ilustrado en piezas (las corta _tools/gato_piezas.py): cola, patas traseras, patas
     // delanteras, cuerpo y cabeza, cada una en su sitio del lienzo y con su pivote; el CSS las anima
     // `rutas` (opcional): { echado, sentado } = la ilustración del mismo gato en esa pose
-    // (_tools/gato_pose.py), que sustituye a las piezas mientras dura; sin ellas, el ilustrado
+    // (_tools/bandeja.py), que sustituye a las piezas mientras dura; sin ellas, el ilustrado
     // solo tiene la pose de pie (se queda mirando en vez de sentarse o echarse)
     cargarPiezas(ruta, rutas){
       fetch(ruta).then(r => r.ok ? r.json() : Promise.reject()).then(meta => {

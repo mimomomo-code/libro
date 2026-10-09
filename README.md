@@ -138,25 +138,30 @@ hace mirar hacia donde tocaste, ladea la cabeza, maúlla (ronronea si estaba
 dormido; el botón ♪ apagado los calla) y suelta corazones. No tocan los
 libros ni estorban al arrastrarlos.
 
-La lista está en `libros.js` (`GATOS`: `id`, `pelaje`, y opcionales `nombre` y
-`caracter`: pereza, velocidad, sillón favorito y tono de voz).
+Cada gato es una **raza** del catálogo (`RAZAS` en `catalogo.js`, generado
+desde la hoja Mascotas de `catalogo/catalogo.xlsx`: pelaje, piezas pintadas,
+poses y carácter por defecto) con el nombre que le puso la pareja: la lista de
+esta sala es `MASCOTAS` en `libros.js` (`raza` y `nombre`, y opcionalmente
+`caracter`: pereza, velocidad, sillón favorito y tono de voz). `libros.js` arma
+`GATOS` con las dos cosas; `gatos.js` no cambia.
 
 **Los ilustrados.** Los cuatro ya no son dibujos: son ilustraciones hechas
 con IA a partir de sus fotos, cada una cortada en cinco piezas (cola, patas
 traseras, patas delanteras, cuerpo y cabeza) que el mismo esqueleto anima, así
 que caminan, mueven la cola y ladean la cabeza con su pelaje pintado; mientras
 las piezas cargan se ve el dibujo por código (que sigue siendo el respaldo).
-Las poses echada y sentada son una imagen entera cada una (`echado:` y
-`sentado:` en `GATOS`, preparadas con `python _tools/gato_pose.py imagen.png
-<id> echado|sentado`): el gato la muestra con un fundido y respira por CSS (el
+Las poses echada y sentada son una imagen entera cada una (`echado` y
+`sentado` de la raza; entran por la Bandeja del Taller, ver "El catálogo y el
+Taller"): el gato la muestra con un fundido y respira por CSS (el
 sentado además cabecea al acicalarse); si le falta una, en vez de esa pose se
 queda mirando. En el sillón se apoya hacia la mitad del cojín, arrimado al
-respaldo, y a veces cambia de postura una vez antes de bajar. Para ilustrar un gato nuevo: generar la
-imagen con la receta de `PROMPTS.md` (un solo gato, de perfil mirando a la
-derecha, fondo transparente), correr `python _tools/gato_piezas.py imagen.png
-<id>`, mirar el control en `_capturas/piezas_<id>.png` y apuntar
-`piezas: "assets/gatos/<id>/piezas.json"` en su entrada de `GATOS`. También
-vale una `imagen` entera sin cortar (se mueve como recorte de papel).
+respaldo, y a veces cambia de postura una vez antes de bajar. Para ilustrar una
+raza nueva: una fila en la hoja Mascotas del Excel, `python _tools/catalogo.py`
+(escribe sus tres `PEDIDO` en `Taller del libro/Mascotas/<raza>/`), generar las
+imágenes con ChatGPT, dejarlas en la Bandeja y `python _tools/bandeja.py
+1=<raza>_parado 2=<raza>_echado ...` (la de pie se corta sola en cinco piezas
+con `gato_piezas.py`; mirar el control en `_capturas/piezas_<raza>.png`).
+También vale una `imagen` entera sin cortar (se mueve como recorte de papel).
 `node _tools/plantillas_gatos.js` genera las plantillas de referencia de cada
 gato. `?gatos=0` los quita y `?semilla=N` repite el mismo azar (para capturas).
 
@@ -170,29 +175,54 @@ una tira de muestras por pieza y la casilla "que cambie sola con la estación y
 las fiestas" (Navidad del 15 al 26 de diciembre, San Valentín del 1 al 14 de
 febrero y las cuatro estaciones del hemisferio sur); la elección se guarda en
 el navegador. Hoy hay 13 paredes, 8 ventanas y 7 pisos, más el dibujo de
-siempre de cada pieza (`FONDOS` en `libros.js`; `fondos.js` los aplica).
+siempre de cada pieza (`FONDOS` en `catalogo.js`, generado desde el Excel del
+catálogo; `fondos.js` los aplica).
 
 Los archivos viven en `assets/fondos/` (`pared_<clave>.webp`,
 `ventana_<clave>.webp`, `suelo_<clave>.webp`, con su miniatura en `mini/`) y
-los deja `python _tools/fondo.py <imagen> pared|ventanal|suelo <clave>` a
-partir de las imágenes generadas con los pedidos del catálogo
-(`_tools/catalogo_fondos.py`, ver `PROMPTS.md`). Para añadir una variante:
-su archivo y su nombre en `FONDOS`. `?fondo=pared:rosa,ventana:rosa,piso:blanco`
+entran por la Bandeja del Taller (ver "El catálogo y el Taller"). Para añadir
+una variante: una fila en su hoja del Excel, su pedido a ChatGPT y la Bandeja.
+`?fondo=pared:rosa,ventana:rosa,piso:blanco`
 fuerza una combinación para capturas (no se guarda) y `?hoy=AAAA-MM-DD` finge
 la fecha para probar las temporadas.
 
-Lo mismo vale para los **muebles** (`MUEBLES` en `libros.js`: parejas de
+Lo mismo vale para los **muebles** (`MUEBLES` en `catalogo.js`: parejas de
 sillones, mesas y alfombras, en `assets/muebles/`; "hoy" son los de
 `DECORACION`) y para los **adornos de las librerías** (`ADORNOS`: cada uno
 nace en una ranura fija y tapa tantas como diga su `ancho`, así que ahí no cabe
 un libro y el que estuviera se corre al hueco vecino; su imagen es
 `assets/adornos/<id>.webp` y, mientras no exista, no ocupa nada). El panel ✎
 tiene una tira por pieza y los adornos se apagan y encienden uno por uno. Las
-imágenes las deja `python _tools/mueble.py <imagen> sillones|mesa|alfombra|adorno
-<clave>` (la pareja de sillones se parte sola por el hueco del medio) a partir de
-los pedidos de `_tools/catalogo_muebles.py`. Una variante sin archivo no sale en
-el selector (le falta la miniatura). Ojo: la clase `.adorno` es el filete del
-lector; los de las librerías son `.adorno-estante`.
+imágenes entran por la misma Bandeja (la pareja de sillones se parte sola por
+el hueco del medio). Una variante sin archivo no sale en el selector (le falta
+la miniatura). Ojo: la clase `.adorno` es el filete del lector; los de las
+librerías son `.adorno-estante`.
+
+## El catálogo y el Taller (cómo se añaden piezas)
+
+Todo lo que se pinta con IA (paredes, ventanas, pisos, sillones, mesas,
+alfombras, adornos y razas de mascota) sale de **un solo Excel**,
+`catalogo/catalogo.xlsx`: una hoja por familia, una fila por variante (clave,
+nombre, para quién, precio, y los campos que rellenan su pedido). La hoja
+Familias guarda la configuración técnica de cada familia (tamaño, si lleva fondo
+transparente, referencia, dónde va en `assets/`, cómo se procesa) y la hoja
+Plantillas los textos de los pedidos. Una familia nueva (lámparas, cuadros,
+perros) es una fila en Familias, una hoja y una plantilla; lo que la página haga
+con ella sí es código.
+
+- `python _tools/catalogo.py` lee el Excel y escribe `catalogo/catalogo.json`
+  (el espejo que git sabe comparar), `catalogo.js` (`FONDOS`, `MUEBLES`,
+  `ADORNOS`, `RAZAS` y `CATALOGO`: solo las variantes cuya imagen ya existe, y
+  sin los prompts) y el **Taller del libro** en el Escritorio: un `PEDIDO` por
+  variante listo para pegar en ChatGPT, `Mascotas/<raza>/` con un pedido por
+  pose, `CATALOGO.md` con lo hecho y lo pendiente, y `LEEME.md` con el flujo.
+- Los PNG que devuelve la IA se dejan en `Taller del libro/Bandeja/` tal cual.
+  `python _tools/bandeja.py` hace una hoja de contacto numerada y dice qué
+  falta; `python _tools/bandeja.py 1=pared_rosa 2=atigrado_echado` convierte
+  cada imagen según su familia (`_tools/pieza.py`), la deja en `assets/`,
+  mueve el PNG a `Hechos/` (o a la carpeta de la raza), reescribe `catalogo.js`
+  y deja una tira de control en `_capturas/bandeja.png`.
+- `--excel-desde-json` reconstruye el Excel desde el JSON si se pierde.
 
 ## Texturas y sillones ilustrados
 
