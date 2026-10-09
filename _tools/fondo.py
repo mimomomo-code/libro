@@ -54,7 +54,15 @@ def main():
     im.save(dst, quality=85, method=6)
     rel = os.path.relpath(dst, RAIZ).replace(os.sep, '/')
     print(os.path.basename(dst), im.size, os.path.getsize(dst) // 1024, 'KB ->', rel)
-    print('En libros.js, en DECORACION:  %s: "%s"' % (clave, rel))
+    if variante:
+        # la miniatura para el selector de la página (assets/fondos/mini/<nombre>.webp, 160 px de lado mayor)
+        mini = im.copy(); mini.thumbnail((160, 160), Image.LANCZOS)
+        carpeta_mini = os.path.join(RAIZ, 'assets', 'fondos', 'mini'); os.makedirs(carpeta_mini, exist_ok=True)
+        mini.save(os.path.join(carpeta_mini, os.path.basename(dst)), quality=80, method=6)
+        print('   mini ->', 'assets/fondos/mini/' + os.path.basename(dst), mini.size)
+        print('En libros.js, en FONDOS.%s:  %s: "%s"' % ({'pared': 'paredes', 'ventanal': 'ventanas', 'suelo': 'pisos'}.get(clave, clave), variante, rel))
+    else:
+        print('En libros.js, en DECORACION:  %s: "%s"' % (clave, rel))
 
 if __name__ == '__main__':
     main()

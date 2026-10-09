@@ -160,6 +160,27 @@ vale una `imagen` entera sin cortar (se mueve como recorte de papel).
 `node _tools/plantillas_gatos.js` genera las plantillas de referencia de cada
 gato. `?gatos=0` los quita y `?semilla=N` repite el mismo azar (para capturas).
 
+## La pared, la ventana y el piso a elección
+
+Los tres fondos de la sala son piezas pintadas e independientes que se mezclan
+a gusto: la **pared** (solo papel tapiz con su zócalo, sin ventana), la
+**ventana** con sus cortinas (una pieza con fondo transparente, como los
+sillones) y el **piso**. El botón ✎ (abajo a la izquierda) abre el panel con
+una tira de muestras por pieza y la casilla "que cambie sola con la estación y
+las fiestas" (Navidad del 15 al 26 de diciembre, San Valentín del 1 al 14 de
+febrero y las cuatro estaciones del hemisferio sur); la elección se guarda en
+el navegador. Hoy hay 13 paredes, 8 ventanas y 7 pisos, más el dibujo de
+siempre de cada pieza (`FONDOS` en `libros.js`; `fondos.js` los aplica).
+
+Los archivos viven en `assets/fondos/` (`pared_<clave>.webp`,
+`ventana_<clave>.webp`, `suelo_<clave>.webp`, con su miniatura en `mini/`) y
+los deja `python _tools/fondo.py <imagen> pared|ventanal|suelo <clave>` a
+partir de las imágenes generadas con los pedidos del catálogo
+(`_tools/catalogo_fondos.py`, ver `PROMPTS.md`). Para añadir una variante:
+su archivo y su nombre en `FONDOS`. `?fondo=pared:rosa,ventana:rosa,piso:blanco`
+fuerza una combinación para capturas (no se guarda) y `?hoy=AAAA-MM-DD` finge
+la fecha para probar las temporadas.
+
 ## Texturas y sillones ilustrados
 
 Las tramas (veta de madera, tejido, terciopelo, papel, cuero) no son

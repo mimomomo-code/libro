@@ -57,15 +57,45 @@ const DECORACION = {
   sillon_amarillo: "assets/sillon_amarillo.webp",
   mesa: "assets/mesa.webp",            // vista de frente; los libros se apoyan en su tapa
   alfombra: "assets/alfombra.webp",    // vista en perspectiva, con el borde de abajo más ancho
-  // Los fondos pintados, tres piezas independientes que se mezclan: la pared (SOLO papel tapiz con
-  // zócalo, sin ventana; anclada abajo), la ventana con sus cortinas (pieza con alfa que sustituye al
-  // ventanal CSS) y el piso (textura, centrada). Se preparan con  python _tools/fondo.py <imagen>
-  // pared|ventanal|suelo [variante]  (el catálogo y los pedidos para la IA están en
-  // OneDrive\Escritorio\Sala del libro). Mientras no existan quedan apagadas y se ve el dibujo CSS.
-  // pared: "assets/fondos/pared_vino.webp",
-  // ventanal: "assets/fondos/ventana_vino.webp",
-  // suelo: "assets/fondos/suelo_nogal.webp",
-  // pared_vertical: "...",                         // opcional: otra pared en 2:3 solo para el celular vertical
+  // La pared, la ventana y el piso pintados van en FONDOS (abajo), a elección; estas claves sueltas
+  // (pared, ventanal, suelo, pared_vertical) siguen valiendo para un archivo único sin selector.
+};
+
+// Los fondos pintados, tres piezas independientes que se mezclan a gusto: la PARED (solo papel tapiz
+// con su zócalo, sin ventana), la VENTANA con sus cortinas (pieza con fondo transparente, como los
+// sillones) y el PISO. Los archivos siguen la convención assets/fondos/pared_<clave>.webp,
+// ventana_<clave>.webp y suelo_<clave>.webp (más su miniatura en assets/fondos/mini/), que deja
+//   python _tools/fondo.py <imagen> pared|ventanal|suelo <clave>
+// a partir de las imágenes generadas con los pedidos de OneDrive\Escritorio\Sala del libro (CATALOGO.md).
+// "css" es el dibujo de siempre. `defecto` es lo que ve quien entra por primera vez; el botón ✎ abre
+// el selector (fondos.js) y la elección se guarda en el navegador. `temporadas`: lo que se pone solo
+// cuando se marca "que cambie con la estación" (fiestas primero, luego estaciones del hemisferio sur).
+// Para añadir una variante: su archivo en assets/fondos/ y su nombre aquí.
+const FONDOS = {
+  paredes: {
+    css: "Vino de siempre (dibujo)", vino: "Vino clásico", azul: "Azul noche y dorado", esmeralda: "Verde esmeralda y oro",
+    rosa: "Rosa empolvado", lavanda: "Lavanda y violetas", perla: "Gris perla y dorado", chocolate: "Chocolate y crema",
+    primavera: "Primavera (cerezos en flor)", verano: "Verano (girasoles)", otono: "Otoño (hojas)", invierno: "Invierno (copos)",
+    navidad: "Navidad", sanvalentin: "San Valentín",
+  },
+  ventanas: {
+    css: "Terciopelo rojo (dibujo)", crema: "Terciopelo crema y dorado", esmeralda: "Mostaza y verde", rosa: "Gasa marfil y lazos rosa",
+    lavanda: "Violeta y plata, luna llena", chocolate: "Caramelo y cuero", primavera: "Lino blanco y cerezo en flor",
+    verano: "Lino amarillo y atardecer en el mar", otono: "Óxido y luna de cosecha",
+  },
+  pisos: {
+    css: "Nogal de siempre (dibujo)", nogal: "Nogal oscuro", roble: "Roble claro miel", cerezo: "Cerezo rojizo",
+    blanco: "Tablones blancos envejecidos", gris: "Gris ceniza", damero: "Damero de mármol crema y café", terracota: "Baldosa de terracota",
+  },
+  defecto: { pared: "vino", ventana: "crema", piso: "nogal" },
+  temporadas: [
+    { desde: "12-15", hasta: "12-26", pared: "navidad", ventana: "crema", piso: "cerezo" },
+    { desde: "02-01", hasta: "02-14", pared: "sanvalentin", ventana: "rosa", piso: "cerezo" },
+    { meses: [9, 10, 11], pared: "primavera", ventana: "primavera", piso: "roble" },
+    { meses: [12, 1, 2], pared: "verano", ventana: "verano", piso: "terracota" },
+    { meses: [3, 4, 5], pared: "otono", ventana: "otono", piso: "nogal" },
+    { meses: [6, 7, 8], pared: "invierno", ventana: "crema", piso: "gris" },
+  ],
 };
 
 // Girasoles y limones ilustrados para la lluvia del libro "21 Sep 2026".

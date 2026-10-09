@@ -208,10 +208,10 @@ def main():
      "- Y cualquier otra mezcla: las tres piezas son independientes.", "",
      "## Cómo entran en la página", "",
      "Cada imagen se convierte con `python _tools/fondo.py <imagen> pared|ventanal|suelo <variante>`",
-     "(en `Documents/libro`), que la deja en `assets/fondos/` (la ventana conserva su transparencia).",
-     "Cuando haya más de un juego, la página tendrá un selector para elegir pared, ventana y piso",
-     "(y, si se quiere, cambiar solos por estación). Mientras tanto, las primeras que lleguen se",
-     "activan a mano en `DECORACION` (`libros.js`).", ""]
+     "(en `Documents/libro`), que la deja en `assets/fondos/` con su miniatura (la ventana conserva su",
+     "transparencia), y se le pone nombre en `FONDOS` (`libros.js`). En la página, el botón ✎ (abajo a",
+     "la izquierda) abre el selector: una tira de muestras por pieza y la casilla para que cambie sola",
+     "con la estación y las fiestas; la elección se guarda en el navegador.", ""]
     io.open(os.path.join(D, "CATALOGO.md"), "w", encoding="utf-8").write("\n".join(cat))
     print("paredes", len(PAREDES), "ventanas", len(VENTANAS), "pisos", len(PISOS), "+ CATALOGO.md en", D)
 

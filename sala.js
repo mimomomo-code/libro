@@ -361,6 +361,16 @@
     ok(!!window.GATOS_SALA && GATOS_SALA.lista().length === 4 && sala.querySelectorAll('.centro .gato .dibujo-gato').length === 4, 'los cuatro gatos andan por la sala');
     ok(!!window.GATOS_SALA && GATOS_SALA.poses.join() === 'parado,sentado,echado' && ['parado', 'sentado', 'echado'].every(p => /data-pose="/.test(GATOS_SALA.svg('carey', p)) && GATOS_SALA.svg('carey', p).includes('class="cabeza"')),
       'cada gato se dibuja en tres poses');
+    // los fondos a elección: la temporada manda cuando está en automático, y elegir una pieza la cambia (con ?test=1 no se guarda nada)
+    if (window.FONDOS_SALA){
+      const t = FONDOS_SALA.porTemporada;
+      ok(t(new Date(2026, 11, 20)).pared === 'navidad' && t(new Date(2026, 1, 10)).pared === 'sanvalentin' && t(new Date(2026, 3, 10)).pared === 'otono' && t(new Date(2026, 9, 11)).pared === 'primavera',
+        'fondos: diciembre es Navidad, febrero San Valentín, abril otoño y octubre primavera');
+      const antes = FONDOS_SALA.eleccion().pared;
+      FONDOS_SALA.elegir('pared', 'rosa'); ok(FONDOS_SALA.eleccion().pared === 'rosa' && FONDOS_SALA.vivo().pared === 'rosa', 'fondos: elegir una pared la pone');
+      FONDOS_SALA.elegir('pared', 'css'); ok(FONDOS_SALA.vivo().pared === 'css' && FONDOS_SALA.eleccion().pared === 'css', 'fondos: el dibujo de siempre vuelve');
+      FONDOS_SALA.elegir('pared', antes);
+    } else ok(false, 'fondos: el selector no cargó');
     if (cal && window.CALENDARIO){
       const D = { dias: [{ fecha: '2026-10-11', nombre: 'Inicio', inicio: true }, { dia: 30, mes: 9, nombre: 'Autitos', icono: 'auto' }] };
       const ev = (y, m) => CALENDARIO.eventos(D, y, m).map(e => e.d + ':' + e.nombre).join('|');

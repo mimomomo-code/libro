@@ -364,7 +364,7 @@ body.leyendo #barra{opacity:1;pointer-events:auto}
 #pista{position:absolute}
 #pista.ver,#pista-sala.ver{opacity:1}
 body.en-lector #pista-sala{opacity:0}
-#pista-sala{top:10vh;text-shadow:0 1px 6px rgba(0,0,0,.8);color:rgba(240,213,154,.85);max-width:86vw}
+#pista-sala{top:10vh;text-shadow:0 1px 6px rgba(0,0,0,.8);color:rgba(240,213,154,.85);max-width:86vw;padding:6px 14px;border-radius:14px;background:rgba(20,10,6,.5)}   /* con píldora: sobre una cenefa pintada clara no se leía */
 /* volver a la sala */
 #volver{position:absolute;left:max(14px, env(safe-area-inset-left));top:max(12px, env(safe-area-inset-top));z-index:30;width:40px;height:40px;border-radius:50%;
   background:rgba(18,13,11,.55);border:1px solid rgba(212,176,106,.4);color:rgba(240,213,154,.9);
@@ -376,6 +376,31 @@ body.en-lector #pista-sala{opacity:0}
   font:400 19px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 0 2px;transition:opacity .4s,background .2s,border-color .2s}
 #musica-btn:hover{background:rgba(212,176,106,.12);border-color:rgba(212,176,106,.7)}
 #musica-btn.apagada{opacity:.35}
+
+/* ---------- el selector de fondos (fondos.js): el botón ✎ abajo a la izquierda y su panel con una tira de muestras por pieza ---------- */
+#fondos-btn{position:fixed;left:max(14px, env(safe-area-inset-left));bottom:max(14px, env(safe-area-inset-bottom));z-index:50;width:38px;height:38px;border-radius:50%;
+  background:rgba(18,13,11,.5);border:1px solid rgba(212,176,106,.35);color:rgba(212,176,106,.85);
+  font:400 17px/1 'Cormorant Garamond',Georgia,serif;cursor:pointer;padding:0 0 1px;transition:background .2s,border-color .2s}
+#fondos-btn:hover,#fondos-btn.abierto{background:rgba(212,176,106,.12);border-color:rgba(212,176,106,.7)}
+#fondos-btn[hidden]{display:none}
+body.en-lector #fondos-btn,body.en-lector #fondos,body.plantilla #fondos-btn,body.plantilla #fondos{display:none !important}
+#fondos{position:fixed;left:max(10px, env(safe-area-inset-left));bottom:calc(max(14px, env(safe-area-inset-bottom)) + 46px);z-index:51;width:min(92vw, 380px);
+  padding:12px 12px 10px;border-radius:14px;background:rgba(22,15,12,.94);border:1px solid rgba(212,176,106,.35);box-shadow:0 10px 30px rgba(0,0,0,.6);
+  color:#e9dcc4;font:400 14px/1.3 'EB Garamond','Cormorant Garamond',Georgia,serif}
+#fondos[hidden]{display:none}
+#fondos h3{margin:0 0 8px;font:400 15px/1 Cinzel,serif;letter-spacing:.06em;color:#d4b06a;display:flex;justify-content:space-between;align-items:center}
+#fondos h3 button{background:none;border:0;color:#d4b06a;font-size:15px;cursor:pointer;padding:0 4px;line-height:1}
+#fondos .fila{margin:6px 0 2px}
+#fondos .fila > span{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,176,106,.8);margin-bottom:4px}
+#fondos .tira{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+#fondos .tira button{flex:0 0 auto;width:56px;height:42px;border-radius:8px;border:2px solid transparent;padding:0;cursor:pointer;background:#3a2a22 center/cover no-repeat;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+#fondos .tira button.elegido{border-color:#f2d688;box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.6)}
+#fondos .nombre{font-size:12px;color:rgba(233,220,196,.7);min-height:1.2em}
+#fondos .auto{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;cursor:pointer}
+#fondos .auto input{accent-color:#d4b06a;margin:0}
+/* el cambio de pieza se funde (fondos.js pone .cambiando un instante) */
+.fondo-pared,.suelo,.ventanal{transition:opacity .22s}
+.fondo-pared.cambiando,.suelo.cambiando,.ventanal.cambiando{opacity:0}
 
 /* ---------- el candado: la cerradura que pide el número, y los candaditos del lomo y de la mesa ---------- */
 #candado{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:20px;   /* por encima de la pista de la sala (35) */
@@ -558,6 +583,7 @@ body.arrastrando .ranura{box-shadow:inset 0 0 0 1px rgba(240,213,154,.10)}
 .fondo-pared.con-imagen{display:block}
 .ventanal.con-imagen > :not(.foto){display:none}
 .ventanal .foto{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 10px 16px rgba(0,0,0,.45))}
+.ventanal.con-imagen{max-height:50%}   /* la pieza pintada es vertical: un poco más de alto que la ventana dibujada */
 .suelo.con-imagen{background:var(--foto) 50% 50% / cover no-repeat}
 .lugar{width:var(--lm);display:flex;align-items:flex-end;justify-content:center}
 .piel{background:
@@ -746,6 +772,8 @@ body.arrastrando{cursor:grabbing}
   </div>
 </div>
 <button id="musica-btn" type="button" aria-label="Música" title="Música" hidden>&#9835;</button>
+<button id="fondos-btn" type="button" aria-label="Cambiar la sala" title="Cambiar la sala" hidden>&#10000;</button>
+<div id="fondos" hidden></div>
 
 <!-- ================= EL CANDADO (candado.js) ================= -->
 <div id="candado" hidden>
@@ -1378,6 +1406,7 @@ window.TAPAS = {
 })();
 </script>
 <script src="texturas.js"></script>
+<script src="fondos.js"></script>
 <script src="girasoles.js"></script>
 <script src="calendario.js"></script>
 <script src="candado.js"></script>
