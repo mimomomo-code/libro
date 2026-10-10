@@ -17,7 +17,9 @@ for (let i = 0; i < args.length; i++){
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const PORT = 9400 + Math.floor(Math.random() * 200);
 const perfil = process.env.TEMP + '\\perfil_cdp_' + PORT;
-const edge = spawn(EDGE, ['--headless=new', '--disable-gpu', '--allow-file-access-from-files', '--hide-scrollbars',
+// --disk-cache-size=1: sin caché de disco. Los perfiles perfil_cdp_<puerto> se reutilizan entre sesiones y el 9 oct uno
+// sirvió el poema.js de OTRO proyecto cacheado en el mismo puerto (la captura mentía; el repo estaba bien).
+const edge = spawn(EDGE, ['--headless=new', '--disable-gpu', '--allow-file-access-from-files', '--hide-scrollbars', '--disk-cache-size=1',
   '--remote-debugging-port=' + PORT, '--user-data-dir=' + perfil, '--window-size=' + opt.w + ',' + opt.h, 'about:blank'], { stdio: 'ignore' });
 const get = url => new Promise((ok, ko) => http.get(url, r => { let s = ''; r.on('data', d => s += d); r.on('end', () => ok(s)); }).on('error', ko));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
