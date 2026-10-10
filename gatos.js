@@ -324,6 +324,9 @@
   //  estira, salta) y su posición normalizada (u, v) dentro de la caja
   // =====================================================================
   const POSE_DE = { quieto: 'parado', anda: 'parado', salta: 'parado', estira: 'parado', sentado: 'sentado', echado: 'echado' };
+  // las piezas cambian de vez en cuando (el 9 oct se limpiaron las orejas) y el navegador las guarda días: subir
+  // esta marca cuando cambien para que todos reciban las nuevas sin vaciar la caché
+  const V_PIEZAS = '?v=20261009b';
   const ESTADOS = Object.keys(POSE_DE);
   let gatos = [];
   class Gato {
@@ -364,7 +367,7 @@
     // (_tools/bandeja.py), que sustituye a las piezas mientras dura; sin ellas, el ilustrado
     // solo tiene la pose de pie (se queda mirando en vez de sentarse o echarse)
     cargarPiezas(ruta, rutas){
-      fetch(ruta).then(r => r.ok ? r.json() : Promise.reject()).then(meta => {
+      fetch(ruta + V_PIEZAS).then(r => r.ok ? r.json() : Promise.reject()).then(meta => {
         const base = ruta.slice(0, ruta.lastIndexOf('/') + 1), W = meta.lienzo[0], H = meta.lienzo[1];
         const orden = Object.keys(meta.piezas).sort((a, b) => meta.piezas[a].z - meta.piezas[b].z);
         const cont = document.createElement('div'); cont.className = 'piezas'; cont.style.aspectRatio = W + ' / ' + H;
@@ -381,7 +384,7 @@
             if (this.pose !== 'parado'){ if (this.imgs[this.pose]) cont.hidden = true; else this.cambiar('quieto', entre(2, 5)); }   // sin imagen de esa pose: de pie
           };
           im.onerror = () => {};                             // si falta una pieza, el gato se queda dibujado
-          im.src = base + nombre + '.webp';
+          im.src = base + nombre + '.webp' + V_PIEZAS;
           cont.appendChild(im);
         }
       }).catch(() => {});

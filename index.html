@@ -267,7 +267,9 @@ body.centro .verso{padding-left:0;text-indent:0}
 .gato .pz{position:absolute;display:block;height:auto;pointer-events:auto;-webkit-user-drag:none;transition:transform .4s}
 .gato.anda .pz.patas_tras,.gato.anda .pz.patas_del{animation:paso-pz var(--paso, .5s) ease-in-out infinite}
 .gato.anda .pz.patas_del{animation-delay:calc(var(--paso, .5s) / -2)}
-.gato.anda .pz.cuerpo,.gato.anda .pz.cabeza{animation:trote-pz calc(var(--paso, .5s) / 2) ease-in-out infinite}
+/* al andar solo el cuerpo trota, y poco: con la cabeza trotando a la vez, el filo claro de las orejas (muy fino a tamaño normal)
+   se pintaba y despintaba a cada paso por el desplazamiento de menos de un píxel, y parecía que asomaba un trozo de oreja arriba */
+.gato.anda .pz.cuerpo{animation:trote-pz calc(var(--paso, .5s) / 2) ease-in-out infinite}
 .gato .pz.cola{animation:cola-pz 2.8s ease-in-out infinite}
 .gato.anda .pz.cola{animation-duration:calc(var(--paso, .5s) * 2.4)}
 .gato.salta .pz.patas_tras{transform:rotate(-25deg)}
@@ -277,7 +279,7 @@ body.centro .verso{padding-left:0;text-indent:0}
 .gato.estira .pz.cola{transform:rotate(-14deg)}
 .gato.mimado .pz.cabeza{animation:cabecita-pz .9s ease}
 @keyframes paso-pz{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}
-@keyframes trote-pz{50%{transform:translateY(-1.5%)}}
+@keyframes trote-pz{50%{transform:translateY(-1%)}}
 @keyframes cola-pz{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(9deg)}}
 @keyframes cabecita-pz{25%{transform:rotate(-10deg)}70%{transform:rotate(7deg)}}
 .gato .pata{transform-box:fill-box;transform-origin:50% 4%;transition:transform .4s}
