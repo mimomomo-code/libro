@@ -457,6 +457,15 @@ def main():
     os.makedirs(destino, exist_ok=True)
     if not os.path.isdir(os.path.join(destino, '.git')):
         git(destino, 'init', '-b', 'main'); print('  git init en el producto')
+    else:
+        # DESDE EL 9 OCT (noche) EL PRODUCTO SE DESARROLLA APARTE (tienda, inventario, editor, creador de
+        # libros): su último commit ya no es una exportación y copiar en espejo lo pisaría. Solo sigue con
+        # --forzar, a conciencia (y mejor aún: llevar a mano al producto lo que haga falta de la fábrica).
+        ultimo = git(destino, 'log', '-1', '--format=%s', ok=False).stdout.strip()
+        if ultimo and not ultimo.startswith('Producto ') and '--forzar' not in a:
+            raise SystemExit('EL PRODUCTO YA VIVE APARTE: su último commit es "%s", no una exportación.\n'
+                             'Copiar en espejo borraría su trabajo (tienda, editor, creador...). Lo que cambie en la fábrica se lleva a mano;\n'
+                             'si de verdad quieres pisarlo, vuelve a correr con --forzar.' % ultimo[:90])
     for r in borrar:
         os.remove(ya[r]); print('   borrado', r)
     for r, src in fs.items():

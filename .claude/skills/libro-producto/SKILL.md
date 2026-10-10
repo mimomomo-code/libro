@@ -11,6 +11,15 @@ remoto `https://github.com/DYBITSOLUTIONS/bookscat.git` (credencial de github.co
 Herramienta: `_tools/producto.py` (copia en espejo todo lo versionado, sustituye los tramos personales,
 cifra un candado DE MUESTRA con número 123456, pasa la GUARDIA y hace el commit allí).
 
+## OJO: desde el 9 oct (noche) el producto vive aparte
+
+bookscat ya tiene su propio desarrollo (cuenta.js, tienda.js, editor.js, crear.js y cambios en sala.js,
+gatos.js, fondos.js e index.html) que la fábrica NO tiene. `producto.py` se frena si el último commit del
+producto no es una exportación ("Producto <fecha>..."), y `--forzar` lo pisaría todo: NO usarlo. Lo que
+cambie en la fábrica y haga falta en el producto se lleva A MANO (diff del archivo y aplicar), y al revés
+igual (los libros nuevos de muestra, los arreglos de gatos.js...). Los pasos de abajo valen solo para
+regenerar un producto desde cero en otra carpeta (`--destino`), por ejemplo para comparar.
+
 ## Pasos
 
 1. Comprobar que la fábrica está como se quiere exportar (`git -C C:/Users/basti/Documents/libro status --short`
