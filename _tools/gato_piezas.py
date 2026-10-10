@@ -136,6 +136,13 @@ def main():
     cabeza_pieza = cabeza.copy()
     cabeza_pieza[:ybarbilla + int(.02 * bh), xcuello - int(.015 * bw):] |= A[:ybarbilla + int(.02 * bh), xcuello - int(.015 * bw):] > 16
     pivote_cabeza = (xcuello + int(.06 * bw), ybarbilla)
+    # ---- las orejas: lo que asoma por encima del lomo cerca del cuello es oreja (de la cabeza) aunque quede a la
+    # izquierda del cuello. Sin esto la oreja trasera caía en el cuerpo y su punta en la cola, y al mecerse la cola
+    # se veía un trozo de oreja "estirarse" lejos de la cabeza (9 oct 2026; las piezas ya hechas se limpiaron a mano)
+    orejas = np.zeros_like(A, dtype=bool)
+    orejas[:max(0, lomo - int(.02 * bh)), max(0, xcuello - int(.15 * bw)):] = A[:max(0, lomo - int(.02 * bh)), max(0, xcuello - int(.15 * bw)):] > 16
+    cabeza |= orejas; cabeza_pieza |= orejas
+    cola &= ~orejas; cola_pieza &= ~orejas
 
     # ---- patas (con la cadera metida bajo el cuerpo) y cuerpo (todo lo demás, con solapes) ----
     arriba_patas = ycut - int(.08 * bh)
