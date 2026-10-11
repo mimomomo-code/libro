@@ -72,12 +72,15 @@
     for (const k in M){ const s = M[k].pos; if (s.lado === p.lado && s.fila === p.fila && p.col >= s.col && p.col < s.col + MONTON_ANCHO) return M[k]; }
     return null;
   }
-  // (los montones van DELANTE de los libros, al pie del estante, y no les quitan la ranura: ocupada() no los cuenta)
+  // el montón OCUPA sus dos ranuras: ahí no entra un libro (y el hueco del medio, entre sus dos ranuras, se pierde para la carta de pie)
   function ocupada(p, salvo){
     if (cubiertas[clave(p)]) return cubiertas[clave(p)];
+    const m = montonEn(p); if (m && !(m.ids.length === 1 && m.ids[0] === salvo)) return 'monton';
     for (const id in estado.estantes){ if (id !== salvo && !esCarta(porId(id)) && clave(estado.estantes[id]) === clave(p)) return id; }
     return null;
   }
+  // el hueco k (a la izquierda de la ranura k) está perdido si cae en medio de un montón (el que empieza en k - 1)
+  const huecoPerdido = p => { const m = montonEn({ lado: p.lado, fila: p.fila, col: p.col - 1 }); return !!m && m.pos.col === p.col - 1; };
   // en la mesa caben pocas cartas a la vez (la pila de la torre de la mesa): el resto espera en la librería o en las torres
   const MESA_CARTAS = 5;
   const cartasEnMesa = () => estado.mesa.filter(id => esCarta(porId(id))).length;
@@ -102,12 +105,14 @@
     return true;
   }
   // una carta va a un montón: al que haya en esa ranura (si le cabe) o a un sitio libre de dos ranuras cerca
-  const libre2 = (lado, fila, c) => c >= 0 && c + MONTON_ANCHO <= COLS && !cubiertas[clave({ lado, fila, col: c })] && !cubiertas[clave({ lado, fila, col: c + 1 })] && !montonEn({ lado, fila, col: c }) && !montonEn({ lado, fila, col: c + 1 });
+  // dos ranuras libres de verdad para un montón nuevo: sin adorno, sin libro y sin otro montón
+  const libre2 = (lado, fila, c) => c >= 0 && c + MONTON_ANCHO <= COLS && !ocupada({ lado, fila, col: c }) && !ocupada({ lado, fila, col: c + 1 });
+  const huecoLibre = p => p.col >= 0 && p.col <= COLS && !enHueco(p) && !huecoPerdido(p);
   function colocarCarta(id, p){
     delete estado.estantes[id];
     if (p.hueco){                                                     // de pie entre dos libros: ese hueco o el libre más cercano de la fila
       let mejor = null, md = Infinity;
-      for (let k = 0; k <= COLS; k++){ if (enHueco({ lado: p.lado, fila: p.fila, col: k })) continue; const d = Math.abs(k - p.col); if (d < md){ md = d; mejor = k; } }
+      for (let k = 0; k <= COLS; k++){ if (!huecoLibre({ lado: p.lado, fila: p.fila, col: k })) continue; const d = Math.abs(k - p.col); if (d < md){ md = d; mejor = k; } }
       if (mejor != null){ estado.estantes[id] = { lado: p.lado, fila: p.fila | 0, col: mejor, hueco: true }; return true; }
       p = { lado: p.lado, fila: p.fila, col: Math.min(p.col, COLS - 1) };
     }
@@ -122,13 +127,24 @@
     }
     if (!mejor){                                                      // sin sitio para acostarla: a un hueco libre, el más cercano
       for (const lado of LADOS) for (let f = 0; f < FILAS; f++) for (let k = 0; k <= COLS; k++){
-        if (enHueco({ lado, fila: f, col: k })) continue;
+        if (!huecoLibre({ lado, fila: f, col: k })) continue;
         const d = (lado === p.lado ? 0 : 1000) + Math.abs(f - p.fila) * 10 + Math.abs(k - p.col);
         if (d < md){ md = d; mejor = { lado, fila: f, col: k, hueco: true }; }
       }
     }
     if (!mejor) return false;
-    estado.estantes[id] = mejor; return true;
+    estado.estantes[id] = mejor;
+    if (!mejor.hueco) desalojarMonton(mejor);
+    return true;
+  }
+  // un montón recién puesto echa de sus dos ranuras al libro que hubiera y del hueco del medio a la carta de pie
+  function desalojarMonton(pos){
+    for (const id of Object.keys(estado.estantes)){
+      const x = estado.estantes[id], l = porId(id);
+      if (x.lado !== pos.lado || x.fila !== pos.fila) continue;
+      if (!esCarta(l) && x.col >= pos.col && x.col < pos.col + MONTON_ANCHO){ const h = huecoCerca(x, id); if (h) estado.estantes[id] = h; }
+      else if (esCarta(l) && x.hueco && x.col === pos.col + 1) colocarCarta(id, Object.assign({}, x));
+    }
   }
   // mudar un montón entero (todas sus cartas juntas)
   function moverMonton(ids, p){
@@ -206,12 +222,13 @@
       if (vistas[k]){ const p = estado.estantes[id]; delete estado.estantes[id]; colocar(id, p); }
       vistas[clave(estado.estantes[id])] = id;
     }
-    // montones de más de 20 o dos cartas en un hueco: la de más busca sitio
+    // montones de más de 20, dos cartas en un hueco, una carta de pie en el hueco del medio de un montón o un libro bajo un montón: buscan sitio
     const huecosVistos = {};
     for (const id of Object.keys(estado.estantes)){
       const p = estado.estantes[id], l = porId(id);
-      if (esCarta(l) && p.hueco){ const k = clave(p); if (huecosVistos[k]) colocarCarta(id, p); else huecosVistos[k] = id; }
+      if (esCarta(l) && p.hueco){ const k = clave(p); if (huecosVistos[k] || huecoPerdido(p)) colocarCarta(id, p); else huecosVistos[k] = id; }
       else if (esCarta(l)){ const m = montonEn(p); if (m && m.ids.length > MONTON_MAX && m.ids.indexOf(id) >= MONTON_MAX) colocarCarta(id, p); }
+      else if (ocupada(p, id) === 'monton'){ const h = huecoCerca(p, id); if (h) estado.estantes[id] = h; }
     }
     // en la mesa, como mucho MESA_CARTAS cartas: las de más vuelven a su estante de nacimiento (el bucle de abajo las coloca)
     let nc = 0; estado.mesa = estado.mesa.filter(id => !esCarta(porId(id)) || ++nc <= MESA_CARTAS);
@@ -281,7 +298,7 @@
       for (let i = 0; i < n; i += MONTON_ATADO){ const g = m.ids.slice(i, i + MONTON_ATADO); partes.push(g.length === MONTON_ATADO ? '<span class="atado">' + g.map(franja).join('') + '</span>' : g.map(franja).join('')); }
       el.innerHTML = '<span class="pila">' + partes.join('') + '</span>' + (n > 1 ? '<b class="cuenta">' + n + '</b>' : '');
       const ranura = librerias[m.pos.lado].filas[m.pos.fila][m.pos.col]; ranura.appendChild(el);
-      el.style.setProperty('--f', Math.max(2, Math.min(4.5, ranura.offsetHeight * .029)).toFixed(2) + 'px');      // 20 cartas ≈ 60 % del estante: los libros de atrás asoman
+      el.style.setProperty('--f', Math.max(2, Math.min(5, ranura.offsetHeight * .037)).toFixed(2) + 'px');      // 20 cartas ≈ 75 % del estante (ya no hay libros detrás)
       engancharMonton(el, m.ids.slice(), m.pos);
     }
     for (const id in estado.estantes){
@@ -706,10 +723,11 @@
     }
     // la carta y el cordón (en las dos salas): el montón ocupa dos ranuras; cada cordón es una torre; una carta se ata y se desata a la mesa
     if (porId('carta')){
-      ok(pos('carta') === 'der:2:6' && !ocupada({ lado: 'der', fila: 2, col: 6 }) && !!montonEn({ lado: 'der', fila: 2, col: 7 }), 'montón: va delante de los libros, dos ranuras de ancho, sin quitarles el sitio');
+      ok(pos('carta') === 'der:2:6' && ocupada({ lado: 'der', fila: 2, col: 6 }) === 'monton' && ocupada({ lado: 'der', fila: 2, col: 7 }) === 'monton', 'montón: ocupa sus dos ranuras');
       aMesa('poema'); aEstante('poema', { lado: 'der', fila: 2, col: 6 });
-      ok(pos('poema') === 'der:2:6' && pos('carta') === 'der:2:6', 'montón: el libro entra en la misma ranura y queda detrás');
+      ok(pos('poema') !== 'der:2:6' && pos('poema') !== 'der:2:7' && pos('poema').startsWith('der:2:'), 'montón: el libro mandado ahí busca el hueco vecino');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
+      ok(!huecoLibre({ lado: 'der', fila: 2, col: 7 }) && huecoLibre({ lado: 'der', fila: 2, col: 6 }) && huecoLibre({ lado: 'der', fila: 2, col: 8 }), 'montón: el hueco del medio se pierde, los de los bordes siguen');
       aMesa('carta'); aEstante('carta', { lado: 'izq', fila: 1, col: 4, hueco: true }); render();
       ok(!!estado.estantes.carta.hueco && pos('carta') === 'izq:1:4' && !ocupada({ lado: 'izq', fila: 1, col: 4 }) && ocupada({ lado: 'izq', fila: 1, col: 3 }) === 'suenos' && !!sala.querySelector('.carta-hueco'), 'hueco: una carta de pie entre dos libros no ocupa ranura (y el libro de al lado sigue)');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 1, col: 4 }); ok(pos('poema') === 'izq:1:4', 'hueco: el libro entra igual en la ranura de al lado');
@@ -929,7 +947,7 @@
     if (estado.torres[0]) ids.slice(EN_MESA + EN_LIBRERIA).forEach(id => aTorre(id, estado.torres[0].id));
     guardar(); render();
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
-    pista(ids.length + ' cartas de prueba: ' + EN_MESA + ' en la mesa, ' + EN_LIBRERIA + ' delante del Álbum y ' + EN_TORRE + ' en la torre. Toca el montón o la torre para elegir una.', 9000);
+    pista(ids.length + ' cartas de prueba: ' + EN_MESA + ' en la mesa, ' + EN_LIBRERIA + ' en un montón de la librería derecha y ' + EN_TORRE + ' en la torre. Toca el montón o la torre para elegir una.', 9000);
   }
 
   // ---- arranque ----
