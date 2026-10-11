@@ -204,7 +204,9 @@ const LIBROS = [
   },
 ];
 
-// El FAJO de cartas: un cordón que ata hasta 100 cartas en dos ranuras de la librería (se abre con un toque,
-// tocar una carta la lleva a la mesa, y arrastrar una carta hasta el fajo la ata; arrastrar el fajo lo muda).
-// null = sin fajo.
-const FAJO = { lado: "der", fila: 4, col: 6 };
+// LAS TORRES DE CARTAS (el cordón): cuántas hay en esta sala. Cada torre ata hasta 100 cartas y es un objeto
+// suelto: nace al costado de la librería derecha, se arrastra a donde quieras (sobre la mesa, junto a un sillón) y
+// se apila sobre otra torre, hasta cinco de alto; un toque abre su lista y tocar una carta la lleva a la mesa;
+// arrastrar una carta hasta la torre la ata. En la librería las cartas forman MONTONES de hasta 10 (dos ranuras).
+// 0 = sin torres.
+const TORRES_CARTAS = 1;

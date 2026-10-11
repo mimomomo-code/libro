@@ -28,11 +28,11 @@
   const TAP = window.TAPAS || {};
   const colores = t => TAP[t] || TAP.burdeos || ['#6b2630', '#4a1a20', '#33111a'];
   const esc = s => String(s).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
-  const SOLO_LECTURA = ['mesa', 'abrir', 'p', 'lleno', 'nota', 'limpio', 'test', 'clave'].some(k => q.has(k));
+  const SOLO_LECTURA = ['mesa', 'abrir', 'p', 'lleno', 'nota', 'limpio', 'test', 'clave', 'borrador'].some(k => q.has(k));
   const conCandado = l => !!(l.candado && window.CANDADO);
 
-  // ---- el catálogo ----
-  const CAT = ((typeof LIBROS !== 'undefined' && Array.isArray(LIBROS)) ? LIBROS : []).map((l, i) => {
+  // ---- el catálogo: los libros de libros.js, los que escribió la pareja (CUENTA) y el borrador del creador ----
+  function normalizar(l, i){
     const o = Object.assign({}, l);
     if (!o.id) o.id = 'libro' + i;
     if (o.tipo === 'poema' && o.datos){ o.titulo = o.titulo || o.datos.titulo || 'Sin título'; o.tapa = o.tapa || o.datos.tapa; }
@@ -41,25 +41,37 @@
     o.titulo = o.titulo || 'Libro';
     if (!TAP[o.tapa]) o.tapa = 'burdeos';
     return o;
-  }).filter(o => (o.tipo !== 'poema' || o.datos) && (o.tipo !== 'carta' || !!window.CARTA));
-  const porId = id => CAT.find(l => l.id === id);
+  }
+  const valido = o => (o.tipo !== 'poema' || !!o.datos) && (o.tipo !== 'carta' || !!window.CARTA);
   const esCarta = o => !!o && o.tipo === 'carta';
+  const CAT = ((typeof LIBROS !== 'undefined' && Array.isArray(LIBROS)) ? LIBROS : []).map(normalizar).filter(valido);
+  if (window.CUENTA) for (const l of CUENTA.libros()){ const o = normalizar(l, CAT.length); if (valido(o) && !CAT.some(x => x.id === o.id)) CAT.push(o); }
+  if (q.has('borrador')){                                       // ?borrador=1: la vista previa del creador (localStorage 'libro.borrador.v1')
+    try { const b = JSON.parse(localStorage.getItem('libro.borrador.v1') || 'null'); if (b && b.tipo){ b.id = 'borrador'; const o = normalizar(b, 0); if (valido(o)) CAT.push(o); } } catch (e) {}
+  }
+  const porId = id => CAT.find(l => l.id === id);
 
-  // ---- el estado: qué hay en la mesa, en qué ranura está cada libro y qué cartas están atadas en el fajo ----
-  let estado = { mesa: [], estantes: {}, fajo: [] };
+  // ---- el estado: qué hay en la mesa, en qué ranura está cada libro (y cada montón de cartas) y las torres de cartas ----
+  let estado = { mesa: [], estantes: {}, torres: [] };
   const clave = p => p.lado + ':' + p.fila + ':' + p.col;
   const posValida = p => !!p && LADOS.includes(p.lado) && p.fila >= 0 && p.fila < FILAS && p.col >= 0 && p.col < COLS;
   const cubiertas = {};                        // ranuras tapadas por un adorno (clave -> 'adorno:<id>'): ahí no cabe un libro
-  // el FAJO de cartas (el cordón: `const FAJO = { lado, fila, col }` en libros.js): hasta 100 cartas atadas en dos ranuras de la librería
-  const FAJO_MAX = 100, FAJO_ANCHO = 2, FAJO_DEF = { lado: 'der', fila: 4, col: 6 };
-  const tieneFajo = () => typeof FAJO !== 'undefined' && !!FAJO;
-  let fajoPos = null;                          // adónde lo mudó la persona (va en el estado guardado)
-  const posFajo = () => { const p = fajoPos || (typeof FAJO === 'object' && FAJO) || FAJO_DEF; return posValida(p) ? { lado: p.lado, fila: p.fila | 0, col: Math.min(COLS - FAJO_ANCHO, p.col | 0) } : FAJO_DEF; };
-  const enFajo = p => { if (!tieneFajo()) return false; const f = posFajo(); return p.lado === f.lado && p.fila === f.fila && p.col >= f.col && p.col < f.col + FAJO_ANCHO; };
-  // (una carta acostada no ocupa la ranura: comparte el sitio con un libro, y dos cartas pueden ir en la misma; el fajo sí ocupa las suyas)
+  // LAS CARTAS EN LA LIBRERÍA van en MONTONES: las que comparten posición forman uno (hasta 10), visto de canto con su cinta,
+  // que ocupa DOS ranuras (col y col + 1). LAS TORRES son el cordón: cada cordón comprado (CUENTA.cordones(); en la sala
+  // personal, TORRES_CARTAS en libros.js) es una torre de hasta 100 cartas, un objeto suelto en la sala (en el suelo, al
+  // costado de las librerías o los sillones, sobre la mesa) que se arrastra y se apila sobre otra torre, hasta 5 de alto.
+  const MONTON_MAX = 10, MONTON_ANCHO = 2, TORRE_MAX = 100, TORRES_ALTO = 5;
+  const nTorres = () => window.CUENTA ? (CUENTA.cordones ? CUENTA.cordones() : (CUENTA.tiene('mejora', 'cordon') ? 1 : 0)) : (typeof TORRES_CARTAS === 'number' ? TORRES_CARTAS : 0);
+  const montones = () => { const m = {}; for (const id in estado.estantes){ if (!esCarta(porId(id))) continue; const k = clave(estado.estantes[id]); (m[k] = m[k] || { pos: estado.estantes[id], ids: [] }).ids.push(id); } return m; };
+  // el montón que cubre esa ranura (empieza en ella o en la de su izquierda), si lo hay
+  function montonEn(p){
+    const M = montones();
+    for (const k in M){ const s = M[k].pos; if (s.lado === p.lado && s.fila === p.fila && p.col >= s.col && p.col < s.col + MONTON_ANCHO) return M[k]; }
+    return null;
+  }
   function ocupada(p, salvo){
     if (cubiertas[clave(p)]) return cubiertas[clave(p)];
-    if (enFajo(p)) return 'fajo';
+    const m = montonEn(p); if (m && !(m.ids.length === 1 && m.ids[0] === salvo)) return 'monton';
     for (const id in estado.estantes){ if (id !== salvo && !esCarta(porId(id)) && clave(estado.estantes[id]) === clave(p)) return id; }
     return null;
   }
@@ -75,69 +87,115 @@
     return mejor;
   }
   function colocar(id, p){
-    const h = (esCarta(porId(id)) ? (!!cubiertas[clave(p)] || ocupada(p, id) === 'fajo') : !!ocupada(p, id)) ? huecoCerca(p, id) : p;     // la carta solo esquiva adornos y fajo
+    if (esCarta(porId(id))) return colocarCarta(id, p);
+    const h = ocupada(p, id) ? huecoCerca(p, id) : p;
     if (!h) return false;
     estado.estantes[id] = { lado: h.lado, fila: h.fila | 0, col: h.col | 0 };
     return true;
   }
+  // una carta va a un montón: al que haya en esa ranura (si le cabe) o a un sitio libre de dos ranuras cerca
+  const libre2 = (lado, fila, c) => c >= 0 && c + MONTON_ANCHO <= COLS && !ocupada({ lado, fila, col: c }) && !ocupada({ lado, fila, col: c + 1 });
+  function colocarCarta(id, p){
+    delete estado.estantes[id];
+    const m = montonEn(p);
+    if (m && m.ids.length < MONTON_MAX){ estado.estantes[id] = Object.assign({}, m.pos); return true; }
+    let mejor = null, md = Infinity;
+    for (const lado of LADOS) for (let f = 0; f < FILAS; f++) for (let c = 0; c <= COLS - MONTON_ANCHO; c++){
+      const x = { lado, fila: f, col: c }, mm = montonEn(x);
+      if (mm ? (mm.ids.length >= MONTON_MAX || mm.pos.col !== c) : !libre2(lado, f, c)) continue;
+      const d = (lado === p.lado ? 0 : 1000) + Math.abs(f - p.fila) * 10 + Math.abs(c - Math.min(p.col, COLS - MONTON_ANCHO));
+      if (d < md){ md = d; mejor = x; }
+    }
+    if (!mejor) return false;
+    estado.estantes[id] = mejor; return true;
+  }
+  // mudar un montón entero (todas sus cartas juntas)
+  function moverMonton(ids, p){
+    const resto = ids.slice(1);
+    for (const id of ids) delete estado.estantes[id];
+    if (!colocarCarta(ids[0], p)) return false;
+    for (const id of resto) estado.estantes[id] = Object.assign({}, estado.estantes[ids[0]]);
+    guardar(); return true;
+  }
   function guardar(){
     if (SOLO_LECTURA) return;
-    try { localStorage.setItem(CLAVE, JSON.stringify(Object.assign({}, estado, fajoPos ? { fajoPos } : {}))); } catch (e) {}
+    try { localStorage.setItem(CLAVE, JSON.stringify(estado)); } catch (e) {}
+  }
+  // ---- las torres: tantas como cordones; las nuevas nacen al costado de la librería derecha, apiladas sobre la anterior ----
+  const torrePorId = tid => estado.torres.find(t => t.id === tid);
+  const torreDe = id => estado.torres.find(t => t.cartas.includes(id));
+  const alturaPila = tid => { let n = 0, t = torrePorId(tid), vistos = new Set(); while (t && !vistos.has(t.id)){ vistos.add(t.id); n++; t = t.sobre ? torrePorId(t.sobre) : null; } return n; };
+  const basesDe = tid => { const out = []; let t = torrePorId(tid), vistos = new Set(); while (t && t.sobre && !vistos.has(t.id)){ vistos.add(t.id); out.push(t.sobre); t = torrePorId(t.sobre); } return out; };
+  const encimaDe = tid => estado.torres.filter(t => t.sobre === tid).map(t => t.id);
+  function sincronizarTorres(){
+    estado.torres = (estado.torres || []).filter(t => t && t.id).map(t => ({ id: String(t.id), cartas: (t.cartas || []).filter((id, i, a) => esCarta(porId(id)) && a.indexOf(id) === i).slice(0, TORRE_MAX),
+      x: Math.max(.04, Math.min(.96, +t.x || .9)), y: Math.max(.3, Math.min(.99, +t.y || .97)), sobre: t.sobre ? String(t.sobre) : null }));
+    for (const t of estado.torres) if (t.sobre && (!torrePorId(t.sobre) || t.sobre === t.id)) t.sobre = null;
+    while (estado.torres.length < nTorres()){
+      const k = estado.torres.length, id = 't' + (k + 1), prev = estado.torres[k - 1];
+      estado.torres.push({ id, cartas: [], x: .87, y: .975, sobre: (prev && alturaPila(prev.id) < TORRES_ALTO && !encimaDe(prev.id).length) ? prev.id : null });
+    }
+  }
+  function aTorre(id, tid){
+    const t = torrePorId(tid); if (!t || !esCarta(porId(id)) || t.cartas.includes(id) || t.cartas.length >= TORRE_MAX) return false;
+    const i = estado.mesa.indexOf(id); if (i >= 0) estado.mesa.splice(i, 1);
+    delete estado.estantes[id]; const o = torreDe(id); if (o) o.cartas.splice(o.cartas.indexOf(id), 1);
+    t.cartas.push(id); guardar(); return true;
+  }
+  function delTorre(id){
+    const t = torreDe(id); if (!t) return false;
+    t.cartas.splice(t.cartas.indexOf(id), 1); aMesa(id); return true;
+  }
+  // mudar una torre: a un punto de la sala (fracciones del .centro) o encima de otra (si la pila no pasa de 5)
+  function moverTorre(tid, x, y, sobre){
+    const t = torrePorId(tid); if (!t) return false;
+    if (sobre){
+      const b = torrePorId(sobre); if (!b || sobre === tid || basesDe(sobre).includes(tid) || encimaDe(sobre).length) return false;
+      const alto = alturaPila(sobre) + 1 + encimaDe(tid).length; if (alto > TORRES_ALTO) return false;
+      t.sobre = sobre;
+    } else { t.sobre = null; t.x = Math.max(.04, Math.min(.96, +x)); t.y = Math.max(.3, Math.min(.99, +y)); }
+    guardar(); return true;
   }
   function cargarEstado(){
     let s = null;
     if (!q.has('limpio') && !q.has('test')){ try { s = JSON.parse(localStorage.getItem(CLAVE)); } catch (e) {} }
-    estado = { mesa: [], estantes: {}, fajo: [] };
+    estado = { mesa: [], estantes: {}, torres: [] };
     if (s && typeof s === 'object'){
       if (Array.isArray(s.mesa)) estado.mesa = s.mesa.filter((id, i, a) => porId(id) && a.indexOf(id) === i);
-      if (Array.isArray(s.fajo)) estado.fajo = s.fajo.filter((id, i, a) => esCarta(porId(id)) && a.indexOf(id) === i && !estado.mesa.includes(id)).slice(0, FAJO_MAX);
+      if (Array.isArray(s.torres)) estado.torres = s.torres;
+      else if (Array.isArray(s.fajo) && s.fajo.length) estado.torres = [{ id: 't1', cartas: s.fajo, x: .87, y: .975, sobre: null }];     // el fajo de antes pasa a ser la torre 1
+      sincronizarTorres();
+      const enTorre = new Set(estado.torres.flatMap(t => t.cartas));
+      estado.mesa = estado.mesa.filter(id => !enTorre.has(id));
       if (s.estantes && typeof s.estantes === 'object') for (const id in s.estantes){
         const p = s.estantes[id];
-        if (porId(id) && posValida(p) && !estado.mesa.includes(id) && !estado.fajo.includes(id)) estado.estantes[id] = { lado: p.lado, fila: p.fila | 0, col: p.col | 0 };
+        if (porId(id) && posValida(p) && !estado.mesa.includes(id) && !enTorre.has(id)) estado.estantes[id] = { lado: p.lado, fila: p.fila | 0, col: esCarta(porId(id)) ? Math.min(COLS - MONTON_ANCHO, p.col | 0) : p.col | 0 };
       }
-      if (posValida(s.fajoPos)) fajoPos = { lado: s.fajoPos.lado, fila: s.fajoPos.fila | 0, col: s.fajoPos.col | 0 };
-    }
-    if (!tieneFajo()) estado.fajo = [];
+    } else sincronizarTorres();
     if (q.has('mesa')){
       estado.mesa = q.get('mesa').split(',').filter((id, i, a) => porId(id) && a.indexOf(id) === i);
       for (const id of estado.mesa) delete estado.estantes[id];
     }
-    // dos libros en la misma ranura: el segundo busca hueco
+    // dos libros en la misma ranura: el segundo busca hueco (las cartas sí pueden compartirla: son un montón)
     const vistas = {};
     for (const id of Object.keys(estado.estantes)){
+      if (esCarta(porId(id))) continue;
       const k = clave(estado.estantes[id]);
       if (vistas[k]){ const p = estado.estantes[id]; delete estado.estantes[id]; colocar(id, p); }
       vistas[clave(estado.estantes[id])] = id;
     }
+    // libros y montones pisados: el libro que cayó bajo un montón (o un montón de más de 10) busca sitio
+    for (const id of Object.keys(estado.estantes)){
+      const p = estado.estantes[id], l = porId(id);
+      if (esCarta(l)){ const m = montonEn(p); if (m && m.ids.length > MONTON_MAX && m.ids.indexOf(id) >= MONTON_MAX) colocarCarta(id, p); }
+      else if (ocupada(p, id) === 'monton'){ const h = huecoCerca(p, id); if (h) estado.estantes[id] = h; }
+    }
     // libros sin sitio (nuevos en el catálogo): a su estante de nacimiento
+    const enTorre = new Set(estado.torres.flatMap(t => t.cartas));
     for (const l of CAT){
-      if (estado.mesa.includes(l.id) || estado.estantes[l.id] || estado.fajo.includes(l.id)) continue;
+      if (estado.mesa.includes(l.id) || estado.estantes[l.id] || enTorre.has(l.id)) continue;
       colocar(l.id, posValida(l.estante) ? l.estante : { lado: 'izq', fila: 0, col: 0 });
     }
-    desalojarFajo();
-  }
-  // lo que haya en las ranuras del fajo se corre al hueco vecino
-  function desalojarFajo(){
-    if (!tieneFajo()) return;
-    for (const id in estado.estantes){ if (enFajo(estado.estantes[id])){ const h = huecoCerca(estado.estantes[id], id); if (h) estado.estantes[id] = h; } }
-  }
-  // ---- el fajo: atar una carta, desatarla (a la mesa) y mudarlo de ranura ----
-  function aFajo(id){
-    estado.fajo = estado.fajo || [];
-    if (!tieneFajo() || !esCarta(porId(id)) || estado.fajo.includes(id) || estado.fajo.length >= FAJO_MAX) return false;
-    const i = estado.mesa.indexOf(id); if (i >= 0) estado.mesa.splice(i, 1);
-    delete estado.estantes[id]; estado.fajo.push(id); guardar(); return true;
-  }
-  function delFajo(id){
-    estado.fajo = estado.fajo || [];
-    const i = estado.fajo.indexOf(id); if (i < 0) return false;
-    estado.fajo.splice(i, 1); aMesa(id); return true;
-  }
-  function moverFajo(p){
-    if (!tieneFajo() || !posValida(p)) return false;
-    p = { lado: p.lado, fila: p.fila | 0, col: Math.min(COLS - FAJO_ANCHO, p.col | 0) };
-    for (let k = 0; k < FAJO_ANCHO; k++) if (cubiertas[clave({ lado: p.lado, fila: p.fila, col: p.col + k })]) return false;    // encima de un adorno no
-    fajoPos = p; desalojarFajo(); guardar(); return true;
   }
 
   // ---- las dos operaciones ----
@@ -185,31 +243,28 @@
   const plano = (r, css) => ({ left: r.left, top: r.top, width: r.width, height: r.height, css: css || '' });
 
   function render(){
-    sala.querySelectorAll('.lomo, .libro-mesa, .libro-torre, .carta-estante, .carta-mesa, .carta-torre, .fajo-cartas').forEach(e => e.remove());
-    estado.fajo = estado.fajo || [];
-    if (tieneFajo()){                                            // el fajo de cartas, en sus ranuras
-      const p = posFajo(), fj = document.createElement('div');
-      fj.className = 'fajo-cartas'; fj.title = 'Cartas atadas: ' + estado.fajo.length + ' de ' + FAJO_MAX;
-      const cols = estado.fajo.slice(0, 4).map(id => CARTA.colores(porId(id))[0]);
-      while (cols.length < 4) cols.push(cols.length % 2 ? '#e7c9a9' : '#f1e4c4');
-      fj.innerHTML = '<span class="pila">' + cols.map(c => '<i style="background:linear-gradient(180deg,' + c + ', rgba(0,0,0,.08))"></i>').join('') + '</span><i class="cordon v"></i><i class="cordon h"></i><i class="nudo"></i>' +
-        (estado.fajo.length ? '<b class="cuenta">' + estado.fajo.length + '</b>' : '');
-      librerias[p.lado].filas[p.fila][p.col].appendChild(fj);
-      engancharFajo(fj);
+    sala.querySelectorAll('.lomo, .libro-mesa, .libro-torre, .monton-cartas, .carta-mesa, .carta-torre').forEach(e => e.remove());
+    // los montones de cartas: uno por posición, dos ranuras de ancho, las cartas de canto con su cinta
+    const M = montones();
+    for (const k in M){
+      const m = M[k], el = document.createElement('div'), n = m.ids.length;
+      el.className = 'monton-cartas'; el.dataset.monton = k; el.dataset.id = m.ids[0]; el.title = n === 1 ? porId(m.ids[0]).titulo : n + ' cartas';
+      el.style.setProperty('--n', n);
+      el.innerHTML = '<span class="pila">' + m.ids.map(id => '<i style="background:' + CARTA.colores(porId(id))[0] + '"></i>').join('') + '</span><i class="cinta"></i><i class="lazo"></i>' + (n > 1 ? '<b class="cuenta">' + n + '</b>' : '');
+      librerias[m.pos.lado].filas[m.pos.fila][m.pos.col].appendChild(el);
+      engancharMonton(el, m.ids.slice(), m.pos);
     }
     for (const id in estado.estantes){
       const l = porId(id), p = estado.estantes[id];
+      if (esCarta(l)) continue;
       const lomo = document.createElement('div');
       lomo.dataset.id = id; lomo.style.cssText = estilo(l); lomo.title = l.titulo;
-      if (esCarta(l)){                                           // acostada al pie de la ranura, delante del lomo que haya
-        lomo.className = 'carta-estante'; lomo.innerHTML = CARTA.sobre(l, 'chico') + '<i class="toque"></i>';
-      } else {
-        lomo.className = 'lomo';
-        lomo.innerHTML = '<span class="rotulo">' + esc(l.lomo || l.titulo) + '</span><i class="toque"></i>' + (l.candado ? '<i class="candado-lomo"></i>' : '');
-      }
+      lomo.className = 'lomo';
+      lomo.innerHTML = '<span class="rotulo">' + esc(l.lomo || l.titulo) + '</span><i class="toque"></i>' + ((l.candado || l.pin) ? '<i class="candado-lomo"></i>' : '');
       librerias[p.lado].filas[p.fila][p.col].appendChild(lomo);
       enganchar(lomo, id, 'estante');
     }
+    pintarTorres();
     const lugar = $('.lugar'), torre = $('.torre');
     estado.mesa.forEach((id, i) => {
       const l = porId(id);
@@ -220,7 +275,7 @@
         else {
           b.className = 'libro-mesa piel';
           b.innerHTML = '<span class="titulo-mesa">' + esc(l.titulo) + '</span>' +
-            (l.candado ? '<i class="candado-mesa' + (conCandado(l) && CANDADO.listo(l) ? ' abierto' : '') + '"></i>' : '');
+            ((l.candado || l.pin) ? '<i class="candado-mesa' + ((conCandado(l) && CANDADO.listo(l)) || l._pinOk ? ' abierto' : '') + '"></i>' : '');
         }
         lugar.appendChild(b); enganchar(b, id, 'mesa');
       } else {
@@ -303,7 +358,8 @@
     for (const lado of LADOS) librerias[lado].filas.forEach((fila, f) => fila.forEach((r, c) => a.ranuras.push({ el: r, r: r.getBoundingClientRect(), lado, fila: f, col: c })));
     a.libs = LADOS.map(lado => ({ lado, r: librerias[lado].el.getBoundingClientRect() }));
     a.mesaEl = $('.mesa'); a.mesaR = a.mesaEl.getBoundingClientRect();
-    const fj = sala.querySelector('.fajo-cartas'); a.fajoEl = (fj && esCarta(l)) ? fj : null; a.fajoR = a.fajoEl ? a.fajoEl.getBoundingClientRect() : null;
+    a.torres = esCarta(l) ? [...sala.querySelectorAll('.torre-cartas')].map(t => ({ el: t, r: t.getBoundingClientRect(), tid: t.dataset.torre })).filter(t => torrePorId(t.tid).cartas.length < TORRE_MAX) : [];
+    a.montones = esCarta(l) ? [...sala.querySelectorAll('.monton-cartas')].map(m => ({ el: m, r: m.getBoundingClientRect(), k: m.dataset.monton })) : [];
     a.destino = null;
   }
   function mover(e){
@@ -311,7 +367,9 @@
     a.fant.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px) translate(-50%,-72%) rotate(-6deg)';
     let d = null;
     const lib = a.libs.find(x => dentro(e, x.r, 6));
-    if (a.fajoEl && dentro(e, a.fajoR, 10) && estado.fajo.length < FAJO_MAX) d = { tipo: 'fajo', el: a.fajoEl };   // una carta sobre el fajo: se ata
+    const tor = a.torres.find(t => dentro(e, t.r, 10)), mon = a.montones.find(m => dentro(e, m.r, 4) && montones()[m.k] && montones()[m.k].ids.length < MONTON_MAX && !montones()[m.k].ids.includes(a.id));
+    if (tor) d = { tipo: 'torre', el: tor.el, tid: tor.tid };                                   // una carta sobre una torre: se ata
+    else if (mon) d = { tipo: 'ranura', pos: montones()[mon.k].pos, el: mon.el };                 // sobre un montón con sitio: se suma
     else if (lib){
       let fila = 0;
       for (const x of a.ranuras){ if (x.lado === lib.lado && x.col === 0 && e.clientY >= x.r.top) fila = Math.max(fila, x.fila); }
@@ -323,8 +381,14 @@
       }
       if (mejor){
         const p = { lado: mejor.lado, fila: mejor.fila, col: mejor.col };
-        const h = ocupada(p, a.id) ? huecoCerca(p, a.id) : p;
-        if (h) d = { tipo: 'ranura', pos: h, el: librerias[h.lado].filas[h.fila][h.col] };
+        if (esCarta(porId(a.id))){                                                               // la carta: su montón o un sitio de dos ranuras
+          const antes = estado.estantes[a.id]; const okc = colocarCarta(a.id, p); const h = okc ? Object.assign({}, estado.estantes[a.id]) : null;
+          delete estado.estantes[a.id]; if (antes) estado.estantes[a.id] = antes;
+          if (h) d = { tipo: 'ranura', pos: h, el: librerias[h.lado].filas[h.fila][h.col] };
+        } else {
+          const h = ocupada(p, a.id) ? huecoCerca(p, a.id) : p;
+          if (h) d = { tipo: 'ranura', pos: h, el: librerias[h.lado].filas[h.fila][h.col] };
+        }
       }
     } else if (dentro(e, a.mesaR, 30) && a.origen !== 'mesa') d = { tipo: 'mesa', el: a.mesaEl };
     if (a.destino && (!d || a.destino.el !== d.el)) a.destino.el.classList.remove('destino');
@@ -341,12 +405,11 @@
     const desde = {}; desde[a.id] = rf;
     if (d && d.tipo === 'ranura') flip(() => aEstante(a.id, d.pos), desde);
     else if (d && d.tipo === 'mesa') flip(() => aMesa(a.id), desde);
-    else if (d && d.tipo === 'fajo'){ const rfj = d.el.getBoundingClientRect(); volar(rf, rfj, null, false); aFajo(a.id); render(); }
+    else if (d && d.tipo === 'torre'){ volar(rf, d.el.getBoundingClientRect(), null, false); aTorre(a.id, d.tid); render(); }
     else volar(rf, a.el.getBoundingClientRect(), a.el, false);       // vuelve solo a su sitio
   }
-  // el fajo: un toque lo abre (la lista de cartas atadas: tocar una la lleva a la mesa); arrastrarlo lo muda de ranura
-  let fajoPanel = null;
-  function engancharFajo(el){
+  // arrastre genérico de un objeto de cartas (montón o torre): toque corto = abrir; movimiento = fantasma que sigue al dedo
+  function arrastreObjeto(el, op){
     let ar = null;
     el.addEventListener('pointerdown', e => {
       if (e.button !== 0 || bloqueado || arrastre) return;
@@ -357,44 +420,88 @@
       if (!ar) return;
       if (!ar.activo){
         if (Math.hypot(e.clientX - ar.x0, e.clientY - ar.y0) < 9) return;
-        ar.activo = true; ar.fant = el.cloneNode(true); ar.fant.classList.add('fajo-fantasma'); document.body.appendChild(ar.fant); el.classList.add('fantasma'); cuerpo.classList.add('arrastrando');
+        ar.activo = true; ar.fant = el.cloneNode(true); ar.fant.classList.add('objeto-fantasma'); ar.fant.style.width = el.getBoundingClientRect().width + 'px'; ar.fant.style.height = el.getBoundingClientRect().height + 'px';
+        document.body.appendChild(ar.fant); el.classList.add('fantasma'); cuerpo.classList.add('arrastrando'); if (op.empezar) op.empezar(ar);
       }
       ar.fant.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px) translate(-50%,-60%)';
-      const r = ranuraBajo(e.clientX, e.clientY);
-      if (ar.destino && (!r || ar.destino.el !== r.el)) ar.destino.el.classList.remove('destino');
-      if (r && !cubiertas[clave(r)]) { r.el.classList.add('destino'); ar.destino = r; } else ar.destino = null;
+      const d = op.destino(e, ar);
+      if (ar.destino && ar.destino.el && (!d || ar.destino.el !== d.el)) ar.destino.el.classList.remove('destino');
+      if (d && d.el) d.el.classList.add('destino');
+      ar.destino = d;
     });
     const fin = e => {
       if (!ar) return; const a = ar; ar = null;
-      if (!a.activo){ abrirFajo(); return; }
+      if (!a.activo){ op.tocar(); return; }
       a.fant.remove(); el.classList.remove('fantasma'); cuerpo.classList.remove('arrastrando');
-      if (a.destino){ a.destino.el.classList.remove('destino'); if (moverFajo({ lado: a.destino.lado, fila: a.destino.fila, col: a.destino.col })) render(); }
+      if (a.destino && a.destino.el) a.destino.el.classList.remove('destino');
+      op.soltar(a.destino, e);
     };
     el.addEventListener('pointerup', fin); el.addEventListener('pointercancel', fin);
   }
-  function abrirFajo(){
-    if (!fajoPanel){ fajoPanel = document.createElement('div'); fajoPanel.id = 'fajo-panel'; document.body.appendChild(fajoPanel); fajoPanel.addEventListener('pointerdown', e => { if (e.target === fajoPanel) cerrarFajo(); }); }
-    const items = estado.fajo.map(id => { const l = porId(id); return '<div class="item" data-id="' + esc(id) + '">' + CARTA.sobre(l, 'chico') + '<span>' + esc(l.titulo) + '</span></div>'; }).join('');
-    fajoPanel.innerHTML = '<div class="caja" role="dialog" aria-label="Cartas atadas"><h4>Cartas atadas · ' + estado.fajo.length + ' / ' + FAJO_MAX + '<button type="button" class="cerrar" aria-label="Cerrar">✕</button></h4>' +
-      (items || '<div class="vacio">No hay cartas atadas. Arrastra una carta hasta el fajo para atarla.</div>') + '</div>';
-    fajoPanel.hidden = false;
-    fajoPanel.querySelector('.cerrar').onclick = cerrarFajo;
-    fajoPanel.querySelectorAll('.item').forEach(it => { it.onclick = () => { cerrarFajo(); flip(() => delFajo(it.dataset.id)); }; });
+  // el montón: un toque abre la carta (si es una) o la lista; arrastrarlo muda todas sus cartas a otra ranura
+  function engancharMonton(el, ids, pos){
+    arrastreObjeto(el, {
+      tocar: () => { if (ids.length === 1) flip(() => aMesa(ids[0])); else abrirLista(ids.length + ' cartas en el montón', ids); },
+      destino: e => { const r = ranuraBajo(e.clientX, e.clientY); if (!r) return null; const c = Math.min(r.col, COLS - MONTON_ANCHO); const m = montonEn({ lado: r.lado, fila: r.fila, col: c }); if (m && m.pos.lado === pos.lado && m.pos.fila === pos.fila && m.pos.col === pos.col) return null; return { lado: r.lado, fila: r.fila, col: c, el: librerias[r.lado].filas[r.fila][c] }; },
+      soltar: d => { if (d && moverMonton(ids, d)) render(); },
+    });
   }
-  function cerrarFajo(){ if (fajoPanel) fajoPanel.hidden = true; }
-  // la ranura bajo un punto de la pantalla (para mudar el fajo): null si no hay librería ahí
-  function ranuraBajo(x, y){
-    for (const lado of LADOS){
-      const lib = librerias[lado]; if (!lib) continue;
-      const r = lib.el.getBoundingClientRect(); if (x < r.left - 6 || x > r.right + 6 || y < r.top - 6 || y > r.bottom + 6) continue;
-      let fila = 0;
-      lib.filas.forEach((f, i) => { if (y >= f[0].getBoundingClientRect().top) fila = Math.max(fila, i); });
-      let mejor = null, md = Infinity;
-      lib.filas[fila].forEach((el, col) => { const rr = el.getBoundingClientRect(), d = Math.abs(rr.left + rr.width / 2 - x); if (d < md){ md = d; mejor = { lado, fila, col, el }; } });
-      return mejor;
+  // la lista de cartas de un montón o una torre: tocar una la lleva a la mesa
+  let listaPanel = null;
+  function abrirLista(titulo, ids){
+    if (!listaPanel){ listaPanel = document.createElement('div'); listaPanel.id = 'lista-cartas'; document.body.appendChild(listaPanel); listaPanel.addEventListener('pointerdown', e => { if (e.target === listaPanel) cerrarLista(); }); }
+    const items = ids.map(id => { const l = porId(id); return '<div class="item" data-id="' + esc(id) + '">' + CARTA.sobre(l, 'chico') + '<span>' + esc(l.titulo) + '</span></div>'; }).join('');
+    listaPanel.innerHTML = '<div class="caja" role="dialog" aria-label="' + esc(titulo) + '"><h4>' + esc(titulo) + '<button type="button" class="cerrar" aria-label="Cerrar">✕</button></h4>' +
+      (items || '<div class="vacio">Todavía no hay cartas aquí. Arrastra una carta hasta la torre para atarla.</div>') + '</div>';
+    listaPanel.hidden = false;
+    listaPanel.querySelector('.cerrar').onclick = cerrarLista;
+    listaPanel.querySelectorAll('.item').forEach(it => { it.onclick = () => { cerrarLista(); const id = it.dataset.id; flip(() => { if (torreDe(id)) delTorre(id); else aMesa(id); }); }; });
+  }
+  function cerrarLista(){ if (listaPanel) listaPanel.hidden = true; }
+  // ---- las torres: objetos sueltos en el .centro; se pintan con medidas en píxeles (las apiladas se apoyan en la de abajo) ----
+  const centroEl = sala.querySelector('.centro');
+  function medidaTorre(t, W){
+    const w = Math.max(44, Math.min(84, W * .075)), n = t.cartas.length;
+    return { w, h: w * (.45 + 1.05 * Math.min(1, n / TORRE_MAX)) };
+  }
+  function pintarTorres(){
+    sala.querySelectorAll('.torre-cartas').forEach(e => e.remove());
+    if (!centroEl || !estado.torres.length) return;
+    const c = centroEl.getBoundingClientRect(), W = c.width, H = c.height; if (!W || !H) return;
+    const m = sala.querySelector('.mesa'), mr = m ? m.getBoundingClientRect() : null, mesaBase = mr ? (mr.bottom - c.top) - mr.height * .03 : H;
+    const puesto = {};
+    const colocarT = t => {
+      if (puesto[t.id]) return puesto[t.id];
+      const d = medidaTorre(t, W);
+      let x, yb;
+      if (t.sobre && torrePorId(t.sobre)){ const b = colocarT(torrePorId(t.sobre)); x = b.x; yb = b.yb - b.h; } else { x = t.x * W; yb = t.y * H; }
+      return (puesto[t.id] = { x, yb, w: d.w, h: d.h, z: yb > mesaBase ? 4 : 2 });
+    };
+    for (const t of estado.torres){
+      const g = colocarT(t), el = document.createElement('div'), n = t.cartas.length;
+      el.className = 'torre-cartas'; el.dataset.torre = t.id; el.title = 'Torre de cartas: ' + n + ' de ' + TORRE_MAX + (t.sobre ? ' (apilada)' : '');
+      el.style.cssText = 'left:' + (g.x - g.w / 2).toFixed(1) + 'px;top:' + (g.yb - g.h).toFixed(1) + 'px;width:' + g.w.toFixed(1) + 'px;height:' + g.h.toFixed(1) + 'px;z-index:' + g.z;
+      const cols = t.cartas.slice(0, 6).map(id => CARTA.colores(porId(id))[0]); while (cols.length < 2) cols.push(cols.length ? '#e7c9a9' : '#f1e4c4');
+      el.style.setProperty('--pap', cols[0]); el.style.setProperty('--pap2', cols[1] || cols[0]);
+      el.innerHTML = '<i class="bloque"></i><i class="cinta"></i><i class="lazo"></i>' + (n ? '<b class="cuenta">' + n + '</b>' : '');
+      centroEl.appendChild(el);
+      engancharTorre(el, t);
     }
-    return null;
   }
+  function engancharTorre(el, t){
+    arrastreObjeto(el, {
+      tocar: () => abrirLista('Torre de cartas · ' + t.cartas.length + ' / ' + TORRE_MAX, t.cartas.slice()),
+      empezar: ar => { ar.otras = [...sala.querySelectorAll('.torre-cartas')].filter(o => o !== el && !basesDe(o.dataset.torre).includes(t.id) && !encimaDe(o.dataset.torre).length && o.dataset.torre !== t.sobre).map(o => ({ el: o, r: o.getBoundingClientRect(), tid: o.dataset.torre })); },
+      destino: (e, ar) => { const o = ar.otras.find(x => dentro(e, x.r, 8)); if (o && alturaPila(o.tid) + 1 + encimaDe(t.id).length <= TORRES_ALTO) return { tipo: 'torre', el: o.el, tid: o.tid }; return { tipo: 'suelo' }; },
+      soltar: (d, e) => {
+        if (!d) return;
+        if (d.tipo === 'torre'){ if (moverTorre(t.id, null, null, d.tid)) render(); return; }
+        const c = centroEl.getBoundingClientRect();
+        if (moverTorre(t.id, (e.clientX - c.left) / c.width, (e.clientY - c.top) / c.height + .04, null)) render();
+      },
+    });
+  }
+  addEventListener('resize', () => pintarTorres());
 
   // ---- pistas que se enseñan solas ----
   let pistaT = 0;
@@ -415,6 +522,8 @@
     const l = porId(id); if (!l || bloqueado) return;
     // con candado: primero el número (o la clave que recuerda el navegador); las fotos se descifran y recién entonces se abre
     if (conCandado(l) && !CANDADO.listo(l)){ CANDADO.pedir(l, () => abrirLibro(id)); return; }
+    // un libro propio con candado (crear.js): pide su número y compara la huella
+    if (l.pin && !l._pinOk){ pedirPin(l, () => { l._pinOk = true; render(); abrirLibro(id); }); return; }
     if (esLibroDePaginas(l)) abrirPoema(l, -1, true);
     else if (l.tipo === 'girasoles') abrirGirasoles(l);
     else if (esCarta(l)) abrirCarta(l);
@@ -422,6 +531,32 @@
   function abrirCarta(l){
     bloqueado = true; pistaS.classList.remove('ver');
     CARTA.mostrar(l, { alTerminar: () => { bloqueado = false; } });
+  }
+  let pinPanel = null;
+  function pedirPin(l, cb){
+    if (!pinPanel){
+      pinPanel = document.createElement('div'); pinPanel.id = 'candado-propio'; pinPanel.hidden = true;
+      pinPanel.innerHTML = '<div class="cerradura" role="dialog" aria-label="Este libro tiene candado">' +
+        '<svg class="cierre" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="#d4b06a" stroke-width="2"/><rect x="5" y="10" width="14" height="11" rx="2" fill="#d4b06a"/></svg>' +
+        '<div class="tit">Este libro tiene candado</div><div class="sub">Escribe el número para abrirlo</div>' +
+        '<input class="cifra" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="12" aria-label="Número del candado">' +
+        '<div class="aviso"></div><div class="botones"><button type="button" class="cancelar">Volver</button><button type="button" class="abrir">Abrir</button></div></div>';
+      document.body.appendChild(pinPanel);
+    }
+    const input = pinPanel.querySelector('.cifra'), aviso = pinPanel.querySelector('.aviso'), caja = pinPanel.querySelector('.cerradura');
+    input.value = ''; aviso.textContent = ''; input.maxLength = Math.max(1, (l.pin.largo | 0) || 12);
+    pinPanel.hidden = false; setTimeout(() => { try { input.focus(); } catch (e) {} }, 60);
+    const cerrar = () => { pinPanel.hidden = true; pinPanel.querySelector('.abrir').onclick = null; pinPanel.querySelector('.cancelar').onclick = null; input.onkeydown = null; input.oninput = null; };
+    const probar = async () => {
+      const n = input.value.trim(); if (!n) return;
+      const h = window.CUENTA ? await CUENTA.huella(l.pin.sal, n) : '';
+      if (h && h === l.pin.huella){ cerrar(); cb(); }
+      else { aviso.textContent = 'No es ese número'; caja.classList.remove('tiembla'); void caja.offsetWidth; caja.classList.add('tiembla'); input.select(); }
+    };
+    pinPanel.querySelector('.abrir').onclick = probar;
+    pinPanel.querySelector('.cancelar').onclick = cerrar;
+    input.onkeydown = e => { if (e.key === 'Enter') probar(); else if (e.key === 'Escape') cerrar(); };
+    input.oninput = () => { if (l.pin.largo && input.value.length >= l.pin.largo) probar(); };
   }
   // el poema, los álbumes y el calendario se leen en el lector; el calendario escribe sus páginas con la fecha de hoy
   function esLibroDePaginas(l){
@@ -468,23 +603,8 @@
     const res = [];
     const ok = (c, m) => res.push((c ? 'OK ' : 'FALLA ') + m);
     const pos = id => estado.estantes[id] ? clave(estado.estantes[id]) : '-';
-    estado = { mesa: [], estantes: {}, fajo: [] };
+    estado = { mesa: [], estantes: {}, torres: [] };
     for (const l of CAT) colocar(l.id, l.estante);
-    // la carta y el fajo: la carta no ocupa ranura; con FAJO definido, una carta se ata, se desata a la mesa y el fajo se muda
-    if (porId('carta')){
-      aMesa('poema'); aEstante('poema', { lado: 'der', fila: 2, col: 6 });
-      ok(pos('poema') === 'der:2:6' && pos('carta') === 'der:2:6', 'carta: comparte la ranura con un libro sin correrlo');
-      aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
-      if (tieneFajo()){
-        render();
-        ok(!!sala.querySelector('.fajo-cartas') && ocupada(posFajo(), null) === 'fajo', 'fajo: aparece en su esquina y ocupa sus ranuras');
-        const atada = aFajo('carta'); render();
-        ok(atada && estado.fajo.join() === 'carta' && !elDe('carta') && sala.querySelector('.fajo-cartas .cuenta').textContent === '1', 'fajo: la carta atada sale de la librería y el fajo la cuenta');
-        ok(delFajo('carta') && !estado.fajo.length && estado.mesa.includes('carta'), 'fajo: desatarla la lleva a la mesa');
-        ok(moverFajo({ lado: 'izq', fila: 4, col: 0 }) && clave(posFajo()) === 'izq:4:0', 'fajo: se muda de ranura');
-        aEstante('carta', { lado: 'der', fila: 2, col: 6 });
-      }
-    }
     ok(pos('poema') === 'izq:0:1' && pos('girasoles') === 'der:0:5', 'nacen en su estante');
     ok(pos('suenos') === 'izq:1:3' && pos('album') === 'der:1:2' && porId('album').datos.paginas.length >= 1, 'los álbumes nacen en su estante con sus páginas');
     // el calendario: nace con candado y, con unos días de prueba, escribe sus páginas y sus marcas
@@ -499,6 +619,7 @@
       ok(t(new Date(2026, 11, 20)).pared === 'navidad' && t(new Date(2026, 1, 10)).pared === 'sanvalentin' && t(new Date(2026, 3, 10)).pared === 'otono' && t(new Date(2026, 9, 11)).pared === 'primavera',
         'fondos: diciembre es Navidad, febrero San Valentín, abril otoño y octubre primavera');
       const antes = FONDOS_SALA.eleccion().pared;
+      if (window.CUENTA && !CUENTA.tiene('pared', 'rosa')) CUENTA.comprar('pared', 'rosa');       // con inventario, primero se compra
       FONDOS_SALA.elegir('pared', 'rosa'); ok(FONDOS_SALA.eleccion().pared === 'rosa' && FONDOS_SALA.vivo().pared === 'rosa', 'fondos: elegir una pared la pone');
       FONDOS_SALA.elegir('pared', 'css'); ok(FONDOS_SALA.vivo().pared === 'css' && FONDOS_SALA.eleccion().pared === 'css', 'fondos: el dibujo de siempre vuelve');
       FONDOS_SALA.elegir('pared', antes);
@@ -512,13 +633,49 @@
       ok(pos('poema') === 'der:4:0', 'adornos: al quitar el adorno la ranura vuelve a servir');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
     } else ok(false, 'adornos: no cargaron');
+    // la cuenta, la tienda, las mascotas en caliente, los libros propios y la mudanza de adornos (el producto)
+    if (window.CUENTA){
+      const antes = CUENTA.monedas(), ran = CUENTA.ranuras();
+      const nuevo = CUENTA.piezas('pared').find(p => p.hecha && !CUENTA.tiene('pared', p.clave));
+      ok(!!nuevo && CUENTA.comprar('pared', nuevo.clave).ok && CUENTA.tiene('pared', nuevo.clave) && CUENTA.monedas() === antes - CUENTA.precioDe('pared', nuevo.clave), 'tienda: comprar una pared la deja en el inventario y cobra su precio');
+      ok(!!nuevo && CUENTA.comprar('pared', nuevo.clave).motivo === 'ya' && CUENTA.comprar('mejora', 'ranura').ok && CUENTA.ranuras() === ran + 1, 'tienda: no se compra dos veces; la ranura extra suma');
+      const enSala = id => !window.GATOS_SALA || !GATOS_SALA.lista().length || GATOS_SALA.lista().some(g => g.id === id);
+      const nm = CUENTA.mascotas().length, rm = CUENTA.agregarMascota('atigrado', 'Prueba');
+      ok(rm.ok && CUENTA.mascotas().length === nm + 1 && enSala(rm.mascota.id), 'editar: subir una mascota la pone en la sala');
+      ok(CUENTA.quitarMascota(rm.mascota.id) && CUENTA.mascotas().length === nm && (!window.GATOS_SALA || !GATOS_SALA.lista().some(g => g.id === rm.mascota.id)), 'editar: bajarla la quita');
+      const g = CUENTA.guardarLibro({ tipo: 'girasoles', titulo: 'Prueba', tapa: 'girasol', notas: ['hola'], estante: { lado: 'der', fila: 4, col: 7 } });
+      ok(g.ok && !!porId(g.libro.id) && pos(g.libro.id) === 'der:4:7' && !!elDe(g.libro.id), 'crear: un libro propio nace en su ranura con su lomo');
+      ok(CUENTA.borrarLibro(g.libro.id) && !porId(g.libro.id) && !elDe(g.libro.id), 'crear: borrarlo lo quita de la sala');
+      const d0 = CUENTA.disponibles('poema'), s0 = CUENTA.sitiosLibres();
+      ok(CUENTA.comprar('libro', 'poema').ok && CUENTA.disponibles('poema') === d0 + 1 && CUENTA.sitiosLibres() === s0 - 1 && CUENTA.sitiosUsados() + CUENTA.sitiosLibres() === CUENTA.RANURAS_LIBRERIA,
+        'tienda: un libro en blanco más de poemas y un sitio menos de los 80');
+      const ad = ADS[0];
+      if (ad){ const p0 = Object.assign({}, ad.estante); ok(SALA_ADORNOS.mover(ad.id, { lado: 'izq', fila: 2, col: 7 }) && ad.estante.lado === 'izq' && ad.estante.fila === 2 && ad.estante.col === COLS - Math.max(1, ad.ancho | 0 || 1) && !!CUENTA.posAdorno(ad.id), 'editar: un adorno se muda de ranura y su ancho cabe'); SALA_ADORNOS.mover(ad.id, p0); }
+    }
+    // la carta y el cordón (en las dos salas): el montón ocupa dos ranuras; cada cordón es una torre; una carta se ata y se desata a la mesa
+    if (porId('carta')){
+      ok(pos('carta') === 'der:2:6' && ocupada({ lado: 'der', fila: 2, col: 6 }) === 'monton' && ocupada({ lado: 'der', fila: 2, col: 7 }) === 'monton', 'montón: una carta en la librería ocupa dos ranuras');
+      aMesa('poema'); aEstante('poema', { lado: 'der', fila: 2, col: 6 });
+      ok(pos('poema') !== 'der:2:6' && pos('poema') !== 'der:2:7' && pos('poema').startsWith('der:2:'), 'montón: el libro mandado ahí busca el hueco vecino');
+      aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
+      if (window.CUENTA && !nTorres()) CUENTA.comprar('mejora', 'cordon');
+      sincronizarTorres(); render();
+      if (nTorres()){
+        ok(estado.torres.length >= 1 && sala.querySelectorAll('.torre-cartas').length === estado.torres.length, 'cordón: cada cordón es una torre de cartas en la sala');
+        const t1 = estado.torres[0].id, atada = aTorre('carta', t1); render();
+        ok(atada && torreDe('carta') && torreDe('carta').id === t1 && !elDe('carta') && sala.querySelector('.torre-cartas .cuenta').textContent === '1', 'torre: la carta atada sale de la librería y la torre la cuenta');
+        ok(delTorre('carta') && !torreDe('carta') && estado.mesa.includes('carta'), 'torre: desatarla la lleva a la mesa');
+        ok(moverTorre(t1, .3, .9, null) && Math.abs(estado.torres[0].x - .3) < 1e-9, 'torre: se muda a otro punto de la sala');
+      } else ok(false, 'cordón: la sala no tiene torres (TORRES_CARTAS en libros.js)');
+      aEstante('carta', { lado: 'der', fila: 2, col: 6 });
+    }
     if (cal && window.CALENDARIO){
-      const D = { dias: [{ fecha: '2026-10-11', nombre: 'Inicio', inicio: true }, { dia: 30, mes: 9, nombre: 'Autitos', icono: 'auto' }] };
+      const D = { dias: [{ fecha: '2026-03-15', nombre: 'Inicio', inicio: true }, { dia: 20, mes: 2, nombre: 'Regalo', icono: 'regalo' }] };
       const ev = (y, m) => CALENDARIO.eventos(D, y, m).map(e => e.d + ':' + e.nombre).join('|');
-      ok(ev(2026, 9) === '11:Inicio' && ev(2026, 10) === '11:1 mes juntos' && ev(2027, 9) === '11:1 año juntos' && ev(2027, 8) === '11:11 meses juntos|30:Autitos' && ev(2026, 8) === '30:Autitos',
+      ok(ev(2026, 2) === '15:Inicio' && ev(2026, 3) === '15:1 mes juntos' && ev(2027, 2) === '15:1 año juntos' && ev(2027, 1) === '15:11 meses juntos|20:Regalo' && ev(2026, 1) === '20:Regalo',
         'calendario: el inicio marca cada mes y cada año; los días del año se repiten');
-      const px = CALENDARIO.proximos(D, new Date(2026, 9, 7), 3).map(e => e.dias + ':' + e.nombre).join('|');
-      ok(px === '4:Inicio|35:1 mes juntos|65:2 meses juntos' && CALENDARIO.paginas(new Date(2026, 9, 7)).length === 13 && CALENDARIO.paginas(new Date(2026, 9, 7))[1].mes === '2026-10',
+      const px = CALENDARIO.proximos(D, new Date(2026, 2, 11), 3).map(e => e.dias + ':' + e.nombre).join('|');
+      ok(px === '4:Inicio|35:1 mes juntos|65:2 meses juntos' && CALENDARIO.paginas(new Date(2026, 2, 11)).length === 13 && CALENDARIO.paginas(new Date(2026, 2, 11))[1].mes === '2026-03',
         'calendario: lo que viene se cuenta desde hoy y hay doce meses desde el mes en curso');
     }
     aMesa('poema'); ok(estado.mesa.join() === 'poema' && pos('poema') === '-', 'primer libro: de pie en la mesa');
@@ -575,6 +732,10 @@
   // ---- los adornos de las librerías (ADORNOS en catalogo.js): tapan ranuras y los libros se corren ----
   const ADS = (typeof ADORNOS !== 'undefined' && Array.isArray(ADORNOS)) ? ADORNOS : [];
   let adornosOcultos = new Set((window.FONDOS_SALA && FONDOS_SALA.adornosOcultos) ? FONDOS_SALA.adornosOcultos() : []);
+  // la pareja pudo mudar cada adorno de ranura (modo editar) y solo se ponen los que tiene
+  if (window.CUENTA) for (const a of ADS){ const p = CUENTA.posAdorno(a.id); if (p && posValida(p)) a.estante = p; }
+  const tieneAdorno = a => !window.CUENTA || q.has('fondo') || CUENTA.tiene('adorno', a.id);
+  const visible = a => !!a._img && !adornosOcultos.has(a.id) && posValida(a.estante) && tieneAdorno(a);
   const ranurasDe = a => {
     const n = Math.max(1, Math.min((a.ancho | 0) || 1, COLS - a.estante.col)), out = [];
     for (let k = 0; k < n; k++) out.push({ lado: a.estante.lado, fila: a.estante.fila, col: a.estante.col + k });
@@ -594,17 +755,39 @@
   function pintarAdorno(a){
     // (.adorno-estante: ".adorno" ya es el filete del lector, no se puede reutilizar)
     sala.querySelectorAll('.adorno-estante[data-adorno="' + a.id + '"]').forEach(e => e.remove());
-    if (adornosOcultos.has(a.id) || !a._img) return;
+    if (!visible(a)) return;
     const r = a.estante, el = document.createElement('img');
     el.className = 'adorno-estante'; el.dataset.adorno = a.id; el.alt = ''; el.draggable = false; el.title = a.nombre || '';
     el.src = a._img; el.style.setProperty('--ancho', ranurasDe(a).length);
     librerias[r.lado].filas[r.fila][r.col].appendChild(el);
   }
   function aplicarAdornos(){
-    for (const a of ADS){ descubrir(a); if (a._img && !adornosOcultos.has(a.id) && posValida(a.estante)) cubrir(a); }
+    for (const a of ADS){ descubrir(a); if (visible(a)) cubrir(a); }
     desalojar();
     for (const a of ADS) pintarAdorno(a);
   }
+  // mudar un adorno a otra ranura (modo editar): la columna se acota para que quepa su ancho
+  function moverAdorno(id, pos){
+    const a = ADS.find(x => x.id === id); if (!a || !pos || !LADOS.includes(pos.lado)) return false;
+    const n = Math.max(1, (a.ancho | 0) || 1);
+    const p = { lado: pos.lado, fila: Math.max(0, Math.min(FILAS - 1, pos.fila | 0)), col: Math.max(0, Math.min(COLS - n, pos.col | 0)) };
+    a.estante = p; if (window.CUENTA) CUENTA.moverAdorno(id, p);
+    aplicarAdornos(); return true;
+  }
+  // la ranura bajo un punto de la pantalla (para arrastrar adornos desde el editor): null si no hay librería ahí
+  function ranuraBajo(x, y){
+    for (const lado of LADOS){
+      const lib = librerias[lado]; if (!lib) continue;
+      const r = lib.el.getBoundingClientRect(); if (x < r.left - 6 || x > r.right + 6 || y < r.top - 6 || y > r.bottom + 6) continue;
+      let fila = 0;
+      lib.filas.forEach((f, i) => { if (y >= f[0].getBoundingClientRect().top) fila = Math.max(fila, i); });
+      let mejor = null, md = Infinity;
+      lib.filas[fila].forEach((el, col) => { const rr = el.getBoundingClientRect(), d = Math.abs(rr.left + rr.width / 2 - x); if (d < md){ md = d; mejor = { lado, fila, col, el }; } });
+      return mejor;
+    }
+    return null;
+  }
+  document.addEventListener('cuenta', e => { const d = e.detail || {}; if (d.que === 'compra' && d.fam === 'adorno' || d.que === 'reinicio') aplicarAdornos(); });
   function cargarAdornos(){
     for (const a of ADS){
       if (!posValida(a.estante)) continue;
@@ -620,16 +803,75 @@
     cubiertas: () => Object.assign({}, cubiertas),
     // para la prueba: tapar ranuras a mano, sin imagen; devuelve la función que las destapa
     probar: (p, ancho) => { const a = { id: 'prueba', estante: p, ancho }; cubrir(a); desalojar(); return () => { descubrir(a); }; },
+    mover: moverAdorno, ranuraBajo,
   };
-  // la sala para pruebas y capturas: la carta y el fajo
-  window.SALA = { libros: () => CAT.slice(), porId, abrir: abrirLibro, estado: () => JSON.parse(JSON.stringify(estado)), ranuraBajo,
-    aFajo: id => { const ok = aFajo(id); if (ok) render(); return ok; }, delFajo: id => { const ok = delFajo(id); if (ok) render(); return ok; }, moverFajo: p => { const ok = moverFajo(p); if (ok) render(); return ok; }, fajo: () => estado.fajo.slice(), posFajo };
+
+  // ---- la sala para los demás módulos (editor, tienda, creador): libros en caliente ----
+  function agregarLibro(l){
+    if (!l) return null;
+    const i = CAT.findIndex(x => x.id === l.id);
+    if (i >= 0) return actualizarLibro(l);
+    const o = normalizar(l, CAT.length); if (!valido(o)) return null;
+    CAT.push(o);
+    colocar(o.id, posValida(o.estante) ? o.estante : { lado: 'der', fila: 0, col: 0 });
+    guardar(); render(); return o;
+  }
+  function actualizarLibro(l){
+    const i = CAT.findIndex(x => x.id === l.id); if (i < 0) return agregarLibro(l);
+    const o = normalizar(l, i); if (!valido(o)) return null;
+    CAT[i] = o; render(); return o;
+  }
+  function quitarLibro(id){
+    const i = CAT.findIndex(x => x.id === id); if (i < 0) return false;
+    CAT.splice(i, 1); estado.mesa = estado.mesa.filter(x => x !== id); delete estado.estantes[id];
+    guardar(); render(); return true;
+  }
+  document.addEventListener('cuenta', e => {
+    const d = e.detail || {}; if (d.que !== 'libro') return;
+    if (d.fam === 'agregar') agregarLibro(d.extra); else if (d.fam === 'cambiar') actualizarLibro(d.extra); else if (d.fam === 'borrar') quitarLibro(d.clave);
+  });
+  document.addEventListener('cuenta', e => { const d = e.detail || {}; if ((d.que === 'compra' && d.fam === 'mejora' && d.clave === 'cordon') || d.que === 'reinicio'){ sincronizarTorres(); guardar(); render(); } });
+  window.SALA = { libros: () => CAT.slice(), porId, agregarLibro, actualizarLibro, quitarLibro, abrir: abrirLibro, estado: () => JSON.parse(JSON.stringify(estado)), ranuraBajo,
+    aTorre: (id, tid) => { const ok = aTorre(id, tid || (estado.torres[0] || {}).id); if (ok) render(); return ok; }, delTorre: id => { const ok = delTorre(id); if (ok) render(); return ok; },
+    moverTorre: (tid, x, y, sobre) => { const ok = moverTorre(tid, x, y, sobre); if (ok) render(); return ok; }, torres: () => JSON.parse(JSON.stringify(estado.torres)), montones: () => Object.values(montones()).map(m => ({ pos: m.pos, ids: m.ids.slice() })) };
+
+  // ---- cartas de prueba (?demo=cartas, una vez): compra dos cordones (dos torres, una sobre otra), escribe ocho cartas variadas,
+  //      deja cinco apiladas en la mesa y ata tres en la primera torre; luego limpia la dirección para que una recarga no vuelva a sembrar ----
+  function demoCartas(){
+    if (!window.CUENTA || !window.CARTA) return;
+    while (nTorres() < 2 && CUENTA.comprar('mejora', 'cordon').ok){}
+    sincronizarTorres();
+    const P = Object.keys(CARTA.PAPELES), DEMO = [
+      { titulo: 'para Karen', color: 'rosa', cierre: 'cera', hojas: ['Esta es la primera de la pila.\n\nCada carta tiene su color y su cierre; pruébalas todas.'], final: { tipo: 'cerrada', pregunta: '¿Salimos este sábado?', opciones: ['Sí', 'No', 'Lo pienso'], obligatoria: 0, huida: 'explotar' } },
+      { titulo: 'Buenos días', color: 'crema', cierre: 'rasgar', hojas: ['Una carta corta para empezar el día.'], final: null },
+      { titulo: 'Un secreto', color: 'negro', cierre: 'cera', letra: 'imprenta', apertura: { modo: 'colores', colores: ['#111111', '#111111', '#111111'] }, hojas: ['Corazones negros, letra de imprenta.', 'Y una segunda hoja.'], final: { tipo: 'abierta', pregunta: '¿Cuál es el tuyo?' } },
+      { titulo: 'Gracias', color: 'menta', cierre: 'rasgar', hojas: ['Por todo.'], final: null },
+      { titulo: 'Sábado', color: 'celeste', cierre: 'cera', apertura: { modo: 'colores', colores: ['#118ab2', '#70d6ff', '#ffffff'] }, hojas: ['Tres colores a partes iguales.'], final: { tipo: 'cerrada', pregunta: '¿Playa o montaña?', opciones: ['Playa', 'Montaña'], obligatoria: null, huida: 'fantasma' } },
+      { titulo: 'Te extraño', color: 'lavanda', cierre: 'rasgar', hojas: ['Hoja uno.', 'Hoja dos.', 'Hoja tres.', 'Hoja cuatro.', 'Hoja cinco: el máximo.'], final: null },
+      { titulo: 'Léeme después', color: 'rojo', cierre: 'cera', apertura: { modo: 'nada' }, hojas: ['Sin corazones al abrir.'], final: { tipo: 'cerrada', pregunta: '¿Me esperas?', opciones: ['Siempre', 'Un rato', 'Nunca', 'Depende'], obligatoria: 0, huida: 'barrido' } },
+      { titulo: 'Para reír', color: 'marfil', cierre: 'rasgar', hojas: ['Una de las cortas.'], final: null, acepto: { animaciones: ['confeti', 'estrellas'], colores: ['#ffd166', '#06d6a0'] } },
+    ];
+    const ids = [];
+    DEMO.forEach((d, i) => {
+      if (CUENTA.disponibles('carta') <= 0 && !CUENTA.comprar('libro', 'carta').ok) return;
+      const carta = Object.assign({ color: P[i % P.length], letra: 'manuscrita', apertura: { modo: 'muchos' }, firma: 'Yo', acepto: { animaciones: ['fuegos', 'corazones'], colores: ['#e63946', '#ffd166', '#ff70a6'], texto: '¡Sí!' } }, d);
+      delete carta.titulo;
+      const r = CUENTA.guardarLibro({ tipo: 'carta', titulo: d.titulo, tapa: 'rosa', carta, estante: { lado: i % 2 ? 'izq' : 'der', fila: 1 + (i % 4), col: 2 + (i % 5) } });
+      if (r.ok) ids.push(r.libro.id);
+    });
+    ids.slice(0, 5).forEach(id => aMesa(id));
+    if (estado.torres[0]) ids.slice(5).forEach(id => aTorre(id, estado.torres[0].id));
+    guardar(); render();
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    pista(ids.length + ' cartas de prueba: cinco en la mesa, tres atadas en la torre de abajo. Toca la torre, arrastra las de la mesa a la librería.', 9000);
+  }
 
   // ---- arranque ----
   construir();
   cargarEstado();
   render();
   cargarAdornos();
+  if (q.get('demo') === 'cartas') demoCartas();
   sala.addEventListener('pointerup', () => { if (window.LECTOR) LECTOR.musica(); });
   const abrirQ = q.get('abrir') || (q.has('p') ? 'poema' : null);
   if (abrirQ && porId(abrirQ)){

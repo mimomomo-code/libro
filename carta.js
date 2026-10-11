@@ -139,37 +139,42 @@
 .carta-torre::after{content:'';position:absolute;left:46%;top:20%;width:8%;height:60%;border-radius:50%;background:#a3242c;opacity:.85}
 .carta-torre:nth-child(odd){transform:translateX(-5%)}
 .carta-torre:nth-child(even){transform:translateX(5%)}
-.carta-estante{position:absolute;left:4%;width:92%;bottom:0;aspect-ratio:1.5;height:auto;max-height:40%;z-index:3;cursor:pointer;touch-action:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));transition:filter .2s}
-.carta-estante .sobre{width:100%;height:100%;aspect-ratio:auto;transform:perspective(60px) rotateX(8deg)}
-.carta-estante .sobre .rotulo{display:none}
-.carta-estante:hover{filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)) brightness(1.1)}
-.ranura .carta-estante ~ .lomo, .ranura .lomo ~ .carta-estante{z-index:3}
-.carta-estante .toque{position:absolute;inset:-8px -4px}
-/* el fajo de cartas (el cordón) en su ranura, y su lista */
-.fajo-cartas{position:absolute;left:6%;width:188%;bottom:0;aspect-ratio:1.1;height:auto;max-height:60%;z-index:3;cursor:pointer;touch-action:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.55));transition:filter .2s}   /* ocupa dos ranuras */
-.fajo-cartas:hover{filter:drop-shadow(0 3px 3px rgba(0,0,0,.55)) brightness(1.1)}
-.fajo-cartas .pila{position:absolute;inset:0;display:block}
-.fajo-cartas .pila i{position:absolute;left:0;right:0;height:30%;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.08)}
-.fajo-cartas .pila i:nth-child(1){bottom:0}
-.fajo-cartas .pila i:nth-child(2){bottom:23%;transform:rotate(-2.5deg)}
-.fajo-cartas .pila i:nth-child(3){bottom:46%;transform:rotate(1.5deg)}
-.fajo-cartas .pila i:nth-child(4){bottom:69%;transform:rotate(-1deg)}
-.fajo-cartas .cordon{position:absolute;background:#7a4a24;box-shadow:0 0 0 .5px rgba(255,255,255,.25)}
-.fajo-cartas .cordon.v{left:50%;top:-3%;bottom:-2%;width:2px;transform:translateX(-50%)}
-.fajo-cartas .cordon.h{left:-2%;right:-2%;top:48%;height:2px}
-.fajo-cartas .nudo{position:absolute;left:50%;top:49%;width:16%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#a8703a,#5e3516);transform:translate(-50%,-50%)}
-.fajo-cartas .cuenta{position:absolute;right:-8%;top:-14%;min-width:16px;padding:0 4px;border-radius:9px;background:#a3242c;color:#fff;font:600 10px/16px 'Cormorant Garamond',Georgia,serif;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.5)}
-.fajo-fantasma{position:fixed;left:0;top:0;width:70px;height:60px;z-index:80;pointer-events:none;opacity:.9}
-#fajo-panel{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
-#fajo-panel[hidden]{display:none}
-#fajo-panel .caja{width:min(90vw, 380px);max-height:76vh;overflow:auto;scrollbar-width:thin;background:linear-gradient(160deg,#3b2114,#241309 60%,#160b05);border:1px solid rgba(212,176,106,.55);border-radius:10px;padding:14px;color:#e9dcc4;font-family:'Cormorant Garamond',Georgia,serif;box-shadow:0 30px 60px rgba(0,0,0,.7)}
-#fajo-panel h4{margin:0 0 10px;font:400 12px/1 Cinzel,serif;letter-spacing:.1em;color:#d4b06a;text-transform:uppercase;display:flex;align-items:center;gap:8px}
-#fajo-panel h4 button{margin-left:auto;background:none;border:0;color:#d4b06a;font-size:16px;cursor:pointer;line-height:1}
-#fajo-panel .item{display:flex;align-items:center;gap:10px;padding:7px 6px;border-radius:6px;cursor:pointer;font-size:17px}
-#fajo-panel .item:hover{background:rgba(255,255,255,.06)}
-#fajo-panel .item .sobre{width:46px;flex:0 0 auto}
-#fajo-panel .item .sobre .rotulo{display:none}
-#fajo-panel .vacio{font-style:italic;opacity:.75;padding:8px 6px;font-size:15px}
+/* EL MONTÓN en la librería: hasta 10 cartas de canto, una sobre otra, con una cinta roja; ocupa dos ranuras y crece con la cuenta */
+.monton-cartas{position:absolute;left:5%;width:190%;bottom:0;height:calc(14% + var(--n, 1) * 7.6%);max-height:90%;z-index:2;cursor:pointer;touch-action:none;filter:drop-shadow(1px 2px 2px rgba(0,0,0,.55));transition:filter .2s}
+.monton-cartas:hover{filter:drop-shadow(1px 2px 2px rgba(0,0,0,.55)) brightness(1.1)}
+.monton-cartas .pila{position:absolute;inset:0;display:flex;flex-direction:column-reverse;justify-content:flex-start}
+.monton-cartas .pila i{display:block;flex:1 1 0;min-height:0;border-radius:1px;box-shadow:inset 0 -1px 0 rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.35);background-image:linear-gradient(90deg,rgba(0,0,0,.08),transparent 12%,transparent 88%,rgba(0,0,0,.14))}
+.monton-cartas .pila i:nth-child(even){transform:translateX(3%)}
+.monton-cartas .cinta{position:absolute;left:50%;top:-6%;bottom:-2%;width:8%;max-width:5px;background:linear-gradient(90deg,#8e1c24,#c8323b 50%,#8e1c24);transform:translateX(-50%);box-shadow:0 0 0 .5px rgba(0,0,0,.3)}
+.monton-cartas .lazo{position:absolute;left:50%;top:-9%;width:46%;max-width:16px;aspect-ratio:1.6;transform:translate(-50%,-50%);border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:radial-gradient(circle at 50% 50%,#8e1c24 18%,transparent 19%),linear-gradient(90deg,#c8323b,#a3242c 50%,#c8323b);box-shadow:0 1px 1px rgba(0,0,0,.4)}
+.monton-cartas .cuenta{position:absolute;right:-6%;top:-18%;min-width:15px;padding:0 4px;border-radius:9px;background:#a3242c;color:#fff;font:600 10px/15px 'Cormorant Garamond',Georgia,serif;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.5)}
+/* LA TORRE (el cordón): un bloque alto de cartas apiladas, atado con una cinta y su moño; objeto suelto del .centro */
+.torre-cartas{position:absolute;z-index:2;cursor:pointer;touch-action:none;filter:drop-shadow(2px 4px 4px rgba(0,0,0,.6));transition:filter .2s}
+.torre-cartas:hover{filter:drop-shadow(2px 4px 4px rgba(0,0,0,.6)) brightness(1.08)}
+.torre-cartas .bloque{position:absolute;inset:0;border-radius:3px 3px 2px 2px;
+  background:repeating-linear-gradient(180deg,var(--pap, #f1e4c4) 0 4px,rgba(0,0,0,.14) 4px 5px,var(--pap2, #e7c9a9) 5px 9px,rgba(0,0,0,.14) 9px 10px);
+  box-shadow:inset 3px 0 6px rgba(255,255,255,.3), inset -4px 0 8px rgba(0,0,0,.25), inset 0 2px 0 rgba(255,255,255,.4)}
+.torre-cartas .bloque::after{content:'';position:absolute;left:0;right:0;top:0;height:7%;min-height:4px;background:var(--pap, #f1e4c4);border-radius:3px 3px 0 0;box-shadow:inset 0 -1px 0 rgba(0,0,0,.2)}
+.torre-cartas .cinta{position:absolute;left:50%;top:-2%;bottom:0;width:9%;max-width:7px;background:linear-gradient(90deg,#8e1c24,#c8323b 50%,#8e1c24);transform:translateX(-50%);box-shadow:0 0 0 .5px rgba(0,0,0,.3)}
+.torre-cartas .lazo{position:absolute;left:50%;top:0;width:70%;max-width:40px;aspect-ratio:1.5;transform:translate(-50%,-62%);border-radius:50% 50% 45% 45% / 70% 70% 40% 40%;
+  background:radial-gradient(circle at 50% 56%,#6e1218 16%,transparent 17%),linear-gradient(90deg,#c8323b,#a3242c 48%,#a3242c 52%,#c8323b);box-shadow:0 2px 2px rgba(0,0,0,.45)}
+.torre-cartas .lazo::before,.torre-cartas .lazo::after{content:'';position:absolute;top:70%;width:14%;height:70%;background:#a3242c;transform-origin:50% 0}
+.torre-cartas .lazo::before{left:36%;transform:rotate(14deg)}
+.torre-cartas .lazo::after{right:36%;transform:rotate(-14deg)}
+.torre-cartas .cuenta{position:absolute;right:-10%;top:-6%;min-width:16px;padding:0 4px;border-radius:9px;background:#a3242c;color:#fff;font:600 10px/16px 'Cormorant Garamond',Georgia,serif;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.5)}
+.torre-cartas.destino{filter:drop-shadow(0 0 6px rgba(240,213,154,.9))}
+.objeto-fantasma{position:fixed !important;left:0 !important;top:0 !important;bottom:auto !important;z-index:80;pointer-events:none;opacity:.92}
+/* la lista de un montón o una torre */
+#lista-cartas{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
+#lista-cartas[hidden]{display:none}
+#lista-cartas .caja{width:min(90vw, 380px);max-height:76vh;overflow:auto;scrollbar-width:thin;background:linear-gradient(160deg,#3b2114,#241309 60%,#160b05);border:1px solid rgba(212,176,106,.55);border-radius:10px;padding:14px;color:#e9dcc4;font-family:'Cormorant Garamond',Georgia,serif;box-shadow:0 30px 60px rgba(0,0,0,.7)}
+#lista-cartas h4{margin:0 0 10px;font:400 12px/1 Cinzel,serif;letter-spacing:.1em;color:#d4b06a;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+#lista-cartas h4 button{margin-left:auto;background:none;border:0;color:#d4b06a;font-size:16px;cursor:pointer;line-height:1}
+#lista-cartas .item{display:flex;align-items:center;gap:10px;padding:7px 6px;border-radius:6px;cursor:pointer;font-size:17px}
+#lista-cartas .item:hover{background:rgba(255,255,255,.06)}
+#lista-cartas .item .sobre{width:46px;flex:0 0 auto}
+#lista-cartas .item .sobre .rotulo{display:none}
+#lista-cartas .vacio{font-style:italic;opacity:.75;padding:8px 6px;font-size:15px}
 /* el visor */
 #carta-vista{position:fixed;inset:0;z-index:40;background:rgba(18,10,6,.7);opacity:0;animation:capa-entra .6s ease forwards;touch-action:none;font-family:'Cormorant Garamond',Georgia,serif;overflow:hidden}
 #carta-vista.fuera{transition:opacity .7s ease;opacity:0 !important;pointer-events:none}
@@ -200,7 +205,7 @@
 #carta-vista .sobre.grande.rasgado .cuerpo{clip-path:polygon(0 13%,2% 11%,5% 13%,8% 10%,11% 13%,14% 11%,17% 13%,20% 10%,23% 13%,26% 11%,29% 13%,32% 10%,35% 13%,38% 11%,41% 13%,44% 10%,47% 13%,50% 11%,53% 13%,56% 10%,59% 13%,62% 11%,65% 13%,68% 10%,71% 13%,74% 11%,77% 13%,80% 10%,83% 13%,86% 11%,89% 13%,92% 10%,95% 13%,98% 11%,100% 13%,100% 100%,0 100%)}
 #carta-vista .sobre.grande.vacio{transform:translateY(22vh) scale(.85);opacity:0;pointer-events:none}
 /* el pliego doblado en tres que sale del sobre y se desdobla */
-#carta-vista .pliego{position:absolute;left:50%;top:50%;width:min(78vw, 400px);transform:translate(-50%,-50%);transform-style:preserve-3d;opacity:0;transition:opacity .3s}
+#carta-vista .pliego{position:absolute;left:50%;top:50%;width:min(78vw, 400px);transform:translate(-50%,-50%);transform-style:preserve-3d;opacity:0;transition:opacity .3s;pointer-events:none}   /* invisible pero encima del sobre: sin esto se comía el toque al sello */
 #carta-vista .pliego.ver{opacity:1}
 #carta-vista .pliego .panel{position:relative;width:100%;height:calc(min(74vh, 540px) / 3);overflow:hidden;background:var(--p1);box-shadow:0 0 0 1px rgba(0,0,0,.06)}
 #carta-vista .pliego .panel .copia{position:absolute;left:0;width:100%;height:min(74vh, 540px)}
