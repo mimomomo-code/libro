@@ -17,6 +17,9 @@
 //    ?lleno=1&nota=1         girasoles ya posados / con la nota a la vista
 //    ?limpio=1               ignora lo recordado por el navegador
 //    ?test=1                 prueba automática de la lógica de la sala
+//    ?brillo=1 | 0           fuerza o apaga el brillo de lo que nadie abrió (brillo.js)
+//  Una entrada de LIBROS con `mesa: true` nace DE PIE sobre la mesa (la carta
+//  que espera a que la abran); con `brillo: "aurea"` brilla hasta que la abren.
 // =====================================================================
 (function(){
   'use strict';
@@ -252,10 +255,12 @@
     }
     // en la mesa, como mucho MESA_CARTAS cartas: las de más vuelven a su estante de nacimiento (el bucle de abajo las coloca)
     let nc = 0; estado.mesa = estado.mesa.filter(id => !esCarta(porId(id)) || ++nc <= MESA_CARTAS);
-    // libros sin sitio (nuevos en el catálogo): a su estante de nacimiento
+    // libros sin sitio (nuevos en el catálogo): a su estante de nacimiento. Con `mesa: true` nace DE PIE sobre la mesa (la carta que
+    // espera a que la abran); si la mesa no la admite (ya hay 5 cartas) o ?mesa= manda otra cosa, va a su estante como las demás
     const enTorre = new Set(estado.torres.flatMap(t => t.cartas));
     for (const l of CAT){
       if (estado.mesa.includes(l.id) || estado.estantes[l.id] || enTorre.has(l.id)) continue;
+      if (l.mesa && !q.has('mesa') && cabeEnMesa(l.id)){ estado.mesa.unshift(l.id); continue; }
       colocar(l.id, posValida(l.estante) ? l.estante : { lado: 'izq', fila: 0, col: 0 });
     }
   }
@@ -302,6 +307,10 @@
   }
   const estilo = l => { if (esCarta(l)) return CARTA.estilo(l); const c = colores(l.tapa); return '--c1:' + c[0] + ';--c2:' + c[1] + ';--c3:' + c[2]; };
   const elDe = id => sala.querySelector('[data-id="' + id + '"]');
+  // el brillo (brillo.js): lo que tiene `brillo` y nadie abrió lleva dentro el reflejo de arcoíris (va el último, se pinta encima);
+  // un montón o una torre brillan si guardan alguna carta que brille
+  const brilloDe = l => (window.BRILLO && l) ? BRILLO.html(l) : '';
+  const brilloEntre = ids => { if (!window.BRILLO) return ''; const id = ids.find(x => BRILLO.vivo(porId(x))); return id ? BRILLO.html(porId(id)) : ''; };
   // un DOMRect no se copia con Object.assign (sus medidas son getters): se aplana a mano
   const plano = (r, css) => ({ left: r.left, top: r.top, width: r.width, height: r.height, css: css || '' });
 
@@ -316,7 +325,7 @@
       const franja = id => '<i style="background:' + CARTA.colores(porId(id))[0] + '"></i>';
       const partes = [];
       for (let i = 0; i < n; i += MONTON_ATADO){ const g = m.ids.slice(i, i + MONTON_ATADO); partes.push(g.length === MONTON_ATADO ? '<span class="atado">' + g.map(franja).join('') + '</span>' : g.map(franja).join('')); }
-      el.innerHTML = '<span class="pila">' + partes.join('') + '</span>' + (n > 1 ? '<b class="cuenta">' + n + '</b>' : '');
+      el.innerHTML = '<span class="pila">' + partes.join('') + '</span>' + (n > 1 ? '<b class="cuenta">' + n + '</b>' : '') + brilloEntre(m.ids);
       const ranura = librerias[m.pos.lado].filas[m.pos.fila][m.pos.col]; ranura.appendChild(el);
       el.style.setProperty('--f', Math.max(2, Math.min(5, ranura.offsetHeight * .037)).toFixed(2) + 'px');      // 20 cartas ≈ 75 % del estante (ya no hay libros detrás)
       engancharMonton(el, m.ids.slice(), m.pos);
@@ -326,7 +335,7 @@
       if (esCarta(l) && p.hueco){                                  // de pie entre dos libros, en el hueco a la izquierda de la ranura (col 8: a la derecha de la última)
         const h = document.createElement('div'), c = l.carta || {};
         h.className = 'carta-hueco ' + (c.cierre === 'rasgar' ? 'rasgar' : 'cera') + (p.col >= COLS ? ' der' : ''); h.dataset.id = id; h.style.cssText = estilo(l); h.title = l.titulo;
-        h.innerHTML = (c.cierre === 'rasgar' ? '<i class="tira"></i>' : '<i class="sello"></i>') + '<i class="toque"></i>';
+        h.innerHTML = (c.cierre === 'rasgar' ? '<i class="tira"></i>' : '<i class="sello"></i>') + '<i class="toque"></i>' + brilloDe(l);
         librerias[p.lado].filas[p.fila][Math.min(p.col, COLS - 1)].appendChild(h);
         enganchar(h, id, 'estante'); continue;
       }
@@ -334,7 +343,7 @@
       const lomo = document.createElement('div');
       lomo.dataset.id = id; lomo.style.cssText = estilo(l); lomo.title = l.titulo;
       lomo.className = 'lomo';
-      lomo.innerHTML = '<span class="rotulo">' + esc(l.lomo || l.titulo) + '</span><i class="toque"></i>' + ((l.candado || l.pin) ? '<i class="candado-lomo"></i>' : '');
+      lomo.innerHTML = '<span class="rotulo">' + esc(l.lomo || l.titulo) + '</span><i class="toque"></i>' + ((l.candado || l.pin) ? '<i class="candado-lomo"></i>' : '') + brilloDe(l);
       librerias[p.lado].filas[p.fila][p.col].appendChild(lomo);
       enganchar(lomo, id, 'estante');
     }
@@ -349,11 +358,11 @@
         else {
           b.className = 'libro-mesa piel';
           b.innerHTML = '<span class="titulo-mesa">' + esc(l.titulo) + '</span>' +
-            ((l.candado || l.pin) ? '<i class="candado-mesa' + ((conCandado(l) && CANDADO.listo(l)) || l._pinOk ? ' abierto' : '') + '"></i>' : '');
+            ((l.candado || l.pin) ? '<i class="candado-mesa' + ((conCandado(l) && CANDADO.listo(l)) || l._pinOk ? ' abierto' : '') + '"></i>' : '') + brilloDe(l);
         }
         lugar.appendChild(b); enganchar(b, id, 'mesa');
       } else {
-        b.className = esCarta(l) ? 'carta-torre' : 'libro-torre';
+        b.className = esCarta(l) ? 'carta-torre' : 'libro-torre'; b.innerHTML = brilloDe(l);
         torre.appendChild(b); enganchar(b, id, 'torre');
       }
     });
@@ -562,7 +571,7 @@
       el.style.cssText = 'left:' + (g.x - g.w / 2).toFixed(1) + 'px;top:' + (g.yb - g.h).toFixed(1) + 'px;width:' + g.w.toFixed(1) + 'px;height:' + g.h.toFixed(1) + 'px;z-index:' + g.z;
       const cols = t.cartas.slice(0, 6).map(id => CARTA.colores(porId(id))[0]); while (cols.length < 2) cols.push(cols.length ? '#e7c9a9' : '#f1e4c4');
       el.style.setProperty('--pap', cols[0]); el.style.setProperty('--pap2', cols[1] || cols[0]);
-      el.innerHTML = '<i class="bloque"></i><i class="cinta"></i><i class="lazo"></i>' + (n ? '<b class="cuenta">' + n + '</b>' : '');
+      el.innerHTML = '<i class="bloque"></i><i class="cinta"></i><i class="lazo"></i>' + (n ? '<b class="cuenta">' + n + '</b>' : '') + brilloEntre(t.cartas);
       centroEl.appendChild(el);
       engancharTorre(el, t);
     }
@@ -603,6 +612,7 @@
     if (conCandado(l) && !CANDADO.listo(l)){ CANDADO.pedir(l, () => abrirLibro(id)); return; }
     // un libro propio con candado (crear.js): pide su número y compara la huella
     if (l.pin && !l._pinOk){ pedirPin(l, () => { l._pinOk = true; render(); abrirLibro(id); }); return; }
+    if (window.BRILLO && !esCarta(l)) BRILLO.apagar(l.id);     // un libro que brillaba deja de brillar al abrirse por primera vez (la carta, al romper el sello: carta.js)
     if (esLibroDePaginas(l)) abrirPoema(l, -1, true);
     else if (l.tipo === 'girasoles') abrirGirasoles(l);
     else if (esCarta(l)) abrirCarta(l);
@@ -789,6 +799,26 @@
         ok(moverTorre(t1, .3, .9, null) && Math.abs(estado.torres[0].x - .3) < 1e-9, 'torre: se muda a otro punto de la sala');
       } else ok(false, 'cordón: la sala no tiene torres (TORRES_CARTAS en libros.js)');
       aEstante('carta', { lado: 'der', fila: 2, col: 6 });
+    }
+    // el brillo (brillo.js): lo que nace con `brillo` brilla en la mesa y en la librería hasta que se abre por primera vez
+    const conBrillo = window.BRILLO ? CAT.find(l => BRILLO.tiene(l)) : null;
+    if (conBrillo){
+      const b = conBrillo, aurea = () => sala.querySelector('[data-id="' + b.id + '"] .aurea, .monton-cartas[data-id="' + b.id + '"] .aurea');
+      aMesa(b.id); render();
+      ok(BRILLO.vivo(b) && !!aurea() && !!sala.querySelector('.lugar [data-id="' + b.id + '"] .aurea'), 'brillo: lo que nadie abrió brilla de pie en la mesa');
+      aEstante(b.id, posValida(b.estante) ? b.estante : { lado: 'izq', fila: 2, col: 0 }); render();
+      ok(!!aurea(), 'brillo: también brilla guardado en la librería');
+      BRILLO.apagar(b.id); render();
+      ok(!BRILLO.vivo(b) && !aurea() && !!BRILLO.abiertos()[b.id], 'brillo: al abrirse por primera vez se apaga y se recuerda');
+      BRILLO.encender(b.id);
+      ok(BRILLO.vivo(b), 'brillo: encender lo devuelve (para capturas)');
+    }
+    // una carta con `mesa: true` nace DE PIE sobre la mesa (la primera vez; después queda donde la dejen)
+    const nace = CAT.find(l => l.mesa);
+    if (nace){
+      cargarEstado();
+      ok(estado.mesa[0] === nace.id && !estado.estantes[nace.id], 'mesa: la carta que espera nace de pie sobre la mesa');
+      estado = { mesa: [], estantes: {}, torres: [] }; for (const l of CAT) colocar(l.id, l.estante); sincronizarTorres(); render();
     }
     if (cal && window.CALENDARIO){
       const D = { dias: [{ fecha: '2026-03-15', nombre: 'Inicio', inicio: true }, { dia: 20, mes: 2, nombre: 'Regalo', icono: 'regalo' }] };

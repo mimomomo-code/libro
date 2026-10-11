@@ -46,7 +46,15 @@
 //  - estante: dónde nace el libro la PRIMERA vez: lado "izq" o "der",
 //             fila 0-4 (0 = la de arriba) y columna 0-7 (0 = la de la
 //             izquierda). Después cada persona lo mueve donde quiera y su
-//             navegador recuerda el orden.
+//             navegador recuerda el orden. Una carta con `hueco: true` nace DE
+//             PIE en el hueco a la izquierda de esa columna (col 8 = a la
+//             derecha de la última); sin él, acostada en un montón de dos ranuras.
+//  - mesa: (opcional) true = nace DE PIE sobre la mesa en vez de en la librería
+//          (la carta que espera a que la abran). Si la mesa no la admite va a su
+//          `estante`. Solo la primera vez: después queda donde la dejen.
+//  - brillo: (opcional) "aurea" = brilla con un reflejo de arcoíris, sutil,
+//            hasta que alguien lo abre por PRIMERA vez (brillo.js); desde
+//            entonces queda como los demás. Vale para libros y cartas.
 // =====================================================================
 
 // Piezas de la sala que pueden llevar una imagen propia (PNG o WebP con
@@ -177,30 +185,91 @@ const LIBROS = [
     efecto_fin: "estrellas",
     estante: { lado: "izq", fila: 0, col: 5 },
   },
+  // ---- LAS CARTAS (carta.js). Diez repartidas por la sala, cortas, para irlas encontrando de a poco: acostadas en montones
+  //      (dos ranuras de la librería), de pie en el hueco entre dos libros (hueco: true) y una sola, distinta, esperando sobre la
+  //      mesa. NINGUNA de las diez dice "te amo": eso lo dice solo la de la mesa. Formato completo del bloque `carta`: color del
+  //      papel (crema, marfil, rosa, celeste, lavanda, menta, rojo, negro), cierre "cera" (se rompe el sello) | "rasgar" (se
+  //      arranca la tira), letra "manuscrita" | "imprenta", apertura { modo: "muchos" | "colores" con 1-3 colores | "nada" }
+  //      (los corazones que llueven al abrir), hojas (1 a 5, cada una con sus saltos de línea), firma (opcional), final
+  //      (null, o una pregunta abierta { tipo: "abierta", pregunta } o cerrada { tipo: "cerrada", pregunta, opciones (2-5),
+  //      obligatoria: índice o null, huida: "explotar" | "fantasma" | "barrido" }) y acepto (la fiesta: imagen, animaciones
+  //      "fuegos" | "flores" | "corazones" | "estrellas" | "confeti", colores, texto). Las respuestas quedan en el navegador de
+  //      quien la abre. ----
   {
-    // LA CARTA (carta.js): un sobre que se abre rompiendo el sello de cera (cierre "cera") o rasgando la
-    // orilla ("rasgar"), llueven corazones (apertura.modo "muchos" | "colores" con 1-3 colores | "nada"),
-    // hasta cinco hojas manuscritas (letra "manuscrita" | "imprenta") y, al final, una pregunta: abierta
-    // ({ tipo: "abierta", pregunta }) o cerrada ({ tipo: "cerrada", pregunta, opciones (2-5), obligatoria:
-    // índice o null, huida: "explotar" | "fantasma" | "barrido" }). `acepto` es la fiesta: imagen (PNG o GIF por
-    // enlace), animaciones ("fuegos", "flores", "corazones", "estrellas", "confeti"), colores y el grito.
-    // Color del papel: crema, marfil, rosa, celeste, lavanda, menta, rojo, negro. Las respuestas quedan en el
-    // navegador de quien la abre. Escribe aquí la tuya; esta es la de muestra.
-    id: "carta",
-    tipo: "carta",
-    titulo: "Para ti",
-    carta: {
-      color: "rosa", cierre: "cera", letra: "manuscrita",
-      apertura: { modo: "muchos" },
-      hojas: [
-        "Escribe aquí tu carta.\n\nSe abre rompiendo el sello, llueven corazones y se lee hoja por hoja, como una carta doblada en tres.",
-        "Puede tener hasta cinco hojas y, al final, una pregunta.",
-      ],
-      firma: "Con cariño",
-      final: { tipo: "cerrada", pregunta: "¿Salimos este sábado?", opciones: ["Sí", "No", "Lo pienso"], obligatoria: 0, huida: "explotar" },
-      acepto: { animaciones: ["fuegos", "corazones"], colores: ["#e63946", "#ffd166", "#ff70a6"], texto: "¡Sí!" },
-    },
+    id: "carta", tipo: "carta", titulo: "Ábreme",
+    carta: { color: "rosa", cierre: "cera", apertura: { modo: "muchos" },
+      hojas: ["Te quiero.\n\nAsí, en chiquito, para que lo leas rapidito y sigas con tu día sabiendo que te quiero un montón."] },
     estante: { lado: "der", fila: 2, col: 6 },
+  },
+  {
+    id: "buenos_dias", tipo: "carta", titulo: "Buenos días",
+    carta: { color: "crema", cierre: "rasgar", apertura: { modo: "colores", colores: ["#ffd166", "#f4a261", "#ffffff"] },
+      hojas: ["Buenos días, Karen.\n\nOjalá hoy te pase algo bonito. Y si no te pasa nada, igual tienes esto: te quiero."] },
+    estante: { lado: "izq", fila: 0, col: 2, hueco: true },
+  },
+  {
+    id: "buenas_noches", tipo: "carta", titulo: "Buenas noches",
+    carta: { color: "lavanda", cierre: "cera", apertura: { modo: "colores", colores: ["#8338ec", "#c8b9e2", "#ffffff"] },
+      hojas: ["Buenas noches.\n\nA esta hora te extraño un poquito más que el resto del día. Duerme rico, mañana seguimos."] },
+    estante: { lado: "izq", fila: 1, col: 5 },
+  },
+  {
+    id: "psst", tipo: "carta", titulo: "Psst",
+    carta: { color: "menta", cierre: "rasgar", apertura: { modo: "muchos" },
+      hojas: ["Te extraño.\n\nNada más eso. Ya la puedes guardar."] },
+    estante: { lado: "izq", fila: 1, col: 5 },
+  },
+  {
+    id: "si_estas_triste", tipo: "carta", titulo: "Si estás triste",
+    carta: { color: "celeste", cierre: "cera", apertura: { modo: "colores", colores: ["#70d6ff", "#118ab2", "#ffffff"] },
+      hojas: ["Si abriste esta es porque andas bajoneada.\n\nRespira. Ya va a pasar. Y mientras pasa, acá estoy yo, que te quiero y te necesito igual en tus días lindos que en los feos."] },
+    estante: { lado: "izq", fila: 2, col: 6 },
+  },
+  {
+    id: "para_despues", tipo: "carta", titulo: "Para después",
+    carta: { color: "marfil", cierre: "cera", apertura: { modo: "muchos" },
+      hojas: ["Me encanta cómo te ríes. Me encanta cómo hablas rápido cuando te emocionas. Me encanta todo lo que eres, y eso no se me va a pasar."] },
+    estante: { lado: "izq", fila: 3, col: 1 },
+  },
+  {
+    id: "hoy", tipo: "carta", titulo: "Hoy",
+    carta: { color: "rojo", cierre: "cera", apertura: { modo: "colores", colores: ["#e63946", "#ffd166"] },
+      hojas: ["Hoy pensé en ti como mil veces.\n\nMás o menos lo normal."] },
+    estante: { lado: "izq", fila: 3, col: 4, hueco: true },
+  },
+  {
+    id: "leeme", tipo: "carta", titulo: "Léeme",
+    carta: { color: "celeste", cierre: "rasgar", apertura: { modo: "muchos" },
+      hojas: ["Te necesito.\n\nNo de una forma dramática, sino de la buena: contigo todo me sale mejor."] },
+    estante: { lado: "der", fila: 0, col: 1 },
+  },
+  {
+    id: "una_mas", tipo: "carta", titulo: "Una más",
+    carta: { color: "rosa", cierre: "rasgar", apertura: { modo: "muchos" },
+      hojas: ["Eres mi persona favorita.\n\nLo digo en serio. No es una carta cualquiera (bueno, sí, pero igual lo digo en serio)."] },
+    estante: { lado: "der", fila: 1, col: 3, hueco: true },
+  },
+  {
+    id: "para_ti", tipo: "carta", titulo: "Para ti",
+    carta: { color: "crema", cierre: "cera", apertura: { modo: "muchos" },
+      hojas: ["Gracias por aguantarme, por escucharme y por quererme así como soy.\n\nTe quiero muchichichichisimo."] },
+    estante: { lado: "der", fila: 3, col: 5 },
+  },
+  {
+    // LA CARTA DE LA MESA: la única que dice "te amo". Nace de pie sobre la mesa (mesa: true) y BRILLA (brillo: "aurea",
+    // brillo.js) con un reflejo de arcoíris, sutil, hasta que Karen rompe el sello por primera vez; desde entonces queda
+    // como una carta más. Las HOJAS de abajo son un BORRADOR para ver la carta armada: las palabras de verdad las escribe
+    // el usuario con su forma de hablar y se pegan aquí tal cual (una hoja por elemento; "\n\n" separa párrafos).
+    id: "karen", tipo: "carta", titulo: "Para Karen",
+    mesa: true, brillo: "aurea",
+    carta: { color: "marfil", cierre: "cera", letra: "manuscrita", apertura: { modo: "muchos" },
+      hojas: [
+        "Karen,\n\nesta carta es distinta a las otras de la sala. Las demás las puedes abrir cuando quieras; esta la escribí despacio, pensando bien cada palabra, porque hay algo que no te había dicho con todas sus letras.\n\nDesde que apareciste todo se me acomodó. Los días pesan menos, me río más, y hasta las cosas aburridas tienen su gracia si después te las puedo contar.",
+        "No sé escribir bonito, pero sé lo que siento, y lo que siento es simple:\n\nte amo.\n\nAsí, sin adornos. Te amo hoy que empezamos, y te voy a amar en cada uno de los días que vienen, que espero que sean muchos.\n\nGracias por estar.",
+      ],
+      firma: "Con todo lo que soy",
+      final: null },
+    estante: { lado: "der", fila: 3, col: 2 },
   },
 ];
 

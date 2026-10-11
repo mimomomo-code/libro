@@ -29,6 +29,8 @@
 //  abrirse), en la torre y acostada en una ranura de la librería SIN ocupar
 //  sitio (comparte la ranura con un libro). Las respuestas se guardan en el
 //  navegador de quien responde (localStorage "libro.cartas.v1").
+//  Con `brillo: "aurea"` en la entrada (brillo.js), el sobre brilla con un
+//  reflejo de arcoíris hasta que alguien rompe el sello por primera vez.
 //
 //  Expone window.CARTA { PAPELES, HUIDAS, ANIMACIONES, normalizar, colores,
 //    sobre(l, clase), mostrar(l, { alTerminar }), respuesta(id), olvidar(id) }.
@@ -94,12 +96,14 @@
   const colores = l => PAPELES[(l && l.carta && PAPELES[l.carta.color]) ? l.carta.color : 'crema'].c;
   const estilo = l => { const c = colores(l); return '--p1:' + c[0] + ';--p2:' + c[1] + ';--p3:' + c[2] + ';--c1:' + c[0] + ';--c2:' + c[1] + ';--c3:' + c[1]; };
 
-  // el sobre, como pieza de HTML (la sala lo usa en la mesa, la torre y la librería; el visor, en grande)
+  // el sobre, como pieza de HTML (la sala lo usa en la mesa, la torre y la librería; el visor, en grande). Si la carta tiene
+  // `brillo` y nadie la abrió todavía (brillo.js), lleva dentro el reflejo de arcoíris, el último para que se pinte encima
   function sobre(l, clase){
     const c = normalizar(l);
-    return '<div class="sobre ' + (clase || '') + ' ' + c.cierre + '" style="' + estilo(l) + '"><i class="cuerpo"></i><i class="solapa"></i>' +
+    const brillo = (window.BRILLO && l && l.id) ? BRILLO.html(l) : '';
+    return '<div class="sobre ' + (clase || '') + ' ' + c.cierre + (brillo ? ' brilla' : '') + '" style="' + estilo(l) + '"><i class="cuerpo"></i><i class="solapa"></i>' +
       (c.cierre === 'cera' ? '<i class="sello"></i>' : '<i class="tira"><b></b></i>') +
-      '<span class="rotulo">' + esc(l.titulo || 'Carta') + '</span></div>';
+      '<span class="rotulo">' + esc(l.titulo || 'Carta') + '</span>' + brillo + '</div>';
   }
 
   // ---- las respuestas, en el navegador de quien responde ----
@@ -447,6 +451,7 @@
       if (etapa !== 'cerrada') return; etapa = 'abriendo';
       avisar('', 0);
       sobreEl.classList.add('abierto');
+      if (window.BRILLO) BRILLO.apagar(id);                  // la primera vez que se abre, el brillo (brillo.js) se apaga aquí y en la sala
       if (c.apertura.modo !== 'nada'){ lluvia = lluviaCorazones($('.posados'), $('.cayendo'), paletaLluvia); lluvia.arrancar(); }
       // el pliego sale del sobre y se desdobla
       pliego.querySelectorAll('.copia').forEach(e => {
