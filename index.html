@@ -462,7 +462,7 @@ body.en-lector #fondos-btn,body.en-lector #fondos,body.plantilla #fondos-btn,bod
     linear-gradient(180deg,#3a2314,#24150c 60%,#170d07);
   background-blend-mode:multiply, normal, normal, normal}
 .centro{position:absolute;left:var(--lib);right:var(--lib);top:0;bottom:0}
-.alfombra{position:absolute;left:3%;right:3%;top:63%;bottom:2%;border-radius:8px;
+.alfombra{position:absolute;z-index:0;left:3%;right:3%;top:63%;bottom:2%;border-radius:8px;   /* bajo los sillones (z 1), los gatos (2) y la mesa (3) */
   background:
     var(--tex-tejido, none) 0 0 / 56px 56px,
     repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 6px, transparent 6px 14px),
@@ -521,7 +521,7 @@ body.en-lector #fondos-btn,body.en-lector #fondos,body.plantilla #fondos-btn,bod
   background:radial-gradient(circle at 35% 35%,#f6df9a,#a97e2c 70%);box-shadow:0 2px 3px rgba(0,0,0,.5)}
 .riel::before{left:-1%}.riel::after{right:-1%}
 /* sillones: el dibujo (o la imagen de DECORACION) más una capa de tejido recortada con su silueta */
-.sillon{position:absolute;filter:drop-shadow(0 12px 14px rgba(0,0,0,.55))}
+.sillon{position:absolute;z-index:1;filter:drop-shadow(0 12px 14px rgba(0,0,0,.55))}   /* sobre la alfombra */
 .sillon svg,.sillon img{display:block;width:100%;height:auto}
 .sillon .tela{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:.65;
   background:var(--tex-tejido, none) 0 0 / 64px 64px;

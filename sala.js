@@ -751,7 +751,13 @@
       ok(CUENTA.comprar('libro', 'poema').ok && CUENTA.disponibles('poema') === d0 + 1 && CUENTA.sitiosLibres() === s0 - 1 && CUENTA.sitiosUsados() + CUENTA.sitiosLibres() === CUENTA.RANURAS_LIBRERIA,
         'tienda: un libro en blanco más de poemas y un sitio menos de los 80');
       const ad = ADS[0];
-      if (ad){ const p0 = Object.assign({}, ad.estante); ok(SALA_ADORNOS.mover(ad.id, { lado: 'izq', fila: 2, col: 7 }) && ad.estante.lado === 'izq' && ad.estante.fila === 2 && ad.estante.col === COLS - Math.max(1, ad.ancho | 0 || 1) && !!CUENTA.posAdorno(ad.id), 'editar: un adorno se muda de ranura y su ancho cabe'); SALA_ADORNOS.mover(ad.id, p0); }
+      if (ad){
+        const p0 = Object.assign({}, ad.estante), n = Math.max(1, ad.ancho | 0 || 1);
+        ok(SALA_ADORNOS.mover(ad.id, { lado: 'izq', fila: 2, col: 7 }) && ad.estante.lado === 'izq' && ad.estante.fila === 2 && ad.estante.col === COLS - n && !!CUENTA.posAdorno(ad.id), 'editar: un adorno se muda de ranura y su ancho cabe');
+        SALA_ADORNOS.mover(ad.id, p0);
+        const cub = SALA_ADORNOS.cubiertas();
+        ok(!Object.keys(cub).some(k => k.startsWith('izq:2:') && cub[k] === 'adorno:' + ad.id) && (!ad._img || cub[clave(p0)] === 'adorno:' + ad.id), 'editar: al mudar el adorno, las ranuras que deja quedan libres');
+      }
     }
     // la carta y el cordón (en las dos salas): el montón ocupa dos ranuras; cada cordón es una torre; una carta se ata y se desata a la mesa
     if (porId('carta')){
@@ -849,7 +855,9 @@
     return out;
   };
   function cubrir(a){ for (const r of ranurasDe(a)) cubiertas[clave(r)] = 'adorno:' + a.id; }
-  function descubrir(a){ for (const r of ranurasDe(a)) if (cubiertas[clave(r)] === 'adorno:' + a.id) delete cubiertas[clave(r)]; }
+  // descubrir borra TODAS las marcas de ese adorno, estén donde estén: al mudarlo, a.estante ya es la posición nueva, y mirando solo
+  // sus ranuras actuales las viejas quedaban tapadas para siempre (la pila de cartas "no quería volver" a su sitio; 11 oct)
+  function descubrir(a){ for (const k of Object.keys(cubiertas)) if (cubiertas[k] === 'adorno:' + a.id) delete cubiertas[k]; }
   // lo que quedó debajo de un adorno se corre: los libros al hueco vecino, los MONTONES enteros (las dos ranuras cuentan: si
   // se movían carta a carta, la pila se partía en dos montones pegados y el adorno quedaba detrás) y la carta de pie tapada
   function desalojar(){
