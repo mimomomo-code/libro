@@ -107,7 +107,9 @@
   // una carta va a un montón: al que haya en esa ranura (si le cabe) o a un sitio libre de dos ranuras cerca
   // dos ranuras libres de verdad para un montón nuevo: sin adorno, sin libro y sin otro montón
   const libre2 = (lado, fila, c) => c >= 0 && c + MONTON_ANCHO <= COLS && !ocupada({ lado, fila, col: c }) && !ocupada({ lado, fila, col: c + 1 });
-  const huecoLibre = p => p.col >= 0 && p.col <= COLS && !enHueco(p) && !huecoPerdido(p);
+  // un hueco sirve si no hay otra carta de pie, no es el del medio de un montón y ninguna de sus dos ranuras vecinas está bajo un adorno
+  const huecoLibre = (p, salvo) => p.col >= 0 && p.col <= COLS && (!enHueco(p) || enHueco(p) === salvo) && !huecoPerdido(p) &&
+    !(p.col < COLS && cubiertas[clave({ lado: p.lado, fila: p.fila, col: p.col })]) && !(p.col > 0 && cubiertas[clave({ lado: p.lado, fila: p.fila, col: p.col - 1 })]);
   function colocarCarta(id, p){
     delete estado.estantes[id];
     if (p.hueco){                                                     // de pie entre dos libros: ese hueco o el libre más cercano de la fila
@@ -691,6 +693,18 @@
       soltar(); aMesa('poema'); aEstante('poema', { lado: 'der', fila: 4, col: 0 });
       ok(pos('poema') === 'der:4:0', 'adornos: al quitar el adorno la ranura vuelve a servir');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
+      // un adorno encima de un montón lo muda entero (no lo parte), y encima de una carta de pie la corre
+      if (porId('carta')){
+        aMesa('carta'); aEstante('carta', { lado: 'der', fila: 4, col: 1 });
+        const s2 = SALA_ADORNOS.probar({ lado: 'der', fila: 4, col: 0 }, 2);
+        const m = montonEn({ lado: 'der', fila: 4, col: 1 }), mm = Object.values(montones()).find(x => x.ids.includes('carta'));
+        ok(!m && !!mm && mm.pos.col >= 2 && mm.ids.length === 1, 'adornos: el montón tapado se muda entero a un sitio libre');
+        s2();
+        aMesa('carta'); aEstante('carta', { lado: 'der', fila: 4, col: 1, hueco: true });
+        const s3 = SALA_ADORNOS.probar({ lado: 'der', fila: 4, col: 0 }, 2);
+        ok(!!estado.estantes.carta.hueco && estado.estantes.carta.col >= 2, 'adornos: la carta de pie tapada se corre a otro hueco');
+        s3(); aMesa('carta'); aEstante('carta', { lado: 'der', fila: 2, col: 6 });
+      }
     } else ok(false, 'adornos: no cargaron');
     // la cuenta, la tienda, las mascotas en caliente, los libros propios y la mudanza de adornos (el producto)
     if (window.CUENTA){
@@ -818,12 +832,19 @@
   };
   function cubrir(a){ for (const r of ranurasDe(a)) cubiertas[clave(r)] = 'adorno:' + a.id; }
   function descubrir(a){ for (const r of ranurasDe(a)) if (cubiertas[clave(r)] === 'adorno:' + a.id) delete cubiertas[clave(r)]; }
-  // los libros que quedaron debajo de un adorno se corren al hueco vecino
+  // lo que quedó debajo de un adorno se corre: los libros al hueco vecino, los MONTONES enteros (las dos ranuras cuentan: si
+  // se movían carta a carta, la pila se partía en dos montones pegados y el adorno quedaba detrás) y la carta de pie tapada
   function desalojar(){
     let movio = false;
+    const M = montones();
+    for (const k in M){
+      const m = M[k], tapado = [0, 1].some(d => cubiertas[clave({ lado: m.pos.lado, fila: m.pos.fila, col: m.pos.col + d })]);
+      if (tapado && moverMonton(m.ids, m.pos)) movio = true;
+    }
     for (const id in estado.estantes){
-      const p = estado.estantes[id];
-      if (cubiertas[clave(p)]){ const h = huecoCerca(p, id); if (h){ estado.estantes[id] = h; movio = true; } }
+      const p = estado.estantes[id], l = porId(id);
+      if (esCarta(l) && p.hueco){ if (!huecoLibre(p, id)){ colocarCarta(id, p); movio = true; } }
+      else if (!esCarta(l) && cubiertas[clave(p)]){ const h = huecoCerca(p, id); if (h){ estado.estantes[id] = h; movio = true; } }
     }
     if (movio){ guardar(); render(); }
   }
