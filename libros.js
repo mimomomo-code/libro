@@ -177,4 +177,34 @@ const LIBROS = [
     efecto_fin: "estrellas",
     estante: { lado: "izq", fila: 0, col: 5 },
   },
+  {
+    // LA CARTA (carta.js): un sobre que se abre rompiendo el sello de cera (cierre "cera") o rasgando la
+    // orilla ("rasgar"), llueven corazones (apertura.modo "muchos" | "colores" con 1-3 colores | "nada"),
+    // hasta cinco hojas manuscritas (letra "manuscrita" | "imprenta") y, al final, una pregunta: abierta
+    // ({ tipo: "abierta", pregunta }) o cerrada ({ tipo: "cerrada", pregunta, opciones (2-5), obligatoria:
+    // índice o null, huida: "explotar" | "fantasma" | "barrido" }). `acepto` es la fiesta: imagen (PNG o GIF por
+    // enlace), animaciones ("fuegos", "flores", "corazones", "estrellas", "confeti"), colores y el grito.
+    // Color del papel: crema, marfil, rosa, celeste, lavanda, menta, rojo, negro. Las respuestas quedan en el
+    // navegador de quien la abre. Escribe aquí la tuya; esta es la de muestra.
+    id: "carta",
+    tipo: "carta",
+    titulo: "Para ti",
+    carta: {
+      color: "rosa", cierre: "cera", letra: "manuscrita",
+      apertura: { modo: "muchos" },
+      hojas: [
+        "Escribe aquí tu carta.\n\nSe abre rompiendo el sello, llueven corazones y se lee hoja por hoja, como una carta doblada en tres.",
+        "Puede tener hasta cinco hojas y, al final, una pregunta.",
+      ],
+      firma: "Con cariño",
+      final: { tipo: "cerrada", pregunta: "¿Salimos este sábado?", opciones: ["Sí", "No", "Lo pienso"], obligatoria: 0, huida: "explotar" },
+      acepto: { animaciones: ["fuegos", "corazones"], colores: ["#e63946", "#ffd166", "#ff70a6"], texto: "¡Sí!" },
+    },
+    estante: { lado: "der", fila: 2, col: 6 },
+  },
 ];
+
+// El FAJO de cartas: un cordón que ata hasta 100 cartas en dos ranuras de la librería (se abre con un toque,
+// tocar una carta la lleva a la mesa, y arrastrar una carta hasta el fajo la ata; arrastrar el fajo lo muda).
+// null = sin fajo.
+const FAJO = { lado: "der", fila: 4, col: 6 };
