@@ -148,13 +148,25 @@
       else if (esCarta(l) && x.hueco && x.col === pos.col + 1) colocarCarta(id, Object.assign({}, x));
     }
   }
-  // mudar un montón entero (todas sus cartas juntas)
+  // mudar un montón entero (todas sus cartas juntas): se une al montón que haya en el destino solo si caben TODAS (tope 20);
+  // si no, va al sitio libre de dos ranuras más cercano; si no hay ninguno, se queda donde estaba
   function moverMonton(ids, p){
-    const resto = ids.slice(1);
+    const antes = ids.map(id => estado.estantes[id]);
     for (const id of ids) delete estado.estantes[id];
-    if (!colocarCarta(ids[0], p)) return false;
-    for (const id of resto) estado.estantes[id] = Object.assign({}, estado.estantes[ids[0]]);
-    guardar(); return true;
+    const m = montonEn(p);
+    let destino = null;
+    if (m && m.ids.length + ids.length <= MONTON_MAX) destino = Object.assign({}, m.pos);
+    else {
+      let md = Infinity;
+      for (const lado of LADOS) for (let f = 0; f < FILAS; f++) for (let c = 0; c <= COLS - MONTON_ANCHO; c++){
+        if (!libre2(lado, f, c)) continue;
+        const d = (lado === p.lado ? 0 : 1000) + Math.abs(f - p.fila) * 10 + Math.abs(c - Math.min(p.col, COLS - MONTON_ANCHO));
+        if (d < md){ md = d; destino = { lado, fila: f, col: c }; }
+      }
+    }
+    if (!destino){ ids.forEach((id, i) => { if (antes[i]) estado.estantes[id] = antes[i]; }); return false; }
+    for (const id of ids) estado.estantes[id] = Object.assign({}, destino);
+    desalojarMonton(destino); guardar(); return true;
   }
   function guardar(){
     if (SOLO_LECTURA) return;
@@ -231,6 +243,12 @@
       if (esCarta(l) && p.hueco){ const k = clave(p); if (huecosVistos[k] || huecoPerdido(p)) colocarCarta(id, p); else huecosVistos[k] = id; }
       else if (esCarta(l)){ const m = montonEn(p); if (m && m.ids.length > MONTON_MAX && m.ids.indexOf(id) >= MONTON_MAX) colocarCarta(id, p); }
       else if (ocupada(p, id) === 'monton'){ const h = huecoCerca(p, id); if (h) estado.estantes[id] = h; }
+    }
+    // montones solapados o pegados por un estado viejo (antes el adorno los partía): el segundo se muda entero (o se une si caben)
+    const filasVistas = [];
+    for (const m of Object.values(montones()).sort((a, b) => a.pos.col - b.pos.col)){
+      if (filasVistas.some(v => v.lado === m.pos.lado && v.fila === m.pos.fila && Math.abs(v.col - m.pos.col) < MONTON_ANCHO)) moverMonton(m.ids, m.pos);
+      else filasVistas.push(m.pos);
     }
     // en la mesa, como mucho MESA_CARTAS cartas: las de más vuelven a su estante de nacimiento (el bucle de abajo las coloca)
     let nc = 0; estado.mesa = estado.mesa.filter(id => !esCarta(porId(id)) || ++nc <= MESA_CARTAS);
