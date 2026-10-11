@@ -72,12 +72,17 @@
     for (const k in M){ const s = M[k].pos; if (s.lado === p.lado && s.fila === p.fila && p.col >= s.col && p.col < s.col + MONTON_ANCHO) return M[k]; }
     return null;
   }
+  // (los montones van DELANTE de los libros, al pie del estante, y no les quitan la ranura: ocupada() no los cuenta)
   function ocupada(p, salvo){
     if (cubiertas[clave(p)]) return cubiertas[clave(p)];
-    const m = montonEn(p); if (m && !(m.ids.length === 1 && m.ids[0] === salvo)) return 'monton';
     for (const id in estado.estantes){ if (id !== salvo && !esCarta(porId(id)) && clave(estado.estantes[id]) === clave(p)) return id; }
     return null;
   }
+  // en la mesa caben pocas cartas a la vez (la pila de la torre de la mesa): el resto espera en la librería o en las torres
+  const MESA_CARTAS = 5;
+  const cartasEnMesa = () => estado.mesa.filter(id => esCarta(porId(id))).length;
+  const cabeEnMesa = id => !esCarta(porId(id)) || estado.mesa.includes(id) || cartasEnMesa() < MESA_CARTAS;
+  const avisoMesaLlena = () => pista('En la mesa caben ' + MESA_CARTAS + ' cartas: guarda alguna en la librería o en una torre', 4500);
   // la ranura libre más cercana a la pedida: misma fila primero, luego filas vecinas, luego la otra librería
   function huecoCerca(p, salvo){
     let mejor = null, md = Infinity;
@@ -97,7 +102,7 @@
     return true;
   }
   // una carta va a un montón: al que haya en esa ranura (si le cabe) o a un sitio libre de dos ranuras cerca
-  const libre2 = (lado, fila, c) => c >= 0 && c + MONTON_ANCHO <= COLS && !ocupada({ lado, fila, col: c }) && !ocupada({ lado, fila, col: c + 1 });
+  const libre2 = (lado, fila, c) => c >= 0 && c + MONTON_ANCHO <= COLS && !cubiertas[clave({ lado, fila, col: c })] && !cubiertas[clave({ lado, fila, col: c + 1 })] && !montonEn({ lado, fila, col: c }) && !montonEn({ lado, fila, col: c + 1 });
   function colocarCarta(id, p){
     delete estado.estantes[id];
     if (p.hueco){                                                     // de pie entre dos libros: ese hueco o el libre más cercano de la fila
@@ -201,14 +206,15 @@
       if (vistas[k]){ const p = estado.estantes[id]; delete estado.estantes[id]; colocar(id, p); }
       vistas[clave(estado.estantes[id])] = id;
     }
-    // libros y montones pisados: el libro que cayó bajo un montón (o un montón de más de 20, o dos cartas en un hueco) busca sitio
+    // montones de más de 20 o dos cartas en un hueco: la de más busca sitio
     const huecosVistos = {};
     for (const id of Object.keys(estado.estantes)){
       const p = estado.estantes[id], l = porId(id);
       if (esCarta(l) && p.hueco){ const k = clave(p); if (huecosVistos[k]) colocarCarta(id, p); else huecosVistos[k] = id; }
       else if (esCarta(l)){ const m = montonEn(p); if (m && m.ids.length > MONTON_MAX && m.ids.indexOf(id) >= MONTON_MAX) colocarCarta(id, p); }
-      else if (ocupada(p, id) === 'monton'){ const h = huecoCerca(p, id); if (h) estado.estantes[id] = h; }
     }
+    // en la mesa, como mucho MESA_CARTAS cartas: las de más vuelven a su estante de nacimiento (el bucle de abajo las coloca)
+    let nc = 0; estado.mesa = estado.mesa.filter(id => !esCarta(porId(id)) || ++nc <= MESA_CARTAS);
     // libros sin sitio (nuevos en el catálogo): a su estante de nacimiento
     const enTorre = new Set(estado.torres.flatMap(t => t.cartas));
     for (const l of CAT){
@@ -219,6 +225,7 @@
 
   // ---- las dos operaciones ----
   function aMesa(id){
+    if (!cabeEnMesa(id)) return false;
     delete estado.estantes[id];
     const i = estado.mesa.indexOf(id);
     if (i > 0){                    // estaba en la torre: pasa a estar de pie y el de pie sube a la torre
@@ -227,7 +234,7 @@
       estado.mesa.unshift(id);
       if (dePie) estado.mesa.push(dePie);
     } else if (i < 0) estado.mesa.push(id);
-    guardar();
+    guardar(); return true;
   }
   function aEstante(id, p){
     const i = estado.mesa.indexOf(id);
@@ -273,7 +280,8 @@
       const partes = [];
       for (let i = 0; i < n; i += MONTON_ATADO){ const g = m.ids.slice(i, i + MONTON_ATADO); partes.push(g.length === MONTON_ATADO ? '<span class="atado">' + g.map(franja).join('') + '</span>' : g.map(franja).join('')); }
       el.innerHTML = '<span class="pila">' + partes.join('') + '</span>' + (n > 1 ? '<b class="cuenta">' + n + '</b>' : '');
-      librerias[m.pos.lado].filas[m.pos.fila][m.pos.col].appendChild(el);
+      const ranura = librerias[m.pos.lado].filas[m.pos.fila][m.pos.col]; ranura.appendChild(el);
+      el.style.setProperty('--f', Math.max(2, Math.min(4.5, ranura.offsetHeight * .029)).toFixed(2) + 'px');      // 20 cartas ≈ 60 % del estante: los libros de atrás asoman
       engancharMonton(el, m.ids.slice(), m.pos);
     }
     for (const id in estado.estantes){
@@ -372,6 +380,7 @@
   }
   function tocar(a){
     if (a.origen === 'mesa'){ abrirLibro(a.id); return; }
+    if (!cabeEnMesa(a.id)){ avisoMesaLlena(); return; }
     flip(() => aMesa(a.id));
   }
   function empezar(){
@@ -436,6 +445,7 @@
     limpiar(a);
     const desde = {}; desde[a.id] = rf;
     if (d && d.tipo === 'ranura') flip(() => aEstante(a.id, d.pos), desde);
+    else if (d && d.tipo === 'mesa' && !cabeEnMesa(a.id)){ avisoMesaLlena(); volar(rf, a.el.getBoundingClientRect(), a.el, false); }
     else if (d && d.tipo === 'mesa') flip(() => aMesa(a.id), desde);
     else if (d && d.tipo === 'torre'){ volar(rf, d.el.getBoundingClientRect(), null, false); aTorre(a.id, d.tid); render(); }
     else volar(rf, a.el.getBoundingClientRect(), a.el, false);       // vuelve solo a su sitio
@@ -473,7 +483,7 @@
   // el montón: un toque abre la carta (si es una) o la lista; arrastrarlo muda todas sus cartas a otra ranura
   function engancharMonton(el, ids, pos){
     arrastreObjeto(el, {
-      tocar: () => { if (ids.length === 1) flip(() => aMesa(ids[0])); else abrirLista(ids.length + ' cartas en el montón', ids); },
+      tocar: () => { if (ids.length === 1){ if (!cabeEnMesa(ids[0])){ avisoMesaLlena(); return; } flip(() => aMesa(ids[0])); } else abrirLista(ids.length + ' cartas en el montón', ids); },
       destino: e => { const r = ranuraBajo(e.clientX, e.clientY); if (!r) return null; const c = Math.min(r.col, COLS - MONTON_ANCHO); const m = montonEn({ lado: r.lado, fila: r.fila, col: c }); if (m && m.pos.lado === pos.lado && m.pos.fila === pos.fila && m.pos.col === pos.col) return null; return { lado: r.lado, fila: r.fila, col: c, el: librerias[r.lado].filas[r.fila][c] }; },
       soltar: d => { if (d && moverMonton(ids, d)) render(); },
     });
@@ -487,7 +497,7 @@
       (items || '<div class="vacio">Todavía no hay cartas aquí. Arrastra una carta hasta la torre para atarla.</div>') + '</div>';
     listaPanel.hidden = false;
     listaPanel.querySelector('.cerrar').onclick = cerrarLista;
-    listaPanel.querySelectorAll('.item').forEach(it => { it.onclick = () => { cerrarLista(); const id = it.dataset.id; flip(() => { if (torreDe(id)) delTorre(id); else aMesa(id); }); }; });
+    listaPanel.querySelectorAll('.item').forEach(it => { it.onclick = () => { const id = it.dataset.id; if (!cabeEnMesa(id)){ avisoMesaLlena(); return; } cerrarLista(); flip(() => { if (torreDe(id)) delTorre(id); else aMesa(id); }); }; });
   }
   function cerrarLista(){ if (listaPanel) listaPanel.hidden = true; }
   // ---- las torres: objetos sueltos en el .centro; se pintan con medidas en píxeles (las apiladas se apoyan en la de abajo) ----
@@ -675,6 +685,14 @@
       const nm = CUENTA.mascotas().length, rm = CUENTA.agregarMascota('atigrado', 'Prueba');
       ok(rm.ok && CUENTA.mascotas().length === nm + 1 && enSala(rm.mascota.id), 'editar: subir una mascota la pone en la sala');
       ok(CUENTA.quitarMascota(rm.mascota.id) && CUENTA.mascotas().length === nm && (!window.GATOS_SALA || !GATOS_SALA.lista().some(g => g.id === rm.mascota.id)), 'editar: bajarla la quita');
+      // en la mesa caben MESA_CARTAS cartas: la que sobra no sube
+      if (porId('carta') && CUENTA._stock){
+        const s0 = CUENTA.disponibles('carta'); CUENTA._stock('carta', 100);
+        const extra = []; for (let k = 0; k < MESA_CARTAS; k++){ const r = CUENTA.guardarLibro({ tipo: 'carta', titulo: 'Mesa ' + k, tapa: 'rosa', carta: { hojas: ['x'] }, estante: { lado: 'izq', fila: 3, col: 0 } }); if (r.ok) extra.push(r.libro.id); }
+        extra.forEach(id => aMesa(id));
+        ok(cartasEnMesa() === MESA_CARTAS && aMesa('carta') === false && !estado.mesa.includes('carta'), 'mesa: con ' + MESA_CARTAS + ' cartas encima, otra no sube');
+        extra.forEach(id => CUENTA.borrarLibro(id)); CUENTA._stock('carta', s0 + CUENTA.libros().filter(l => l.tipo === 'carta').length);
+      }
       const g = CUENTA.guardarLibro({ tipo: 'girasoles', titulo: 'Prueba', tapa: 'girasol', notas: ['hola'], estante: { lado: 'der', fila: 4, col: 7 } });
       ok(g.ok && !!porId(g.libro.id) && pos(g.libro.id) === 'der:4:7' && !!elDe(g.libro.id), 'crear: un libro propio nace en su ranura con su lomo');
       ok(CUENTA.borrarLibro(g.libro.id) && !porId(g.libro.id) && !elDe(g.libro.id), 'crear: borrarlo lo quita de la sala');
@@ -686,9 +704,9 @@
     }
     // la carta y el cordón (en las dos salas): el montón ocupa dos ranuras; cada cordón es una torre; una carta se ata y se desata a la mesa
     if (porId('carta')){
-      ok(pos('carta') === 'der:2:6' && ocupada({ lado: 'der', fila: 2, col: 6 }) === 'monton' && ocupada({ lado: 'der', fila: 2, col: 7 }) === 'monton', 'montón: una carta en la librería ocupa dos ranuras');
+      ok(pos('carta') === 'der:2:6' && !ocupada({ lado: 'der', fila: 2, col: 6 }) && !!montonEn({ lado: 'der', fila: 2, col: 7 }), 'montón: va delante de los libros, dos ranuras de ancho, sin quitarles el sitio');
       aMesa('poema'); aEstante('poema', { lado: 'der', fila: 2, col: 6 });
-      ok(pos('poema') !== 'der:2:6' && pos('poema') !== 'der:2:7' && pos('poema').startsWith('der:2:'), 'montón: el libro mandado ahí busca el hueco vecino');
+      ok(pos('poema') === 'der:2:6' && pos('carta') === 'der:2:6', 'montón: el libro entra en la misma ranura y queda detrás');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
       aMesa('carta'); aEstante('carta', { lado: 'izq', fila: 1, col: 4, hueco: true }); render();
       ok(!!estado.estantes.carta.hueco && pos('carta') === 'izq:1:4' && !ocupada({ lado: 'izq', fila: 1, col: 4 }) && ocupada({ lado: 'izq', fila: 1, col: 3 }) === 'suenos' && !!sala.querySelector('.carta-hueco'), 'hueco: una carta de pie entre dos libros no ocupa ranura (y el libro de al lado sigue)');
@@ -844,6 +862,7 @@
   };
 
   // ---- la sala para los demás módulos (editor, tienda, creador): libros en caliente ----
+  let sembrando = false;                                       // la demo mete muchos libros seguidos: pinta una sola vez al final
   function agregarLibro(l){
     if (!l) return null;
     const i = CAT.findIndex(x => x.id === l.id);
@@ -851,7 +870,7 @@
     const o = normalizar(l, CAT.length); if (!valido(o)) return null;
     CAT.push(o);
     colocar(o.id, posValida(o.estante) ? o.estante : { lado: 'der', fila: 0, col: 0 });
-    guardar(); render(); return o;
+    if (!sembrando){ guardar(); render(); } return o;
   }
   function actualizarLibro(l){
     const i = CAT.findIndex(x => x.id === l.id); if (i < 0) return agregarLibro(l);
@@ -876,8 +895,12 @@
   //      deja cinco apiladas en la mesa y ata tres en la primera torre; luego limpia la dirección para que una recarga no vuelva a sembrar ----
   function demoCartas(){
     if (!window.CUENTA || !window.CARTA) return;
-    while (nTorres() < 2 && CUENTA.comprar('mejora', 'cordon').ok){}
+    if (!nTorres() && !CUENTA.comprar('mejora', 'cordon').ok) return;
     sincronizarTorres();
+    // los tres tamaños que pidió el usuario: una torre de 100, un montón de 20 en la librería (delante del Álbum) y 5 en la mesa.
+    // Son 125 cartas: la demo pasa el tope de compra (100) a mano, porque es para mirar, no para vender
+    const EN_TORRE = 100, EN_LIBRERIA = 20, EN_MESA = MESA_CARTAS, TOTAL = EN_TORRE + EN_LIBRERIA + EN_MESA;
+    if (CUENTA._stock) CUENTA._stock('carta', CUENTA.libros().filter(l => l.tipo === 'carta').length + TOTAL);
     const P = Object.keys(CARTA.PAPELES), DEMO = [
       { titulo: 'para Karen', color: 'rosa', cierre: 'cera', hojas: ['Esta es la primera de la pila.\n\nCada carta tiene su color y su cierre; pruébalas todas.'], final: { tipo: 'cerrada', pregunta: '¿Salimos este sábado?', opciones: ['Sí', 'No', 'Lo pienso'], obligatoria: 0, huida: 'explotar' } },
       { titulo: 'Buenos días', color: 'crema', cierre: 'rasgar', hojas: ['Una carta corta para empezar el día.'], final: null },
@@ -889,18 +912,22 @@
       { titulo: 'Para reír', color: 'marfil', cierre: 'rasgar', hojas: ['Una de las cortas.'], final: null, acepto: { animaciones: ['confeti', 'estrellas'], colores: ['#ffd166', '#06d6a0'] } },
     ];
     const ids = [];
-    DEMO.forEach((d, i) => {
-      if (CUENTA.disponibles('carta') <= 0 && !CUENTA.comprar('libro', 'carta').ok) return;
+    sembrando = true;
+    for (let i = 0; i < TOTAL; i++){
+      if (CUENTA.disponibles('carta') <= 0 && !CUENTA.comprar('libro', 'carta').ok) break;
+      const d = DEMO[i] || { titulo: 'Carta ' + (i + 1), color: P[i % P.length], cierre: i % 2 ? 'rasgar' : 'cera', hojas: ['Carta de prueba número ' + (i + 1) + '.'], final: null };
       const carta = Object.assign({ color: P[i % P.length], letra: 'manuscrita', apertura: { modo: 'muchos' }, firma: 'Yo', acepto: { animaciones: ['fuegos', 'corazones'], colores: ['#e63946', '#ffd166', '#ff70a6'], texto: '¡Sí!' } }, d);
       delete carta.titulo;
-      const r = CUENTA.guardarLibro({ tipo: 'carta', titulo: d.titulo, tapa: 'rosa', carta, estante: { lado: i % 2 ? 'izq' : 'der', fila: 1 + (i % 4), col: 2 + (i % 5) } });
+      const r = CUENTA.guardarLibro({ tipo: 'carta', titulo: d.titulo, tapa: 'rosa', carta, estante: { lado: 'der', fila: 1, col: 2 } });
       if (r.ok) ids.push(r.libro.id);
-    });
-    ids.slice(0, 5).forEach(id => aMesa(id));
-    if (estado.torres[0]) ids.slice(5).forEach(id => aTorre(id, estado.torres[0].id));
+    }
+    sembrando = false;
+    ids.slice(0, EN_MESA).forEach(id => aMesa(id));
+    ids.slice(EN_MESA, EN_MESA + EN_LIBRERIA).forEach(id => colocarCarta(id, { lado: 'der', fila: 1, col: 2 }));
+    if (estado.torres[0]) ids.slice(EN_MESA + EN_LIBRERIA).forEach(id => aTorre(id, estado.torres[0].id));
     guardar(); render();
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
-    pista(ids.length + ' cartas de prueba: cinco en la mesa, tres atadas en la torre de abajo. Toca la torre, arrastra las de la mesa a la librería.', 9000);
+    pista(ids.length + ' cartas de prueba: ' + EN_MESA + ' en la mesa, ' + EN_LIBRERIA + ' delante del Álbum y ' + EN_TORRE + ' en la torre. Toca el montón o la torre para elegir una.', 9000);
   }
 
   // ---- arranque ----

@@ -144,7 +144,7 @@
 .carta-torre:nth-child(odd){transform:translateX(-5%)}
 .carta-torre:nth-child(even){transform:translateX(5%)}
 /* EL MONTÓN en la librería: hasta 10 cartas de canto, una sobre otra, con una cinta roja; ocupa dos ranuras y crece con la cuenta */
-.monton-cartas{position:absolute;left:5%;width:190%;bottom:0;z-index:2;cursor:pointer;touch-action:none;filter:drop-shadow(1px 2px 2px rgba(0,0,0,.55));transition:filter .2s;--f:5px}
+.monton-cartas{position:absolute;left:5%;width:190%;bottom:0;z-index:3;cursor:pointer;touch-action:none;filter:drop-shadow(1px 2px 2px rgba(0,0,0,.55));transition:filter .2s;--f:3.5px}   /* delante de los lomos (z 2) */
 .monton-cartas:hover{filter:drop-shadow(1px 2px 2px rgba(0,0,0,.55)) brightness(1.1)}
 .monton-cartas .pila{display:flex;flex-direction:column-reverse;align-items:stretch}
 .monton-cartas .pila i{display:block;height:var(--f);border-radius:1px;box-shadow:inset 0 -1px 0 rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.4), inset 0 0 0 .5px rgba(0,0,0,.08);background-image:linear-gradient(90deg,rgba(0,0,0,.1),transparent 10%,transparent 90%,rgba(0,0,0,.16))}
@@ -153,7 +153,6 @@
 .monton-cartas .pila .atado::before{content:'';position:absolute;left:50%;top:-1px;bottom:-1px;width:3px;transform:translateX(-50%);background:linear-gradient(90deg,#8e1c24,#c8323b 50%,#8e1c24);box-shadow:0 0 0 .5px rgba(0,0,0,.25)}
 .monton-cartas .pila .atado::after{content:'';position:absolute;left:50%;top:-4px;width:9px;height:6px;transform:translateX(-50%);border-radius:50% 50% 40% 40% / 60% 60% 40% 40%;background:radial-gradient(circle at 50% 55%,#6e1218 20%,transparent 21%),linear-gradient(90deg,#c8323b,#a3242c 50%,#c8323b);box-shadow:0 1px 1px rgba(0,0,0,.4)}
 .monton-cartas .cuenta{position:absolute;right:-6%;top:-9px;min-width:15px;padding:0 4px;border-radius:9px;background:#a3242c;color:#fff;font:600 10px/15px 'Cormorant Garamond',Georgia,serif;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.5)}
-@media (max-width:600px){.monton-cartas{--f:3px}}
 /* la carta DE PIE en el hueco entre dos libros (una por hueco): un lomo fino de papel con su sello o su tira asomando */
 .carta-hueco{position:absolute;left:0;bottom:0;width:36%;height:74%;max-height:106px;transform:translateX(-50%);z-index:3;cursor:pointer;touch-action:none;border-radius:2px 2px 0 0;
   background:linear-gradient(90deg,var(--p2),var(--p1) 28%,var(--p1) 72%,var(--p2));box-shadow:1px 0 0 rgba(0,0,0,.45), -1px 0 0 rgba(255,255,255,.12), inset 0 1px 0 rgba(255,255,255,.35);transition:filter .2s}
