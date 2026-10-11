@@ -690,7 +690,7 @@
       aMesa('poema'); aEstante('poema', { lado: 'der', fila: 2, col: 6 });
       ok(pos('poema') !== 'der:2:6' && pos('poema') !== 'der:2:7' && pos('poema').startsWith('der:2:'), 'montón: el libro mandado ahí busca el hueco vecino');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
-      aMesa('carta'); aEstante('carta', { lado: 'izq', fila: 1, col: 4, hueco: true });
+      aMesa('carta'); aEstante('carta', { lado: 'izq', fila: 1, col: 4, hueco: true }); render();
       ok(!!estado.estantes.carta.hueco && pos('carta') === 'izq:1:4' && !ocupada({ lado: 'izq', fila: 1, col: 4 }) && ocupada({ lado: 'izq', fila: 1, col: 3 }) === 'suenos' && !!sala.querySelector('.carta-hueco'), 'hueco: una carta de pie entre dos libros no ocupa ranura (y el libro de al lado sigue)');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 1, col: 4 }); ok(pos('poema') === 'izq:1:4', 'hueco: el libro entra igual en la ranura de al lado');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
