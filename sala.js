@@ -60,9 +60,12 @@
   // que ocupa DOS ranuras (col y col + 1). LAS TORRES son el cordón: cada cordón comprado (CUENTA.cordones(); en la sala
   // personal, TORRES_CARTAS en libros.js) es una torre de hasta 100 cartas, un objeto suelto en la sala (en el suelo, al
   // costado de las librerías o los sillones, sobre la mesa) que se arrastra y se apila sobre otra torre, hasta 5 de alto.
-  const MONTON_MAX = 10, MONTON_ANCHO = 2, TORRE_MAX = 100, TORRES_ALTO = 5;
+  // El montón acostado: hasta 5 cartas sueltas y, de ahí, atadas de a 5 (4 atados = 20). Entre dos libros juntos, DE PIE en el
+  // hueco entre ranuras (9 huecos por estante: col 0..8, el hueco a la izquierda de la ranura col), cabe UNA sola carta.
+  const MONTON_MAX = 20, MONTON_ATADO = 5, MONTON_ANCHO = 2, TORRE_MAX = 100, TORRES_ALTO = 5;
   const nTorres = () => window.CUENTA ? (CUENTA.cordones ? CUENTA.cordones() : (CUENTA.tiene('mejora', 'cordon') ? 1 : 0)) : (typeof TORRES_CARTAS === 'number' ? TORRES_CARTAS : 0);
-  const montones = () => { const m = {}; for (const id in estado.estantes){ if (!esCarta(porId(id))) continue; const k = clave(estado.estantes[id]); (m[k] = m[k] || { pos: estado.estantes[id], ids: [] }).ids.push(id); } return m; };
+  const montones = () => { const m = {}; for (const id in estado.estantes){ const p = estado.estantes[id]; if (!esCarta(porId(id)) || p.hueco) continue; const k = clave(p); (m[k] = m[k] || { pos: p, ids: [] }).ids.push(id); } return m; };
+  const enHueco = p => { for (const id in estado.estantes){ const x = estado.estantes[id]; if (x.hueco && x.lado === p.lado && x.fila === p.fila && x.col === p.col) return id; } return null; };
   // el montón que cubre esa ranura (empieza en ella o en la de su izquierda), si lo hay
   function montonEn(p){
     const M = montones();
@@ -97,6 +100,12 @@
   const libre2 = (lado, fila, c) => c >= 0 && c + MONTON_ANCHO <= COLS && !ocupada({ lado, fila, col: c }) && !ocupada({ lado, fila, col: c + 1 });
   function colocarCarta(id, p){
     delete estado.estantes[id];
+    if (p.hueco){                                                     // de pie entre dos libros: ese hueco o el libre más cercano de la fila
+      let mejor = null, md = Infinity;
+      for (let k = 0; k <= COLS; k++){ if (enHueco({ lado: p.lado, fila: p.fila, col: k })) continue; const d = Math.abs(k - p.col); if (d < md){ md = d; mejor = k; } }
+      if (mejor != null){ estado.estantes[id] = { lado: p.lado, fila: p.fila | 0, col: mejor, hueco: true }; return true; }
+      p = { lado: p.lado, fila: p.fila, col: Math.min(p.col, COLS - 1) };
+    }
     const m = montonEn(p);
     if (m && m.ids.length < MONTON_MAX){ estado.estantes[id] = Object.assign({}, m.pos); return true; }
     let mejor = null, md = Infinity;
@@ -105,6 +114,13 @@
       if (mm ? (mm.ids.length >= MONTON_MAX || mm.pos.col !== c) : !libre2(lado, f, c)) continue;
       const d = (lado === p.lado ? 0 : 1000) + Math.abs(f - p.fila) * 10 + Math.abs(c - Math.min(p.col, COLS - MONTON_ANCHO));
       if (d < md){ md = d; mejor = x; }
+    }
+    if (!mejor){                                                      // sin sitio para acostarla: a un hueco libre, el más cercano
+      for (const lado of LADOS) for (let f = 0; f < FILAS; f++) for (let k = 0; k <= COLS; k++){
+        if (enHueco({ lado, fila: f, col: k })) continue;
+        const d = (lado === p.lado ? 0 : 1000) + Math.abs(f - p.fila) * 10 + Math.abs(k - p.col);
+        if (d < md){ md = d; mejor = { lado, fila: f, col: k, hueco: true }; }
+      }
     }
     if (!mejor) return false;
     estado.estantes[id] = mejor; return true;
@@ -169,7 +185,8 @@
       estado.mesa = estado.mesa.filter(id => !enTorre.has(id));
       if (s.estantes && typeof s.estantes === 'object') for (const id in s.estantes){
         const p = s.estantes[id];
-        if (porId(id) && posValida(p) && !estado.mesa.includes(id) && !enTorre.has(id)) estado.estantes[id] = { lado: p.lado, fila: p.fila | 0, col: esCarta(porId(id)) ? Math.min(COLS - MONTON_ANCHO, p.col | 0) : p.col | 0 };
+        const ph = esCarta(porId(id)) && !!p.hueco, pv = ph ? (!!p && LADOS.includes(p.lado) && p.fila >= 0 && p.fila < FILAS && p.col >= 0 && p.col <= COLS) : posValida(p);
+        if (porId(id) && pv && !estado.mesa.includes(id) && !enTorre.has(id)) estado.estantes[id] = ph ? { lado: p.lado, fila: p.fila | 0, col: p.col | 0, hueco: true } : { lado: p.lado, fila: p.fila | 0, col: esCarta(porId(id)) ? Math.min(COLS - MONTON_ANCHO, p.col | 0) : p.col | 0 };
       }
     } else sincronizarTorres();
     if (q.has('mesa')){
@@ -184,10 +201,12 @@
       if (vistas[k]){ const p = estado.estantes[id]; delete estado.estantes[id]; colocar(id, p); }
       vistas[clave(estado.estantes[id])] = id;
     }
-    // libros y montones pisados: el libro que cayó bajo un montón (o un montón de más de 10) busca sitio
+    // libros y montones pisados: el libro que cayó bajo un montón (o un montón de más de 20, o dos cartas en un hueco) busca sitio
+    const huecosVistos = {};
     for (const id of Object.keys(estado.estantes)){
       const p = estado.estantes[id], l = porId(id);
-      if (esCarta(l)){ const m = montonEn(p); if (m && m.ids.length > MONTON_MAX && m.ids.indexOf(id) >= MONTON_MAX) colocarCarta(id, p); }
+      if (esCarta(l) && p.hueco){ const k = clave(p); if (huecosVistos[k]) colocarCarta(id, p); else huecosVistos[k] = id; }
+      else if (esCarta(l)){ const m = montonEn(p); if (m && m.ids.length > MONTON_MAX && m.ids.indexOf(id) >= MONTON_MAX) colocarCarta(id, p); }
       else if (ocupada(p, id) === 'monton'){ const h = huecoCerca(p, id); if (h) estado.estantes[id] = h; }
     }
     // libros sin sitio (nuevos en el catálogo): a su estante de nacimiento
@@ -243,19 +262,29 @@
   const plano = (r, css) => ({ left: r.left, top: r.top, width: r.width, height: r.height, css: css || '' });
 
   function render(){
-    sala.querySelectorAll('.lomo, .libro-mesa, .libro-torre, .monton-cartas, .carta-mesa, .carta-torre').forEach(e => e.remove());
-    // los montones de cartas: uno por posición, dos ranuras de ancho, las cartas de canto con su cinta
+    sala.querySelectorAll('.lomo, .libro-mesa, .libro-torre, .monton-cartas, .carta-hueco, .carta-mesa, .carta-torre').forEach(e => e.remove());
+    // los montones acostados: uno por posición, dos ranuras de ancho; cada carta es una franja de canto del color de su papel,
+    // sueltas hasta 5 y de ahí atadas de a 5 con su cinta
     const M = montones();
     for (const k in M){
       const m = M[k], el = document.createElement('div'), n = m.ids.length;
       el.className = 'monton-cartas'; el.dataset.monton = k; el.dataset.id = m.ids[0]; el.title = n === 1 ? porId(m.ids[0]).titulo : n + ' cartas';
-      el.style.setProperty('--n', n);
-      el.innerHTML = '<span class="pila">' + m.ids.map(id => '<i style="background:' + CARTA.colores(porId(id))[0] + '"></i>').join('') + '</span><i class="cinta"></i><i class="lazo"></i>' + (n > 1 ? '<b class="cuenta">' + n + '</b>' : '');
+      const franja = id => '<i style="background:' + CARTA.colores(porId(id))[0] + '"></i>';
+      const partes = [];
+      for (let i = 0; i < n; i += MONTON_ATADO){ const g = m.ids.slice(i, i + MONTON_ATADO); partes.push(g.length === MONTON_ATADO ? '<span class="atado">' + g.map(franja).join('') + '</span>' : g.map(franja).join('')); }
+      el.innerHTML = '<span class="pila">' + partes.join('') + '</span>' + (n > 1 ? '<b class="cuenta">' + n + '</b>' : '');
       librerias[m.pos.lado].filas[m.pos.fila][m.pos.col].appendChild(el);
       engancharMonton(el, m.ids.slice(), m.pos);
     }
     for (const id in estado.estantes){
       const l = porId(id), p = estado.estantes[id];
+      if (esCarta(l) && p.hueco){                                  // de pie entre dos libros, en el hueco a la izquierda de la ranura (col 8: a la derecha de la última)
+        const h = document.createElement('div'), c = l.carta || {};
+        h.className = 'carta-hueco ' + (c.cierre === 'rasgar' ? 'rasgar' : 'cera') + (p.col >= COLS ? ' der' : ''); h.dataset.id = id; h.style.cssText = estilo(l); h.title = l.titulo;
+        h.innerHTML = (c.cierre === 'rasgar' ? '<i class="tira"></i>' : '<i class="sello"></i>') + '<i class="toque"></i>';
+        librerias[p.lado].filas[p.fila][Math.min(p.col, COLS - 1)].appendChild(h);
+        enganchar(h, id, 'estante'); continue;
+      }
       if (esCarta(l)) continue;
       const lomo = document.createElement('div');
       lomo.dataset.id = id; lomo.style.cssText = estilo(l); lomo.title = l.titulo;
@@ -381,23 +410,26 @@
       }
       if (mejor){
         const p = { lado: mejor.lado, fila: mejor.fila, col: mejor.col };
-        if (esCarta(porId(a.id))){                                                               // la carta: su montón o un sitio de dos ranuras
+        if (esCarta(porId(a.id))){                                                               // la carta: de pie en un hueco (cerca del borde de la ranura) o acostada en un montón
+          const fr = (e.clientX - mejor.r.left) / mejor.r.width;
+          if (fr < .3) p.hueco = true; else if (fr > .7){ p.col = mejor.col + 1; p.hueco = true; }
           const antes = estado.estantes[a.id]; const okc = colocarCarta(a.id, p); const h = okc ? Object.assign({}, estado.estantes[a.id]) : null;
           delete estado.estantes[a.id]; if (antes) estado.estantes[a.id] = antes;
-          if (h) d = { tipo: 'ranura', pos: h, el: librerias[h.lado].filas[h.fila][h.col] };
+          if (h) d = h.hueco ? { tipo: 'ranura', pos: h, el: librerias[h.lado].filas[h.fila][Math.min(h.col, COLS - 1)], clase: 'destino-hueco' + (h.col >= COLS ? ' destino-hueco-der' : '') } : { tipo: 'ranura', pos: h, el: librerias[h.lado].filas[h.fila][h.col] };
         } else {
           const h = ocupada(p, a.id) ? huecoCerca(p, a.id) : p;
           if (h) d = { tipo: 'ranura', pos: h, el: librerias[h.lado].filas[h.fila][h.col] };
         }
       }
     } else if (dentro(e, a.mesaR, 30) && a.origen !== 'mesa') d = { tipo: 'mesa', el: a.mesaEl };
-    if (a.destino && (!d || a.destino.el !== d.el)) a.destino.el.classList.remove('destino');
-    if (d) d.el.classList.add('destino');
+    const marcas = x => (x.clase || 'destino').split(' ');
+    if (a.destino && (!d || a.destino.el !== d.el || a.destino.clase !== d.clase)) a.destino.el.classList.remove(...marcas(a.destino));
+    if (d) d.el.classList.add(...marcas(d));
     a.destino = d;
   }
   function limpiar(a){
     a.fant.remove(); a.el.classList.remove('fantasma'); cuerpo.classList.remove('arrastrando');
-    if (a.destino) a.destino.el.classList.remove('destino');
+    if (a.destino) a.destino.el.classList.remove(...(a.destino.clase || 'destino').split(' '));
   }
   function soltar(a){
     const d = a.destino, rf = a.fant.getBoundingClientRect();
@@ -658,6 +690,11 @@
       aMesa('poema'); aEstante('poema', { lado: 'der', fila: 2, col: 6 });
       ok(pos('poema') !== 'der:2:6' && pos('poema') !== 'der:2:7' && pos('poema').startsWith('der:2:'), 'montón: el libro mandado ahí busca el hueco vecino');
       aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
+      aMesa('carta'); aEstante('carta', { lado: 'izq', fila: 1, col: 4, hueco: true });
+      ok(!!estado.estantes.carta.hueco && pos('carta') === 'izq:1:4' && !ocupada({ lado: 'izq', fila: 1, col: 4 }) && ocupada({ lado: 'izq', fila: 1, col: 3 }) === 'suenos' && !!sala.querySelector('.carta-hueco'), 'hueco: una carta de pie entre dos libros no ocupa ranura (y el libro de al lado sigue)');
+      aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 1, col: 4 }); ok(pos('poema') === 'izq:1:4', 'hueco: el libro entra igual en la ranura de al lado');
+      aMesa('poema'); aEstante('poema', { lado: 'izq', fila: 0, col: 1 });
+      aMesa('carta'); aEstante('carta', { lado: 'der', fila: 2, col: 6 });
       if (window.CUENTA && !nTorres()) CUENTA.comprar('mejora', 'cordon');
       sincronizarTorres(); render();
       if (nTorres()){

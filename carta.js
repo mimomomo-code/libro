@@ -117,11 +117,15 @@
 .sobre{position:relative;display:block;aspect-ratio:1.5;color:var(--p3);font-family:Caveat,'Cormorant Garamond',cursive;user-select:none}
 .sobre .cuerpo{position:absolute;inset:0;background:linear-gradient(180deg,var(--p1),var(--p2));border-radius:3px;box-shadow:0 2px 0 rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.08)}
 .sobre .cuerpo::before{content:'';position:absolute;inset:0;background:linear-gradient(104deg,transparent 48%,rgba(0,0,0,.1) 49%,transparent 52%),linear-gradient(-104deg,transparent 48%,rgba(0,0,0,.1) 49%,transparent 52%);border-radius:3px;opacity:.7}
+/* abierto, se ve el interior: una sombra que entra desde la boca del sobre */
+.sobre .cuerpo::after{content:'';position:absolute;inset:0;border-radius:3px;background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.12) 38%,transparent 58%);opacity:0;transition:opacity .5s .35s}
+.sobre.abierto .cuerpo::after{opacity:1}
 .sobre .solapa{position:absolute;left:0;right:0;top:0;height:56%;background:linear-gradient(180deg,var(--p2),var(--p1) 85%);clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:50% 0;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));transition:transform .7s cubic-bezier(.4,0,.2,1)}
 .sobre.abierto .solapa{transform:rotateX(180deg)}
-.sobre .sello{position:absolute;left:50%;top:50%;width:22%;aspect-ratio:1;transform:translate(-50%,-55%);border-radius:50%;
-  background:radial-gradient(circle at 38% 32%,#e0575f,#a3242c 55%,#6e1218);box-shadow:0 1px 2px rgba(0,0,0,.5), inset 0 0 0 2px rgba(0,0,0,.12), inset 0 0 6px rgba(255,255,255,.18);transition:transform .25s}
-.sobre .sello::after{content:'❤';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 60%/1 serif;color:rgba(255,220,220,.75);text-shadow:0 0 1px rgba(0,0,0,.5)}
+.sobre .sello{position:absolute;left:50%;top:50%;width:22%;aspect-ratio:1;transform:translate(-50%,-55%);border-radius:46% 54% 50% 50% / 52% 48% 52% 48%;
+  background:radial-gradient(circle at 38% 32%,#e0575f,#a3242c 55%,#6e1218);box-shadow:0 2px 3px rgba(0,0,0,.5), inset 0 0 0 2px rgba(0,0,0,.12), inset 0 -3px 4px rgba(0,0,0,.28), inset 0 2px 5px rgba(255,255,255,.2);transition:transform .25s}
+.sobre .sello::before{content:'';position:absolute;inset:16%;border-radius:50%;border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.sobre .sello::after{content:'❤';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 56%/1 serif;color:rgba(255,220,220,.7);text-shadow:0 1px 0 rgba(0,0,0,.45), 0 -1px 0 rgba(255,255,255,.2)}
 /* el sobre de rasgar no lleva solapa en V: una tira de color cruza todo el borde de arriba, con la orilla dentada */
 .sobre.rasgar .solapa{display:none}
 .sobre .tira{position:absolute;left:0;right:0;top:0;height:13%;background:linear-gradient(180deg,var(--p3),color-mix(in srgb, var(--p3) 80%, #fff));border-radius:3px 3px 0 0;transform-origin:0 100%;
@@ -140,14 +144,27 @@
 .carta-torre:nth-child(odd){transform:translateX(-5%)}
 .carta-torre:nth-child(even){transform:translateX(5%)}
 /* EL MONTÓN en la librería: hasta 10 cartas de canto, una sobre otra, con una cinta roja; ocupa dos ranuras y crece con la cuenta */
-.monton-cartas{position:absolute;left:5%;width:190%;bottom:0;height:calc(14% + var(--n, 1) * 7.6%);max-height:90%;z-index:2;cursor:pointer;touch-action:none;filter:drop-shadow(1px 2px 2px rgba(0,0,0,.55));transition:filter .2s}
+.monton-cartas{position:absolute;left:5%;width:190%;bottom:0;z-index:2;cursor:pointer;touch-action:none;filter:drop-shadow(1px 2px 2px rgba(0,0,0,.55));transition:filter .2s;--f:5px}
 .monton-cartas:hover{filter:drop-shadow(1px 2px 2px rgba(0,0,0,.55)) brightness(1.1)}
-.monton-cartas .pila{position:absolute;inset:0;display:flex;flex-direction:column-reverse;justify-content:flex-start}
-.monton-cartas .pila i{display:block;flex:1 1 0;min-height:0;border-radius:1px;box-shadow:inset 0 -1px 0 rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.35);background-image:linear-gradient(90deg,rgba(0,0,0,.08),transparent 12%,transparent 88%,rgba(0,0,0,.14))}
-.monton-cartas .pila i:nth-child(even){transform:translateX(3%)}
-.monton-cartas .cinta{position:absolute;left:50%;top:-6%;bottom:-2%;width:8%;max-width:5px;background:linear-gradient(90deg,#8e1c24,#c8323b 50%,#8e1c24);transform:translateX(-50%);box-shadow:0 0 0 .5px rgba(0,0,0,.3)}
-.monton-cartas .lazo{position:absolute;left:50%;top:-9%;width:46%;max-width:16px;aspect-ratio:1.6;transform:translate(-50%,-50%);border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:radial-gradient(circle at 50% 50%,#8e1c24 18%,transparent 19%),linear-gradient(90deg,#c8323b,#a3242c 50%,#c8323b);box-shadow:0 1px 1px rgba(0,0,0,.4)}
-.monton-cartas .cuenta{position:absolute;right:-6%;top:-18%;min-width:15px;padding:0 4px;border-radius:9px;background:#a3242c;color:#fff;font:600 10px/15px 'Cormorant Garamond',Georgia,serif;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.5)}
+.monton-cartas .pila{display:flex;flex-direction:column-reverse;align-items:stretch}
+.monton-cartas .pila i{display:block;height:var(--f);border-radius:1px;box-shadow:inset 0 -1px 0 rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.4), inset 0 0 0 .5px rgba(0,0,0,.08);background-image:linear-gradient(90deg,rgba(0,0,0,.1),transparent 10%,transparent 90%,rgba(0,0,0,.16))}
+.monton-cartas .pila > i:nth-child(even),.monton-cartas .pila .atado i:nth-child(even){transform:translateX(2.5%)}
+.monton-cartas .pila .atado{position:relative;display:flex;flex-direction:column-reverse;margin:1px 0 0}
+.monton-cartas .pila .atado::before{content:'';position:absolute;left:50%;top:-1px;bottom:-1px;width:3px;transform:translateX(-50%);background:linear-gradient(90deg,#8e1c24,#c8323b 50%,#8e1c24);box-shadow:0 0 0 .5px rgba(0,0,0,.25)}
+.monton-cartas .pila .atado::after{content:'';position:absolute;left:50%;top:-4px;width:9px;height:6px;transform:translateX(-50%);border-radius:50% 50% 40% 40% / 60% 60% 40% 40%;background:radial-gradient(circle at 50% 55%,#6e1218 20%,transparent 21%),linear-gradient(90deg,#c8323b,#a3242c 50%,#c8323b);box-shadow:0 1px 1px rgba(0,0,0,.4)}
+.monton-cartas .cuenta{position:absolute;right:-6%;top:-9px;min-width:15px;padding:0 4px;border-radius:9px;background:#a3242c;color:#fff;font:600 10px/15px 'Cormorant Garamond',Georgia,serif;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.5)}
+@media (max-width:600px){.monton-cartas{--f:3px}}
+/* la carta DE PIE en el hueco entre dos libros (una por hueco): un lomo fino de papel con su sello o su tira asomando */
+.carta-hueco{position:absolute;left:0;bottom:0;width:36%;height:74%;max-height:106px;transform:translateX(-50%);z-index:3;cursor:pointer;touch-action:none;border-radius:2px 2px 0 0;
+  background:linear-gradient(90deg,var(--p2),var(--p1) 28%,var(--p1) 72%,var(--p2));box-shadow:1px 0 0 rgba(0,0,0,.45), -1px 0 0 rgba(255,255,255,.12), inset 0 1px 0 rgba(255,255,255,.35);transition:filter .2s}
+.carta-hueco.der{left:auto;right:0;transform:translateX(50%)}
+.carta-hueco::before{content:'';position:absolute;left:0;right:0;top:0;height:30%;background:linear-gradient(180deg,rgba(0,0,0,.14),transparent);clip-path:polygon(0 0,100% 0,50% 100%)}
+.carta-hueco .sello{position:absolute;left:50%;top:22%;width:64%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle at 38% 32%,#e0575f,#a3242c 55%,#6e1218);box-shadow:0 1px 1px rgba(0,0,0,.45)}
+.carta-hueco .tira{position:absolute;left:0;right:0;top:0;height:9%;background:var(--p3);opacity:.85;border-radius:2px 2px 0 0}
+.carta-hueco .toque{position:absolute;inset:-6px -5px}
+.carta-hueco:hover{filter:brightness(1.1)}
+.ranura.destino-hueco::after{content:'';position:absolute;bottom:0;left:0;width:36%;height:74%;max-height:106px;transform:translateX(-50%);border:1.5px dashed rgba(240,213,154,.9);border-bottom:none;border-radius:2px 2px 0 0;background:rgba(240,213,154,.16)}
+.ranura.destino-hueco.destino-hueco-der::after{left:auto;right:0;transform:translateX(50%)}
 /* LA TORRE (el cordón): un bloque alto de cartas apiladas, atado con una cinta y su moño; objeto suelto del .centro */
 .torre-cartas{position:absolute;z-index:2;cursor:pointer;touch-action:none;filter:drop-shadow(2px 4px 4px rgba(0,0,0,.6));transition:filter .2s}
 .torre-cartas:hover{filter:drop-shadow(2px 4px 4px rgba(0,0,0,.6)) brightness(1.08)}
@@ -205,8 +222,11 @@
 #carta-vista .sobre.grande.rasgado .cuerpo{clip-path:polygon(0 13%,2% 11%,5% 13%,8% 10%,11% 13%,14% 11%,17% 13%,20% 10%,23% 13%,26% 11%,29% 13%,32% 10%,35% 13%,38% 11%,41% 13%,44% 10%,47% 13%,50% 11%,53% 13%,56% 10%,59% 13%,62% 11%,65% 13%,68% 10%,71% 13%,74% 11%,77% 13%,80% 10%,83% 13%,86% 11%,89% 13%,92% 10%,95% 13%,98% 11%,100% 13%,100% 100%,0 100%)}
 #carta-vista .sobre.grande.vacio{transform:translateY(22vh) scale(.85);opacity:0;pointer-events:none}
 /* el pliego doblado en tres que sale del sobre y se desdobla */
-#carta-vista .pliego{position:absolute;left:50%;top:50%;width:min(78vw, 400px);transform:translate(-50%,-50%);transform-style:preserve-3d;opacity:0;transition:opacity .3s;pointer-events:none}   /* invisible pero encima del sobre: sin esto se comía el toque al sello */
-#carta-vista .pliego.ver{opacity:1}
+/* el pliego sale del sobre: nace abajo, dentro, recortado por la boca del sobre, y sube asomando hasta quedar libre */
+#carta-vista .pliego{position:absolute;left:50%;top:50%;width:min(78vw, 400px);transform:translate(-50%,-50%) translateY(34%) scale(.9);transform-style:preserve-3d;opacity:0;clip-path:inset(0 0 100% 0);pointer-events:none;
+  transition:opacity .25s, transform .85s cubic-bezier(.4,0,.2,1), clip-path .85s cubic-bezier(.4,0,.2,1)}   /* invisible pero encima del sobre: sin pointer-events none se comía el toque al sello */
+#carta-vista .pliego.ver{opacity:1;transform:translate(-50%,-50%) translateY(-6%) scale(1);clip-path:inset(0 0 0 0)}
+#carta-vista .pliego.abierto{transform:translate(-50%,-50%);transition:opacity .25s, transform .9s cubic-bezier(.4,0,.2,1)}
 #carta-vista .pliego .panel{position:relative;width:100%;height:calc(min(74vh, 540px) / 3);overflow:hidden;background:var(--p1);box-shadow:0 0 0 1px rgba(0,0,0,.06)}
 #carta-vista .pliego .panel .copia{position:absolute;left:0;width:100%;height:min(74vh, 540px)}
 #carta-vista .pliego .panel.arriba{transform-origin:50% 100%;transform:rotateX(-178deg);transition:transform 1s cubic-bezier(.4,0,.2,1)}
@@ -228,7 +248,8 @@
 #carta-vista .hoja-carta.pasando{transform:translate(-70%,-18%) rotate(-9deg);opacity:0}
 #carta-vista .hoja-carta.volviendo{transform:translate(70%,-18%) rotate(9deg);opacity:0}
 #carta-vista .hoja-carta.sin-transicion{transition:none}
-#carta-vista .papel-carta{background:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.35), transparent 60%),linear-gradient(180deg,var(--p1),var(--p1) 60%,var(--p2));}
+#carta-vista .papel-carta{background:repeating-linear-gradient(47deg, rgba(0,0,0,.016) 0 2px, transparent 2px 5px),repeating-linear-gradient(-33deg, rgba(255,255,255,.05) 0 1px, transparent 1px 4px),radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.38), transparent 60%),radial-gradient(ellipse at 85% 95%, rgba(0,0,0,.08), transparent 55%),linear-gradient(180deg,var(--p1),var(--p1) 60%,var(--p2));}
+#carta-vista .hoja-carta{transform:rotate(-.5deg)}
 /* los dos pliegues (doblada en tres): una línea de sombra y su brillo, con cada tercio apenas distinto */
 #carta-vista .papel-carta::before{content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(0,0,0,.035) 0%,transparent 10%,transparent 30%,rgba(0,0,0,.08) 33%,rgba(0,0,0,.3) 33.3%,rgba(0,0,0,.3) calc(33.3% + 1.5px),rgba(255,255,255,.35) calc(33.3% + 2px),rgba(255,255,255,.35) calc(33.3% + 3px),transparent calc(33.3% + 4px),transparent 63.5%,rgba(0,0,0,.08) 66.3%,rgba(0,0,0,.3) 66.6%,rgba(0,0,0,.3) calc(66.6% + 1.5px),rgba(255,255,255,.35) calc(66.6% + 2px),rgba(255,255,255,.35) calc(66.6% + 3px),transparent calc(66.6% + 4px),transparent 90%,rgba(0,0,0,.035) 100%)}
@@ -425,9 +446,11 @@
           (c.letra === 'imprenta' ? "font:500 clamp(16px, 2.3vh, 20px)/1.35 'Cormorant Garamond',Georgia,serif" : "font:500 clamp(19px, 2.9vh, 26px)/1.35 Caveat,'Cormorant Garamond',cursive");
         e.innerHTML = htmlHoja(0);
       });
-      setTimeout(() => { sobreEl.classList.add('vacio'); pliego.classList.add('ver'); }, 650);
-      setTimeout(() => { pliego.classList.add('abierto'); }, 950);
-      setTimeout(() => { pliego.classList.remove('ver'); pintarHoja(0); pila.classList.add('ver'); etapa = 'hojas'; if (nPaginas > 1) avisar('Toca la hoja para pasar a la siguiente', 3500); }, 2300);
+      // la solapa gira (.7 s), el pliego asoma y sube desde dentro (.85 s), el sobre cae, el pliego se desdobla (1 s) y queda la hoja
+      setTimeout(() => { pliego.classList.add('ver'); }, 450);
+      setTimeout(() => { sobreEl.classList.add('vacio'); }, 1250);
+      setTimeout(() => { pliego.classList.add('abierto'); }, 1450);
+      setTimeout(() => { pliego.classList.remove('ver'); pintarHoja(0); pila.classList.add('ver'); etapa = 'hojas'; if (nPaginas > 1) avisar('Toca la hoja para pasar a la siguiente', 3500); }, 2900);
     }
     const sello = $('.sello');
     if (sello){
