@@ -258,7 +258,7 @@
   // el gato se apoya hacia la mitad del cojín, arrimado al respaldo, no en la orilla
   const sillones = [...centro.querySelectorAll('.sillon')].map(el => ({
     el, ocupado: null, nombre: el.classList.contains('amarillo') ? 'amarillo' : 'rojo',
-    asiento: el.classList.contains('amarillo') ? { x: .5, y: .60, ancho: .39 } : { x: .5, y: .48, ancho: .43 },
+    asiento: el.classList.contains('amarillo') ? { x: .5, y: .60, ancho: .33 } : { x: .5, y: .48, ancho: .36 },   // 11 oct: sillones un 18 % más anchos; el gato conserva su talla
   }));
   const G = { w: 0, h: 0, caja: null, mesa: null, ancho: 60 };
   function medir(){

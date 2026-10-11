@@ -734,6 +734,14 @@
       const nm = CUENTA.mascotas().length, rm = CUENTA.agregarMascota('atigrado', 'Prueba');
       ok(rm.ok && CUENTA.mascotas().length === nm + 1 && enSala(rm.mascota.id), 'editar: subir una mascota la pone en la sala');
       ok(CUENTA.quitarMascota(rm.mascota.id) && CUENTA.mascotas().length === nm && (!window.GATOS_SALA || !GATOS_SALA.lista().some(g => g.id === rm.mascota.id)), 'editar: bajarla la quita');
+      // cada raza admite solo algunos tamaños: un canario no es grande ni un poodle mini; lo guardado que ya no vale se acerca al admitido
+      if (CUENTA.tamanosDe && typeof RAZAS !== 'undefined' && RAZAS.canario && RAZAS.poodle && RAZAS.golden){
+        if (CUENTA._dar && !CUENTA.tiene('mascota', 'canario')){ CUENTA._dar(1e6); CUENTA.comprar('mascota', 'canario'); }   // el canario no viene de regalo: se compra para la prueba
+        const c = CUENTA.agregarMascota('canario', 'Pío');
+        ok(c.ok && CUENTA.tamanosDe('canario').join() === 'mini,chico' && !CUENTA.tamanoMascota(c.mascota.id, 'grande') && CUENTA.tamanoMascota(c.mascota.id, 'chico') && CUENTA.gatosDefs().find(g => g.id === c.mascota.id).tamano === 'chico', 'tamaños: el canario solo mini o chico, grande no entra');
+        ok(CUENTA.tamanosDe('poodle').join() === 'chico,mediano' && CUENTA.tamanoEfectivo('poodle', 'grande') === 'mediano' && CUENTA.tamanoEfectivo('poodle', 'mini') === 'chico' && CUENTA.tamanoEfectivo('golden', 'mini') === 'mediano' && CUENTA.tamanoEfectivo('golden', undefined) === 'grande', 'tamaños: el poodle ni mini ni grande; lo guardado se acerca al admitido');
+        if (c.ok) CUENTA.quitarMascota(c.mascota.id);
+      }
       // las ampliaciones de cartas suman al tope
       if (CUENTA.topeDe){ const t0 = CUENTA.topeDe('carta'); ok(CUENTA.comprar('mejora', 'cartas5').ok && CUENTA.topeDe('carta') === t0 + 5 && CUENTA.piezas('libro').find(p => p.clave === 'carta').tope === t0 + 5, 'tienda: la ampliación de 5 suma al tope de cartas'); }
       // en la mesa caben MESA_CARTAS cartas: la que sobra no sube
