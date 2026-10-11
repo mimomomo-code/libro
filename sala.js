@@ -308,7 +308,7 @@
       const b = document.createElement('div');
       b.dataset.id = id; b.style.cssText = estilo(l); b.title = l.titulo;
       if (i === 0){
-        if (esCarta(l)){ b.className = 'carta-mesa'; b.innerHTML = CARTA.sobre(l); }
+        if (esCarta(l)){ b.className = 'carta-mesa'; b.innerHTML = CARTA.sobre(l) + ((l.candado || l.pin) ? '<i class="candado-mesa' + ((conCandado(l) && CANDADO.listo(l)) || l._pinOk ? ' abierto' : '') + '"></i>' : ''); }
         else {
           b.className = 'libro-mesa piel';
           b.innerHTML = '<span class="titulo-mesa">' + esc(l.titulo) + '</span>' +
@@ -492,7 +492,7 @@
   let listaPanel = null;
   function abrirLista(titulo, ids){
     if (!listaPanel){ listaPanel = document.createElement('div'); listaPanel.id = 'lista-cartas'; document.body.appendChild(listaPanel); listaPanel.addEventListener('pointerdown', e => { if (e.target === listaPanel) cerrarLista(); }); }
-    const items = ids.map(id => { const l = porId(id); return '<div class="item" data-id="' + esc(id) + '">' + CARTA.sobre(l, 'chico') + '<span>' + esc(l.titulo) + '</span></div>'; }).join('');
+    const items = ids.map(id => { const l = porId(id); return '<div class="item" data-id="' + esc(id) + '">' + CARTA.sobre(l, 'chico') + '<span>' + esc(l.titulo) + '</span>' + ((l.candado || l.pin) ? '<i class="con-candado" title="Con candado">🔒</i>' : '') + '</div>'; }).join('');
     listaPanel.innerHTML = '<div class="caja" role="dialog" aria-label="' + esc(titulo) + '"><h4>' + esc(titulo) + '<button type="button" class="cerrar" aria-label="Cerrar">✕</button></h4>' +
       (items || '<div class="vacio">Todavía no hay cartas aquí. Arrastra una carta hasta la torre para atarla.</div>') + '</div>';
     listaPanel.hidden = false;
@@ -685,6 +685,8 @@
       const nm = CUENTA.mascotas().length, rm = CUENTA.agregarMascota('atigrado', 'Prueba');
       ok(rm.ok && CUENTA.mascotas().length === nm + 1 && enSala(rm.mascota.id), 'editar: subir una mascota la pone en la sala');
       ok(CUENTA.quitarMascota(rm.mascota.id) && CUENTA.mascotas().length === nm && (!window.GATOS_SALA || !GATOS_SALA.lista().some(g => g.id === rm.mascota.id)), 'editar: bajarla la quita');
+      // las ampliaciones de cartas suman al tope
+      if (CUENTA.topeDe){ const t0 = CUENTA.topeDe('carta'); ok(CUENTA.comprar('mejora', 'cartas5').ok && CUENTA.topeDe('carta') === t0 + 5 && CUENTA.piezas('libro').find(p => p.clave === 'carta').tope === t0 + 5, 'tienda: la ampliación de 5 suma al tope de cartas'); }
       // en la mesa caben MESA_CARTAS cartas: la que sobra no sube
       if (porId('carta') && CUENTA._stock){
         const s0 = CUENTA.disponibles('carta'); CUENTA._stock('carta', 100);

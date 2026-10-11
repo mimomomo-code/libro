@@ -135,7 +135,9 @@
 .sobre.chico .rotulo{font-size:10px;bottom:6%}
 .sobre.chico .sello{width:18%}
 /* en la sala */
-.carta-mesa{width:calc(var(--lm) * 1.3);cursor:pointer;touch-action:none;transition:filter .2s,transform .2s;filter:drop-shadow(0 10px 10px rgba(0,0,0,.55))}
+.carta-mesa{position:relative;width:calc(var(--lm) * 1.3);cursor:pointer;touch-action:none;transition:filter .2s,transform .2s;filter:drop-shadow(0 10px 10px rgba(0,0,0,.55))}
+.carta-mesa .candado-mesa{left:9%;top:9%;bottom:auto;width:15%;transform:none}      /* el candadito, en la esquina del sobre */
+#lista-cartas .item .con-candado{margin-left:auto;font-style:normal;font-size:13px;opacity:.85}
 .carta-mesa:hover{filter:drop-shadow(0 10px 10px rgba(0,0,0,.55)) brightness(1.08);transform:translateY(-2px)}
 .carta-mesa .sobre .rotulo{font-size:clamp(9px, calc(var(--lm) * .13), 14px)}
 .carta-torre{position:relative;width:calc(var(--lm) * 1.3);height:clamp(6px, calc(var(--lm) * .1), 11px);border-radius:1px;cursor:pointer;touch-action:none;
@@ -252,7 +254,14 @@
 /* los dos pliegues (doblada en tres): una línea de sombra y su brillo, con cada tercio apenas distinto */
 #carta-vista .papel-carta::before{content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(0,0,0,.035) 0%,transparent 10%,transparent 30%,rgba(0,0,0,.08) 33%,rgba(0,0,0,.3) 33.3%,rgba(0,0,0,.3) calc(33.3% + 1.5px),rgba(255,255,255,.35) calc(33.3% + 2px),rgba(255,255,255,.35) calc(33.3% + 3px),transparent calc(33.3% + 4px),transparent 63.5%,rgba(0,0,0,.08) 66.3%,rgba(0,0,0,.3) 66.6%,rgba(0,0,0,.3) calc(66.6% + 1.5px),rgba(255,255,255,.35) calc(66.6% + 2px),rgba(255,255,255,.35) calc(66.6% + 3px),transparent calc(66.6% + 4px),transparent 90%,rgba(0,0,0,.035) 100%)}
-#carta-vista .hoja-carta .texto{position:absolute;inset:6% 8% 9%;display:block;margin:0;max-width:none;text-align:left;overflow:auto;scrollbar-width:thin;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.35}   /* (el lector tiene un .texto global con margen) */
+/* nada de barras: el texto solo desplaza en vertical, y solo cuando de verdad no cabe (clase .scroll, la pone el visor tras pintar);
+   en horizontal nunca (las palabras largas se parten). Las barras que quedan, finas y del color de la tinta */
+#carta-vista .hoja-carta .texto{position:absolute;inset:6% 8% 9%;display:block;margin:0;max-width:none;text-align:left;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;line-height:1.35}   /* (el lector tiene un .texto global con margen) */
+#carta-vista .hoja-carta .texto.scroll,#carta-vista .final.scroll{overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.28) transparent;padding-right:4px}
+#carta-vista .texto::-webkit-scrollbar,#carta-vista .final::-webkit-scrollbar,#carta-vista textarea::-webkit-scrollbar{width:6px;height:0}
+#carta-vista .texto::-webkit-scrollbar-thumb,#carta-vista .final::-webkit-scrollbar-thumb,#carta-vista textarea::-webkit-scrollbar-thumb{background:rgba(0,0,0,.28);border-radius:3px}
+#carta-vista .hoja-carta,#carta-vista .pliego .panel,#carta-vista .escena{overflow:hidden}      /* (la pila no: las hojas de atrás asoman y la de arriba vuela fuera) */
+#carta-vista textarea{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.28) transparent;overflow-x:hidden}
 #carta-vista .hoja-carta.manuscrita .texto{font-family:Caveat,'Cormorant Garamond',cursive;font-weight:500;font-size:clamp(19px, 2.9vh, 26px)}
 #carta-vista .hoja-carta.imprenta .texto{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:clamp(16px, 2.3vh, 20px)}
 #carta-vista .hoja-carta .texto .firma{display:block;text-align:right;margin-top:1.2em;font-style:italic}
@@ -261,7 +270,7 @@
 #carta-vista .hoja-carta .atras[hidden]{display:none}
 #carta-vista .hoja-carta .quedan{position:absolute;right:5%;bottom:2.5%;font:italic 500 13px/1 'Cormorant Garamond',serif;opacity:.5;pointer-events:none}
 /* el final: la pregunta arriba y la respuesta en el tercio de abajo */
-#carta-vista .final{position:absolute;inset:6% 8% 7%;display:none;flex-direction:column;gap:10px;overflow:auto;scrollbar-width:thin}
+#carta-vista .final{position:absolute;inset:6% 8% 7%;display:none;flex-direction:column;gap:10px;overflow:hidden}
 #carta-vista .final.ver{display:flex}
 #carta-vista .hoja-carta .texto.fuera{display:none}
 #carta-vista .final .pregunta{font-family:Caveat,'Cormorant Garamond',cursive;font-weight:600;font-size:clamp(22px, 3.4vh, 30px);line-height:1.2;text-align:center;margin:3% 0 0;flex:0 0 auto}
@@ -488,6 +497,8 @@
       else pintarFinal();
       const restan = nPaginas - pagina - 1;
       sombras.forEach((s, k) => { s.style.display = restan > k ? 'block' : 'none'; });
+      // la barra vertical solo si el texto (o la pregunta) no cabe; nunca durante una transición
+      requestAnimationFrame(() => { textoEl.classList.toggle('scroll', !esFinal && textoEl.scrollHeight > textoEl.clientHeight + 2); finalEl.classList.toggle('scroll', esFinal && finalEl.scrollHeight > finalEl.clientHeight + 2); });
       atras.hidden = pagina === 0;
       quedan.textContent = restan > 1 ? 'quedan ' + restan + ' hojas' : restan === 1 ? 'queda una hoja' : '';
     }
