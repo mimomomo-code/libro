@@ -274,7 +274,9 @@ const LIBROS = [
       firma: "",
       final: { tipo: "cerrada", pregunta: "cielito mio de mi corazon, seria mucha molestia que acepte este corazon?",
         opciones: ["acepto", "mmm...", "lo pienso", "mañana te digo", "nop"], obligatoria: 0, huida: "explotar" },
-      acepto: { animaciones: ["texto", "corazones", "fuegos"], colores: ["#e63946", "#ff70a6", "#ffd166", "#fff3e0"], texto: "wiwiwiwiwi wiwiwiwi wiiiiiiiiii" } },
+      // la imagen de la fiesta: un GIF (o PNG) en assets/karen/fiesta.gif, o un enlace directo (https://...gif); si el archivo
+      // no existe, la fiesta sale sin imagen (el visor la esconde sola). Mejor liviano (menos de ~3 MB): se descarga en el celular.
+      acepto: { imagen: "assets/karen/fiesta.gif", animaciones: ["texto", "corazones", "fuegos"], colores: ["#e63946", "#ff70a6", "#ffd166", "#fff3e0"], texto: "wiwiwiwiwi wiwiwiwi wiiiiiiiiii" } },
     estante: { lado: "der", fila: 3, col: 2 },
   },
 ];
