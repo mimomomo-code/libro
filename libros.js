@@ -268,11 +268,12 @@ const LIBROS = [
     carta: { color: "marfil", cierre: "cera", letra: "manuscrita",
       apertura: { modo: "colores", colores: ["#e63946", "#1a1618"] },
       hojas: [
-        "hola mi wawita bella\n\nesta carta es la mas importante de toda la sala, por eso brillaba. las otras te las puedes leer cuando quieras, esta la guarde para decirte algo que no te habia dicho con todas sus letras.\n\ndesde que llegaste todo esta mas bonito. me rio mas, los dias pesan menos, y hasta los dias feos pasan rapido si despues te los puedo contar.",
+        // la primera hoja son las palabras del usuario TAL CUAL (11 oct noche); solo se partió en párrafos para leerla
+        "hoy no encontre palabras para expresar el como me siento, estoy feliz muy feliz, es algo que he soñado siempre, y es algo que me hubiera encantado que resultara contigo... y la verdad? es que siiii paso contigo!!\n\nse que tengo otros escritos para ti donde se siente mucho la poesia, los sentimientos y todo eso, pero de hace unas semanas que me estoy sintiendo mmmm como era la palabra? inefable! creo que solo me quedan 2 palabras para poder expresar lo que siento por ti, y las empezaras a escuchar muy seguido de ahora en adelante...\n\nse que te he dicho varias veces lo que me gusta fisicamente de ti, y no sera esta la excepcion, tus ojitos negros obsidiana, tu pelito azabache, tus labios de tan amplio volumnen y tu nariz afilada y cincelada... si hable de tus ojos? ME ENCANTAN TUS OJOS ALMENDRADOS!!\n\ny como persona? me gusta tu amor por los animales, me inspira mucho la disiplina que tienes frente a tus objetivos, lo linda que eres y el como te llevas con tu familia.. tus gustos en colores oscuros o tu gran gusto por la comida ajena y mas si nunca antes la habias probado.. me gustaria ser tu nuevo sabor favorito, tu nuevo aroma, persona y lugar.",
         "no se escribir bonito pero si se lo que siento, y es bien simple:\n\nte amo.\n\nte quiamuuu muchichisiiiiiimoooo mi wawita bellaaaaaaaa. hoy que empezamos y todos los dias que vienen, que ojala sean muchisimos.",
       ],
       firma: "",
-      final: { tipo: "cerrada", pregunta: "cielito mio de mi corazon, seria mucha molestia que acepte este corazon?",
+      final: { tipo: "cerrada", pregunta: "cielito mio de mi corazon, seria mucha molestia que acepte este corazon? te gustaria pololear conmigo?",
         opciones: ["acepto", "mmm...", "lo pienso", "mañana te digo", "nop"], obligatoria: 0, huida: "explotar" },
       // la imagen de la fiesta: un GIF (o PNG) en assets/karen/fiesta.gif, o un enlace directo (https://...gif); si el archivo
       // no existe, la fiesta sale sin imagen (el visor la esconde sola). Mejor liviano (menos de ~3 MB): se descarga en el celular.
