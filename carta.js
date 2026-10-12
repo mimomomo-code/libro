@@ -7,7 +7,8 @@
 //  OBLIGATORIA: las otras huyen del dedo y, al séptimo intento, mueren:
 //  explotan, se van como fantasmas o las borra una línea). Al aceptar hay
 //  fiesta: una imagen (PNG o GIF) y animaciones de fondo a elegir (fuegos
-//  artificiales, flores, corazones, estrellas, confeti) con sus colores.
+//  artificiales, flores, corazones, estrellas, confeti y "texto": las
+//  palabras del grito volando por toda la pantalla) con sus colores.
 //  Al abrir el sobre, además, llueven corazones hasta llenar la pantalla:
 //  de todos los colores o de uno, dos o tres (a partes iguales).
 //
@@ -56,7 +57,7 @@
   };
   const MUCHOS = ['#e63946', '#f4a261', '#ffd166', '#06d6a0', '#118ab2', '#8338ec', '#ff70a6', '#ff9770', '#70d6ff', '#c8f560', '#2a9d8f', '#ef476f'];
   const HUIDAS = { explotar: 'Explotan', fantasma: 'Se van como fantasmas', barrido: 'Las borra una línea' };
-  const ANIMACIONES = { fuegos: 'Fuegos artificiales', flores: 'Flores', corazones: 'Corazones', estrellas: 'Estrellas', confeti: 'Confeti' };
+  const ANIMACIONES = { fuegos: 'Fuegos artificiales', flores: 'Flores', corazones: 'Corazones', estrellas: 'Estrellas', confeti: 'Confeti', texto: 'El grito volando (palabras por toda la pantalla)' };
   const MAX_HOJAS = 5, MAX_OPCIONES = 5, INTENTOS = 7;
   const CLAVE = 'libro.cartas.v1';
 
@@ -303,7 +304,8 @@
 #carta-vista.fiesta .pila-hojas{transform:translate(-50%,-50%) translateY(13vh) scale(.84)}
 #carta-vista.fiesta .hoja-carta{cursor:default}
 #carta-vista .fiesta-capa img{max-width:min(70vw, 360px);max-height:17vh;border-radius:10px;box-shadow:0 14px 30px rgba(0,0,0,.6)}
-#carta-vista .fiesta-capa .grito{font-family:Caveat,'Cormorant Garamond',cursive;font-weight:600;font-size:clamp(40px, 9vw, 72px);color:#fff6e0;text-shadow:0 2px 0 rgba(0,0,0,.35), 0 0 30px rgba(255,200,120,.6);line-height:1}
+#carta-vista .fiesta-capa .grito{font-family:Caveat,'Cormorant Garamond',cursive;font-weight:600;font-size:clamp(40px, 9vw, 72px);color:#fff6e0;text-shadow:0 2px 0 rgba(0,0,0,.35), 0 0 30px rgba(255,200,120,.6);line-height:1;animation:grito-salta .55s ease-in-out infinite alternate}
+@keyframes grito-salta{from{transform:scale(1) rotate(-2.5deg)}to{transform:scale(1.1) rotate(2.5deg)}}
 #carta-vista .fiesta-capa .pie{position:fixed;left:50%;bottom:2.5vh;transform:translateX(-50%);font-family:Cinzel,serif;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:rgba(240,213,154,.9);animation:latir 1.8s ease-in-out infinite;white-space:nowrap}
 @media (max-height:560px){#carta-vista .pila-hojas,#carta-vista .pliego{width:min(78vw, 360px)}}
 `;
@@ -369,17 +371,19 @@
 
   // =====================================================================
   //  LA FIESTA DE FONDO: fuegos artificiales, flores, corazones, estrellas,
-  //  confeti, los que se hayan elegido, con sus colores, a la vez
+  //  confeti y el grito volando (sus palabras suben por toda la pantalla,
+  //  manuscritas, meciéndose), los que se hayan elegido, con sus colores, a la vez
   // =====================================================================
-  function fiestaFondo(cv, animaciones, colores){
+  function fiestaFondo(cv, animaciones, colores, grito){
     const ctx = cv.getContext('2d');
     let W = 0, H = 0, dpr = 1, raf = 0, ultimo = 0, parado = false, k = 1;
     const col = () => colores[R() * colores.length | 0];
-    const cohetes = [], chispas = [], flores = [], cors = [], estrellas = [], papeles = [];
+    const cohetes = [], chispas = [], flores = [], cors = [], estrellas = [], papeles = [], textos = [];
+    const palabras = String(grito || '¡Sí!').split(/\s+/).filter(Boolean); let kPal = 0;
     function medir(){ W = innerWidth; H = innerHeight; dpr = Math.min(devicePixelRatio || 1, 2); k = Math.min(W, H) / 700; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
     medir();
     if (animaciones.includes('estrellas')) for (let i = 0; i < 90; i++) estrellas.push({ x: R() * W, y: R() * H, r: (.6 + R() * 1.8) * k, f: R() * 6.28, fv: 1 + R() * 2.5, c: col() });
-    let tCohete = 0, tFlor = 0, tCor = 0, tPapel = 0;
+    let tCohete = 0, tFlor = 0, tCor = 0, tPapel = 0, tTexto = 0;
     function corazon(x, y, s, c, a, rot){ ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0); ctx.globalAlpha = a; ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(0, s); ctx.bezierCurveTo(-s * 1.6, -s * .2, -s * .8, -s * 1.4, 0, -s * .5); ctx.bezierCurveTo(s * .8, -s * 1.4, s * 1.6, -s * .2, 0, s); ctx.fill(); ctx.restore(); }
     function flor(x, y, s, c, rot, a){
       ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = a; ctx.fillStyle = c;
@@ -414,6 +418,20 @@
       if (animaciones.includes('confeti')){
         tPapel -= dt; if (tPapel <= 0){ tPapel = .035; papeles.push({ x: R() * W, y: -12, w: (5 + R() * 6) * k, h: (8 + R() * 8) * k, c: col(), rot: R() * 6.28, vr: (R() - .5) * 8, vy: (90 + R() * 120) * k, f: R() * 6.28, amp: 30 + R() * 40 }); }
         for (let i = papeles.length - 1; i >= 0; i--){ const p = papeles[i]; p.y += p.vy * dt; p.f += 2 * dt; p.x += Math.sin(p.f) * p.amp * dt; p.rot += p.vr * dt; if (p.y > H + 20){ papeles.splice(i, 1); continue; } ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = .95; ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.f * 1.7))); ctx.restore(); }
+      }
+      // el grito volando: cada palabra del grito sube desde abajo, manuscrita, meciéndose y latiendo, en los colores de la fiesta
+      if (animaciones.includes('texto')){
+        tTexto -= dt;
+        if (tTexto <= 0){ tTexto = .16 + R() * .14; textos.push({ x: W * (.08 + R() * .84), y: H + 40, w: palabras[(kPal++) % palabras.length], s: (20 + R() * 30) * k, c: col(), vy: (70 + R() * 100) * k, f: R() * 6.28, fv: 1.2 + R() * 1.8, amp: 16 + R() * 30, rot: (R() - .5) * .5, a: .7 + R() * .3 }); }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        for (let i = textos.length - 1; i >= 0; i--){
+          const p = textos[i]; p.y -= p.vy * dt; p.f += p.fv * dt; p.x += Math.sin(p.f) * p.amp * dt;
+          if (p.y < -60){ textos.splice(i, 1); continue; }
+          const s = p.s * (1 + .1 * Math.sin(p.f * 2));
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot + Math.sin(p.f) * .14); ctx.globalAlpha = p.a;
+          ctx.font = '600 ' + s.toFixed(0) + 'px Caveat, "Cormorant Garamond", cursive'; ctx.fillStyle = p.c; ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 5;
+          ctx.fillText(p.w, 0, 0); ctx.restore();
+        }
       }
       ctx.globalAlpha = 1;
     }
@@ -597,7 +615,7 @@
       $('.grito').textContent = a.texto || '¡Sí!';
       const im = $('.imagen'); if (a.imagen){ im.src = a.imagen; im.hidden = false; im.onerror = () => { im.hidden = true; }; }
       if (lluvia) lluvia.parar();
-      fiesta = fiestaFondo($('.fondo-fiesta'), a.animaciones, a.colores); fiesta.arrancar();
+      fiesta = fiestaFondo($('.fondo-fiesta'), a.animaciones, a.colores, a.texto); fiesta.arrancar();
       setTimeout(() => { capa.classList.add('fiesta-lista'); }, 900);
       if (op.alResponder) op.alResponder(resp);
     }

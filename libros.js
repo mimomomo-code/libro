@@ -258,17 +258,23 @@ const LIBROS = [
   {
     // LA CARTA DE LA MESA: la única que dice "te amo". Nace de pie sobre la mesa (mesa: true) y BRILLA (brillo: "aurea",
     // brillo.js) con un reflejo de arcoíris, sutil, hasta que Karen rompe el sello por primera vez; desde entonces queda
-    // como una carta más. Las HOJAS de abajo son un BORRADOR para ver la carta armada: las palabras de verdad las escribe
-    // el usuario con su forma de hablar y se pegan aquí tal cual (una hoja por elemento; "\n\n" separa párrafos).
+    // como una carta más. Al abrirla llueven corazones ROJOS Y NEGROS. Las hojas van en el tono del usuario (sin tildes, como
+    // sus notas); las frases entre comillas en el pedido del 11 oct son suyas tal cual y el resto se puede retocar aquí.
+    // Al final, la pregunta: hay cinco opciones pero solo "acepto" se deja tocar (obligatoria: 0; las otras huyen del dedo y
+    // al séptimo intento explotan). Al aceptar, la fiesta: el grito "wiwiwiwiwi..." gigante y volando por toda la pantalla
+    // (animación "texto") entre corazones y fuegos.
     id: "karen", tipo: "carta", titulo: "Para Karen",
     mesa: true, brillo: "aurea",
-    carta: { color: "marfil", cierre: "cera", letra: "manuscrita", apertura: { modo: "muchos" },
+    carta: { color: "marfil", cierre: "cera", letra: "manuscrita",
+      apertura: { modo: "colores", colores: ["#e63946", "#1a1618"] },
       hojas: [
-        "Karen,\n\nesta carta es distinta a las otras de la sala. Las demás las puedes abrir cuando quieras; esta la escribí despacio, pensando bien cada palabra, porque hay algo que no te había dicho con todas sus letras.\n\nDesde que apareciste todo se me acomodó. Los días pesan menos, me río más, y hasta las cosas aburridas tienen su gracia si después te las puedo contar.",
-        "No sé escribir bonito, pero sé lo que siento, y lo que siento es simple:\n\nte amo.\n\nAsí, sin adornos. Te amo hoy que empezamos, y te voy a amar en cada uno de los días que vienen, que espero que sean muchos.\n\nGracias por estar.",
+        "hola mi wawita bella\n\nesta carta es la mas importante de toda la sala, por eso brillaba. las otras te las puedes leer cuando quieras, esta la guarde para decirte algo que no te habia dicho con todas sus letras.\n\ndesde que llegaste todo esta mas bonito. me rio mas, los dias pesan menos, y hasta los dias feos pasan rapido si despues te los puedo contar.",
+        "no se escribir bonito pero si se lo que siento, y es bien simple:\n\nte amo.\n\nte quiamuuu muchichisiiiiiimoooo mi wawita bellaaaaaaaa. hoy que empezamos y todos los dias que vienen, que ojala sean muchisimos.",
       ],
-      firma: "Con todo lo que soy",
-      final: null },
+      firma: "",
+      final: { tipo: "cerrada", pregunta: "cielito mio de mi corazon, seria mucha molestia que acepte este corazon?",
+        opciones: ["acepto", "mmm...", "lo pienso", "mañana te digo", "nop"], obligatoria: 0, huida: "explotar" },
+      acepto: { animaciones: ["texto", "corazones", "fuegos"], colores: ["#e63946", "#ff70a6", "#ffd166", "#fff3e0"], texto: "wiwiwiwiwi wiwiwiwi wiiiiiiiiii" } },
     estante: { lado: "der", fila: 3, col: 2 },
   },
 ];
