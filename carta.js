@@ -269,6 +269,7 @@
 #carta-vista textarea{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.28) transparent;overflow-x:hidden}
 #carta-vista .hoja-carta.manuscrita .texto{font-family:Caveat,'Cormorant Garamond',cursive;font-weight:500;font-size:clamp(19px, 2.9vh, 26px)}
 #carta-vista .hoja-carta.imprenta .texto{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:clamp(16px, 2.3vh, 20px)}
+/* (una hoja larga baja de letra hasta caber: ajustarLetra en el visor pone font-size en píxeles sobre .texto) */
 #carta-vista .hoja-carta .texto .firma{display:block;text-align:right;margin-top:1.2em;font-style:italic}
 #carta-vista .hoja-carta .atras{position:absolute;left:4%;top:2.5%;background:none;border:0;color:inherit;font:italic 500 14px/1 'Cormorant Garamond',serif;opacity:.55;cursor:pointer;padding:4px 6px}
 #carta-vista .hoja-carta .atras:hover{opacity:.9}
@@ -459,6 +460,20 @@
     const sombras = [$('.hoja-sombra.s1'), $('.hoja-sombra.s2'), $('.hoja-sombra.s3')];
     const HOJAS = c.hojas.slice(); if (c.firma) HOJAS[HOJAS.length - 1] = (HOJAS[HOJAS.length - 1] || '') + '\n\x01' + c.firma;
     const nPaginas = HOJAS.length + (c.final ? 1 : 0);
+    // una hoja larga se escribe con letra más chica HASTA QUE QUEPA sin deslizar: desde la letra normal del CSS hacia abajo, de
+    // medio en medio píxel, hasta un mínimo (si ni así cabe, el texto desplaza: clase .scroll). Se mide en la hoja de verdad,
+    // así vale para cualquier pantalla (la hoja mide como mucho 540 px de alto y 400 de ancho: con una letra fija por vh, en
+    // PC sobraba media hoja y en el celular alto faltaba)
+    const MIN_LETRA = c.letra === 'imprenta' ? 12 : 14;
+    function ajustarLetra(){
+      textoEl.style.fontSize = '';
+      let s = parseFloat(getComputedStyle(textoEl).fontSize) || 20;
+      for (let k = 0; k < 30 && textoEl.scrollHeight > textoEl.clientHeight + 1 && s - .5 >= MIN_LETRA; k++){ s -= .5; textoEl.style.fontSize = s + 'px'; }
+      return s;
+    }
+    const fuente = px => 'font:500 ' + px + 'px/1.35 ' + (c.letra === 'imprenta' ? "'Cormorant Garamond',Georgia,serif" : "Caveat,'Cormorant Garamond',cursive");
+    // si la letra manuscrita aún no había cargado al medir (la de respaldo es más ancha y encogía de más), se vuelve a ajustar
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!terminado && etapa === 'hojas' && !(c.final && pagina === HOJAS.length)) ajustarLetra(); });
     let pagina = 0, etapa = 'cerrada', terminado = false, lluvia = null, fiesta = null, avisoT = 0;
     const paletaLluvia = c.apertura.modo === 'muchos' ? MUCHOS : c.apertura.colores;
     function avisar(t, ms){ aviso.textContent = t; aviso.classList.toggle('ver', !!t); clearTimeout(avisoT); if (ms) avisoT = setTimeout(() => aviso.classList.remove('ver'), ms); }
@@ -471,10 +486,10 @@
       sobreEl.classList.add('abierto');
       if (window.BRILLO) BRILLO.apagar(id);                  // la primera vez que se abre, el brillo (brillo.js) se apaga aquí y en la sala
       if (c.apertura.modo !== 'nada'){ lluvia = lluviaCorazones($('.posados'), $('.cayendo'), paletaLluvia); lluvia.arrancar(); }
-      // el pliego sale del sobre y se desdobla
+      // el pliego sale del sobre y se desdobla, con la primera hoja a la letra con que va a caber
+      textoEl.innerHTML = htmlHoja(0); const px = ajustarLetra();
       pliego.querySelectorAll('.copia').forEach(e => {
-        e.style.cssText = 'padding:7% 8%;box-sizing:border-box;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere;line-height:1.35;color:var(--p3);' +
-          (c.letra === 'imprenta' ? "font:500 clamp(16px, 2.3vh, 20px)/1.35 'Cormorant Garamond',Georgia,serif" : "font:500 clamp(19px, 2.9vh, 26px)/1.35 Caveat,'Cormorant Garamond',cursive");
+        e.style.cssText = 'padding:7% 8%;box-sizing:border-box;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere;line-height:1.35;color:var(--p3);' + fuente(px);
         e.innerHTML = htmlHoja(0);
       });
       // la solapa gira (.7 s), el pliego asoma y sube desde dentro (.85 s), el sobre cae, el pliego se desdobla (1 s) y queda la hoja
@@ -516,7 +531,7 @@
       pagina = clamp(i, 0, nPaginas - 1);
       const esFinal = !!c.final && pagina === HOJAS.length;
       textoEl.classList.toggle('fuera', esFinal); finalEl.classList.toggle('ver', esFinal);     // (clases, no `hidden`: el display del CSS le ganaría)
-      if (!esFinal){ textoEl.innerHTML = htmlHoja(pagina); textoEl.scrollTop = 0; }
+      if (!esFinal){ textoEl.innerHTML = htmlHoja(pagina); ajustarLetra(); textoEl.scrollTop = 0; }
       else pintarFinal();
       const restan = nPaginas - pagina - 1;
       sombras.forEach((s, k) => { s.style.display = restan > k ? 'block' : 'none'; });
